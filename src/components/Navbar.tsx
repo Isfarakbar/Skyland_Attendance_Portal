@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Shield, User as UserIcon, Clock, Building2, ChevronDown } from 'lucide-react';
+import { LogOut, Shield, User as UserIcon, Clock, Building2, ChevronDown, Smartphone } from 'lucide-react';
 
 interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'hr' | 'employee';
+  role: 'developer' | 'admin' | 'manager' | 'employee' | string;
   employeeId: string;
   department: string;
   designation: string;
@@ -105,6 +105,20 @@ export default function Navbar({ user }: NavbarProps) {
 
           {/* User Profile & Actions */}
           <div className="flex items-center gap-3">
+            {/* Install App Quick Action */}
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('open-pwa-install'));
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
+              title="Install / Download Skyland App on your Phone"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Install App</span>
+            </button>
+
             {user ? (
               <div className="relative">
                 <button

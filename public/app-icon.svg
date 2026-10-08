@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#3730a3" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- App Rounded Base -->
+  <rect width="512" height="512" rx="120" fill="url(#bgGrad)" />
+  <rect width="512" height="256" rx="120" fill="url(#glowGrad)" />
+
+  <!-- Outer Ring (Clock Face) -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#ffffff" stroke-width="24" stroke-opacity="0.9" />
+
+  <!-- Inner Shift Punch Indicator -->
+  <circle cx="256" cy="256" r="18" fill="#10b981" />
+
+  <!-- Clock Hands pointing to 9:00 AM (Work shift) -->
+  <line x1="256" y1="256" x2="256" y2="140" stroke="#ffffff" stroke-width="20" stroke-linecap="round" />
+  <line x1="256" y1="256" x2="160" y2="256" stroke="#ffffff" stroke-width="20" stroke-linecap="round" />
+
+  <!-- Stylized "S" curve watermark in background -->
+  <path d="M 230 190 Q 280 190 280 230 Q 280 270 230 280 Q 180 290 180 330 Q 180 370 240 370" 
+        fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-opacity="0.25" />
+
+  <!-- Active Status Ping -->
+  <circle cx="370" cy="140" r="28" fill="#10b981" stroke="#ffffff" stroke-width="8" />
+</svg>
