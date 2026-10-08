@@ -12,7 +12,8 @@ import EmployeeDirectory from '@/components/EmployeeDirectory';
 import LeaveApprovals from '@/components/LeaveApprovals';
 import ExportReports from '@/components/ExportReports';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
-import { Clock, Calendar, Users, Palmtree, FileSpreadsheet, Sliders } from 'lucide-react';
+import DeveloperConsole from '@/components/DeveloperConsole';
+import { Clock, Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'punch' | 'leaves' | 'roster' | 'directory' | 'approvals' | 'export' | 'settings'>('punch');
+  const [activeTab, setActiveTab] = useState<'punch' | 'leaves' | 'roster' | 'directory' | 'approvals' | 'export' | 'settings' | 'developer'>('punch');
 
   // Employee Punch & Today data
   const [todayData, setTodayData] = useState<any>(null);
@@ -49,7 +50,10 @@ export default function DashboardPage() {
       setUser(data.user);
 
       // Default active tab based on role
-      if (['admin', 'hr'].includes(data.user.role)) {
+      if (data.user.role === 'developer') {
+        setActiveTab('developer');
+        fetchAdminStats();
+      } else if (['admin', 'manager'].includes(data.user.role)) {
         setActiveTab('roster');
         fetchAdminStats();
       } else {
@@ -126,7 +130,24 @@ export default function DashboardPage() {
     );
   }
 
-  const isAdminOrHr = user && ['admin', 'hr'].includes(user.role);
+  const isElevatedUser = user && ['developer', 'admin', 'manager'].includes(user.role);
+  const isDeveloper = user?.role === 'developer';
+  const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
+
+  const getHeaderTitle = () => {
+    if (isDeveloper) return 'Developer Console & Root Operations';
+    if (isAdmin) return 'Administrative Management Portal';
+    if (isManager) return 'Executive Oversight & Management';
+    return `Welcome, ${user?.name}`;
+  };
+
+  const getHeaderSubtitle = () => {
+    if (isDeveloper) return 'Direct system telemetry, raw collection diagnostics, and full administrative control';
+    if (isAdmin) return 'Staff onboarding, shift policy rules, and company-wide attendance operations';
+    if (isManager) return 'Team presence monitoring, leave authorizations, and payroll timecards';
+    return 'Track daily attendance, shift punch clock, and personal leave balances';
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16">
@@ -139,16 +160,14 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {isAdminOrHr ? 'Management Portal' : `Welcome, ${user?.name}`}
+                {getHeaderTitle()}
               </h1>
               <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {user?.department}
               </span>
             </div>
             <p className="text-sm text-slate-500 mt-1">
-              {isAdminOrHr
-                ? 'Team oversight, real-time presence tracking, and leave approvals'
-                : 'Track daily attendance, clock shifts, and manage leave balances'}
+              {getHeaderSubtitle()}
             </p>
           </div>
 
@@ -163,7 +182,7 @@ export default function DashboardPage() {
 
         {/* Top Metric Cards */}
         <StatsCards
-          isAdminOrHr={isAdminOrHr}
+          isAdminOrHr={isElevatedUser}
           adminStats={adminStats}
           employeeStats={employeeStats}
         />
@@ -171,8 +190,23 @@ export default function DashboardPage() {
         {/* Tab Navigation */}
         <div className="border-b border-slate-200">
           <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-px">
-            {isAdminOrHr ? (
+            {isElevatedUser ? (
               <>
+                {/* Developer Diagnostic Console tab */}
+                {isDeveloper && (
+                  <button
+                    onClick={() => setActiveTab('developer')}
+                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                      activeTab === 'developer'
+                        ? 'border-violet-600 text-violet-700'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Terminal className="w-4 h-4 text-violet-600" />
+                    <span>Developer Console</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => setActiveTab('roster')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
@@ -226,19 +260,8 @@ export default function DashboardPage() {
                   <span>Payroll Excel Export</span>
                 </button>
 
-                <button
-                  onClick={() => setActiveTab('punch')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'punch'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>Personal Punch</span>
-                </button>
-
-                {user?.role === 'admin' && (
+                {/* Rules & Settings for Developer and Admin */}
+                {(isDeveloper || isAdmin) && (
                   <button
                     onClick={() => setActiveTab('settings')}
                     className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
@@ -251,6 +274,18 @@ export default function DashboardPage() {
                     <span>Company Rules</span>
                   </button>
                 )}
+
+                <button
+                  onClick={() => setActiveTab('punch')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'punch'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>Personal Punch</span>
+                </button>
               </>
             ) : (
               <>
@@ -292,7 +327,7 @@ export default function DashboardPage() {
                 onRefresh={() => {
                   fetchTodayState();
                   fetchEmployeeHistory(user);
-                  if (isAdminOrHr) fetchAdminStats();
+                  if (isElevatedUser) fetchAdminStats();
                 }}
               />
               <EmployeeCalendar userId={user?._id} />
@@ -316,8 +351,11 @@ export default function DashboardPage() {
           {/* Export Reports Tab (Admin/HR) */}
           {activeTab === 'export' && <ExportReports />}
 
-          {/* Company Settings Tab (Admin only) */}
+          {/* Company Settings Tab (Admin and Developer) */}
           {activeTab === 'settings' && <CompanySettingsTab />}
+
+          {/* Developer Console Tab (Developer only) */}
+          {activeTab === 'developer' && <DeveloperConsole />}
         </div>
       </main>
     </div>

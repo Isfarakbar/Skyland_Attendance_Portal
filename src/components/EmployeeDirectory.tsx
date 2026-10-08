@@ -8,7 +8,7 @@ interface Employee {
   name: string;
   email: string;
   employeeId: string;
-  role: 'admin' | 'hr' | 'employee';
+  role: 'developer' | 'admin' | 'manager' | 'employee';
   department: string;
   designation: string;
   phone?: string;
@@ -26,7 +26,7 @@ export default function EmployeeDirectory() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password123');
-  const [role, setRole] = useState<'admin' | 'hr' | 'employee'>('employee');
+  const [role, setRole] = useState<'developer' | 'admin' | 'manager' | 'employee'>('employee');
   const [department, setDepartment] = useState('Sales');
   const [designation, setDesignation] = useState('Sales Representative');
   const [phone, setPhone] = useState('');
@@ -162,14 +162,16 @@ export default function EmployeeDirectory() {
 
                 <span
                   className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                    emp.role === 'admin'
+                    emp.role === 'developer'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                      : emp.role === 'admin'
                       ? 'bg-purple-50 text-purple-700 border-purple-200'
-                      : emp.role === 'hr'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : emp.role === 'manager'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
                       : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   }`}
                 >
-                  {emp.role}
+                  {emp.role === 'manager' ? 'Boss / Manager' : emp.role}
                 </span>
               </div>
 
@@ -249,8 +251,9 @@ export default function EmployeeDirectory() {
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="employee">Employee</option>
-                    <option value="hr">HR Lead</option>
-                    <option value="admin">Admin</option>
+                    <option value="manager">Boss / Manager</option>
+                    <option value="admin">Administrator</option>
+                    <option value="developer">Developer</option>
                   </select>
                 </div>
                 <div>

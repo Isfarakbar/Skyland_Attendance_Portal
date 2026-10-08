@@ -10,9 +10,9 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'hr' | 'employee'>('employee');
-  const [department, setDepartment] = useState('Executive');
-  const [designation, setDesignation] = useState('Director');
+  const [role, setRole] = useState<'developer' | 'admin' | 'manager' | 'employee'>('developer');
+  const [department, setDepartment] = useState('Engineering');
+  const [designation, setDesignation] = useState('Lead Developer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
@@ -23,14 +23,14 @@ export default function RegisterPage() {
       .then((data) => {
         if (data.isFirstUser) {
           setIsFirstUser(true);
-          setRole('admin');
-          setDepartment('Executive');
-          setDesignation('Managing Director / Admin');
+          setRole('developer');
+          setDepartment('Engineering / Tech');
+          setDesignation('System Developer');
         } else {
           setIsFirstUser(false);
           setRole('employee');
-          setDepartment('Engineering');
-          setDesignation('Software Engineer');
+          setDepartment('Operations');
+          setDesignation('Team Member');
         }
       })
       .catch(() => setIsFirstUser(false));
@@ -140,13 +140,13 @@ export default function RegisterPage() {
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">System Role</label>
                 <select
                   value={role}
-                  disabled={isFirstUser === true}
                   onChange={(e) => setRole(e.target.value as any)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 disabled:opacity-75 disabled:bg-slate-100"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="admin">Administrator</option>
-                  <option value="hr">HR Lead</option>
-                  <option value="employee">Employee</option>
+                  <option value="developer">Developer (Full Access & Diagnostics)</option>
+                  <option value="admin">Administrator (Company Operations)</option>
+                  <option value="manager">Boss / Manager (Executive Oversight)</option>
+                  <option value="employee">Employee (Self-Service Attendance)</option>
                 </select>
               </div>
 

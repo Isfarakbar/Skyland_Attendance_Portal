@@ -52,12 +52,27 @@ export default function Navbar({ user }: NavbarProps) {
 
   const getRoleBadge = (role?: string) => {
     switch (role) {
+      case 'developer':
+        return 'bg-violet-100 text-violet-800 border-violet-300 font-mono';
       case 'admin':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'hr':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-rose-100 text-rose-800 border-rose-300';
+      case 'manager':
+        return 'bg-amber-100 text-amber-800 border-amber-300';
       default:
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    }
+  };
+
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+      case 'developer':
+        return 'Developer';
+      case 'admin':
+        return 'Admin';
+      case 'manager':
+        return 'Manager / Boss';
+      default:
+        return 'Employee';
     }
   };
 
@@ -99,8 +114,8 @@ export default function Navbar({ user }: NavbarProps) {
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-semibold text-slate-800 leading-tight">{user.name}</p>
                     <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${getRoleBadge(user.role)}`}>
-                        {user.role}
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${getRoleBadge(user.role)}`}>
+                        {getRoleLabel(user.role)}
                       </span>
                       <span className="text-[11px] text-slate-500">{user.employeeId}</span>
                     </div>

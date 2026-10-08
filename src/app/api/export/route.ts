@@ -8,8 +8,8 @@ import { format } from 'date-fns';
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['admin', 'hr'].includes(session.role)) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Admin or HR only' }, { status: 403 });
+    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);

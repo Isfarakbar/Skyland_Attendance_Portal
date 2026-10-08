@@ -28,9 +28,9 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'admin') {
+    if (!session || !['developer', 'admin'].includes(session.role)) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized: Only Administrator can modify company settings' },
+        { success: false, error: 'Unauthorized: Only Developer or Administrator can modify company settings' },
         { status: 403 }
       );
     }
