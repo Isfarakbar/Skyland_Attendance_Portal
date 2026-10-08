@@ -38,6 +38,7 @@ export async function seedInitialData() {
       department: 'Executive',
       designation: 'Managing Director',
       phone: '+1 (555) 019-2831',
+      isEmailVerified: true,
     },
     {
       name: 'Pam Beesly',
@@ -48,6 +49,7 @@ export async function seedInitialData() {
       department: 'Human Resources',
       designation: 'HR Lead',
       phone: '+1 (555) 019-2832',
+      isEmailVerified: true,
     },
     {
       name: 'Jim Halpert',
@@ -58,6 +60,7 @@ export async function seedInitialData() {
       department: 'Sales',
       designation: 'Senior Sales Executive',
       phone: '+1 (555) 019-2833',
+      isEmailVerified: true,
     },
     {
       name: 'Dwight Schrute',
@@ -68,6 +71,7 @@ export async function seedInitialData() {
       department: 'Sales',
       designation: 'Assistant to the Regional Director',
       phone: '+1 (555) 019-2834',
+      isEmailVerified: true,
     },
     {
       name: 'Angela Martin',
@@ -78,6 +82,7 @@ export async function seedInitialData() {
       department: 'Finance',
       designation: 'Senior Accountant',
       phone: '+1 (555) 019-2835',
+      isEmailVerified: true,
     },
     {
       name: 'Kevin Malone',
@@ -88,6 +93,7 @@ export async function seedInitialData() {
       department: 'Finance',
       designation: 'Accountant',
       phone: '+1 (555) 019-2836',
+      isEmailVerified: true,
     },
     {
       name: 'Oscar Martinez',
@@ -98,6 +104,7 @@ export async function seedInitialData() {
       department: 'Finance',
       designation: 'Financial Analyst',
       phone: '+1 (555) 019-2837',
+      isEmailVerified: true,
     },
     {
       name: 'Toby Flenderson',
@@ -108,6 +115,7 @@ export async function seedInitialData() {
       department: 'Human Resources',
       designation: 'HR Representative',
       phone: '+1 (555) 019-2838',
+      isEmailVerified: true,
     },
     {
       name: 'Stanley Hudson',
@@ -118,6 +126,7 @@ export async function seedInitialData() {
       department: 'Sales',
       designation: 'Sales Representative',
       phone: '+1 (555) 019-2839',
+      isEmailVerified: true,
     },
     {
       name: 'Phyllis Vance',
@@ -128,6 +137,7 @@ export async function seedInitialData() {
       department: 'Sales',
       designation: 'Sales Representative',
       phone: '+1 (555) 019-2840',
+      isEmailVerified: true,
     },
   ];
 

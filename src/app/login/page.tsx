@@ -37,7 +37,14 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Login failed');
+        if (data.requiresVerification) {
+          setError('Email verification required. Redirecting to verification page...');
+          setTimeout(() => {
+            router.push(`/verify-email?email=${encodeURIComponent(data.email || loginEmail)}`);
+          }, 1000);
+        } else {
+          setError(data.error || 'Login failed');
+        }
       } else {
         router.push('/dashboard');
         router.refresh();
@@ -93,7 +100,12 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-slate-700 uppercase">Password</label>
-                <span className="text-xs text-slate-400">Default: password123</span>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

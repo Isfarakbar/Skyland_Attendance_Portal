@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import { comparePassword, setSessionCookie } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +37,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Invalid email or password' },
         { status: 401 }
+      );
+    }
+
+    // Check if email is verified
+    if (user.isEmailVerified === false) {
+      // Generate and send a fresh OTP
+      const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.verificationCode = verificationOtp;
+      user.verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
+      await user.save();
+
+      await sendVerificationEmail(user.email, user.name, verificationOtp);
+
+      return NextResponse.json(
+        {
+          success: false,
+          requiresVerification: true,
+          email: user.email,
+          error: 'Please verify your email address before logging in. We have sent a new 6-digit code to your inbox.',
+        },
+        { status: 403 }
       );
     }
 

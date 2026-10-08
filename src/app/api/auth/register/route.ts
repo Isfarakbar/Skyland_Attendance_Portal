@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import User, { UserRole } from '@/models/User';
-import { hashPassword, setSessionCookie } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: 'An account with this email already exists' },
@@ -57,9 +59,13 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await hashPassword(password);
 
+    // Generate 6-digit OTP code for verification
+    const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
     const newUser = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password: hashedPassword,
       employeeId: empId,
       role: assignedRole,
@@ -67,32 +73,20 @@ export async function POST(req: NextRequest) {
       designation: designation?.trim() || 'Team Member',
       joinDate: new Date(),
       isActive: true,
+      isEmailVerified: false,
+      verificationCode: verificationOtp,
+      verificationCodeExpires: expiresAt,
       leaveBalance: { sick: 8, casual: 10, annual: 14 },
     });
 
-    const payload = {
-      userId: newUser._id.toString(),
-      email: newUser.email,
-      name: newUser.name,
-      role: newUser.role,
-      employeeId: newUser.employeeId,
-      department: newUser.department,
-      designation: newUser.designation,
-    };
-
-    await setSessionCookie(payload);
+    // Send transactional verification email via Brevo
+    await sendVerificationEmail(newUser.email, newUser.name, verificationOtp);
 
     return NextResponse.json({
       success: true,
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        employeeId: newUser.employeeId,
-        department: newUser.department,
-        designation: newUser.designation,
-      },
+      requiresVerification: true,
+      email: newUser.email,
+      message: 'Registration successful! Verification code sent to your email.',
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error during registration';

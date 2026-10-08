@@ -13,6 +13,11 @@ export interface IUser extends Document {
   phone?: string;
   joinDate: Date;
   isActive: boolean;
+  isEmailVerified: boolean;
+  verificationCode?: string;
+  verificationCodeExpires?: Date;
+  resetPasswordCode?: string;
+  resetPasswordExpires?: Date;
   leaveBalance: {
     sick: number;
     casual: number;
@@ -39,6 +44,11 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String, default: '' },
     joinDate: { type: Date, default: () => new Date() },
     isActive: { type: Boolean, default: true },
+    isEmailVerified: { type: Boolean, default: false },
+    verificationCode: { type: String, default: null },
+    verificationCodeExpires: { type: Date, default: null },
+    resetPasswordCode: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
     leaveBalance: {
       sick: { type: Number, default: 8 },
       casual: { type: Number, default: 10 },

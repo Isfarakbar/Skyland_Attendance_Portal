@@ -37,8 +37,7 @@ export default function RegisterPage() {
       if (!res.ok) {
         setError(data.error || 'Registration failed');
       } else {
-        router.push('/dashboard');
-        router.refresh();
+        router.push(`/verify-email?email=${encodeURIComponent(data.email || email)}`);
       }
     } catch {
       setError('Network error during registration');
