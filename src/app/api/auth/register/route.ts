@@ -48,13 +48,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Determine role: if it's the very first user, default to admin
+    // Determine role:
     const totalUsers = await User.countDocuments();
     let assignedRole: UserRole = 'employee';
-    if (totalUsers === 0) {
-      assignedRole = 'admin';
-    } else if (role && ['admin', 'hr', 'employee'].includes(role)) {
+    if (role && ['developer', 'admin', 'manager', 'employee'].includes(role)) {
       assignedRole = role as UserRole;
+    } else if (totalUsers === 0) {
+      assignedRole = 'developer';
     }
 
     const hashedPassword = await hashPassword(password);

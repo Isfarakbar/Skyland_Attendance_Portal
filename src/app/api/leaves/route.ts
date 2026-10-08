@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     const leave = await LeaveRequest.create({
       user: session.userId,
-      leaveType,
+      leaveType: (leaveType as string).toUpperCase() as import('@/models/LeaveRequest').LeaveType,
       startDate,
       endDate,
       daysCount,
