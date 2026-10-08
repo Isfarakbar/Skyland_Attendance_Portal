@@ -16,10 +16,9 @@ interface AuthUser {
 
 interface NavbarProps {
   user: AuthUser | null;
-  onUserSwitch?: (email: string) => void;
 }
 
-export default function Navbar({ user, onUserSwitch }: NavbarProps) {
+export default function Navbar({ user }: NavbarProps) {
   const router = useRouter();
   const [time, setTime] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -122,49 +121,10 @@ export default function Navbar({ user, onUserSwitch }: NavbarProps) {
                       <p className="text-xs text-indigo-600 mt-1 font-medium">{user.department} • {user.designation}</p>
                     </div>
 
-                    {/* Quick Demo Role Switcher */}
-                    {onUserSwitch && (
-                      <div className="p-2 border-b border-slate-100 bg-slate-50/50">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase px-2 mb-1">
-                          Switch Role (Demo):
-                        </p>
-                        <button
-                          onClick={() => {
-                            onUserSwitch('admin@skyland.com');
-                            setIsMenuOpen(false);
-                          }}
-                          className="w-full text-left px-2 py-1.5 text-xs text-slate-700 hover:bg-white rounded-lg flex items-center justify-between"
-                        >
-                          <span>Admin (Michael)</span>
-                          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 rounded">ADMIN</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            onUserSwitch('hr@skyland.com');
-                            setIsMenuOpen(false);
-                          }}
-                          className="w-full text-left px-2 py-1.5 text-xs text-slate-700 hover:bg-white rounded-lg flex items-center justify-between"
-                        >
-                          <span>HR Lead (Pam)</span>
-                          <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 rounded">HR</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            onUserSwitch('jim@skyland.com');
-                            setIsMenuOpen(false);
-                          }}
-                          className="w-full text-left px-2 py-1.5 text-xs text-slate-700 hover:bg-white rounded-lg flex items-center justify-between"
-                        >
-                          <span>Employee (Jim)</span>
-                          <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 rounded">EMPLOYEE</span>
-                        </button>
-                      </div>
-                    )}
-
                     <div className="pt-1">
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium"
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium cursor-pointer"
                       >
                         <LogOut className="w-4 h-4 text-red-500" />
                         Sign Out

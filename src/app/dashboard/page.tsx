@@ -11,7 +11,8 @@ import AdminRoster from '@/components/AdminRoster';
 import EmployeeDirectory from '@/components/EmployeeDirectory';
 import LeaveApprovals from '@/components/LeaveApprovals';
 import ExportReports from '@/components/ExportReports';
-import { Clock, Calendar, Users, Palmtree, FileSpreadsheet, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import CompanySettingsTab from '@/components/CompanySettingsTab';
+import { Clock, Calendar, Users, Palmtree, FileSpreadsheet, Sliders } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'punch' | 'leaves' | 'roster' | 'directory' | 'approvals' | 'export'>('punch');
+  const [activeTab, setActiveTab] = useState<'punch' | 'leaves' | 'roster' | 'directory' | 'approvals' | 'export' | 'settings'>('punch');
 
   // Employee Punch & Today data
   const [todayData, setTodayData] = useState<any>(null);
@@ -114,23 +115,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Demo user switch handler
-  const handleUserSwitch = async (email: string) => {
-    setLoading(true);
-    try {
-      await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: 'password123' }),
-      });
-      fetchSessionAndData();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -147,7 +131,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16">
       {/* Top Navbar */}
-      <Navbar user={user} onUserSwitch={handleUserSwitch} />
+      <Navbar user={user} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         {/* Welcome Banner */}
@@ -253,6 +237,20 @@ export default function DashboardPage() {
                   <Clock className="w-4 h-4" />
                   <span>Personal Punch</span>
                 </button>
+
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                      activeTab === 'settings'
+                        ? 'border-indigo-600 text-indigo-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Sliders className="w-4 h-4" />
+                    <span>Company Rules</span>
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -317,6 +315,9 @@ export default function DashboardPage() {
 
           {/* Export Reports Tab (Admin/HR) */}
           {activeTab === 'export' && <ExportReports />}
+
+          {/* Company Settings Tab (Admin only) */}
+          {activeTab === 'settings' && <CompanySettingsTab />}
         </div>
       </main>
     </div>

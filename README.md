@@ -33,17 +33,16 @@ A modern, fullstack corporate workforce attendance and leave management portal d
 
 ---
 
-## 🚀 Demo Accounts (Pre-configured)
+## 🚀 First-Time Setup & Onboarding Flow
 
-When you first launch the app, clicking any of the **Fast Demo Accounts** on the login page will automatically initialize sample data with 10 team members and attendance history:
-
-| Role | Email | Password | Name |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@skyland.com` | `password123` | Michael Scott |
-| **HR Lead** | `hr@skyland.com` | `password123` | Pam Beesly |
-| **Employee** | `jim@skyland.com` | `password123` | Jim Halpert |
-
----
+1. **Initial Administrator Registration**:
+   - The first user to register on `/register` is automatically designated as the **Company Administrator**.
+   - A secure **6-digit verification code** is instantly sent to their email via **Brevo (Sendinblue)**.
+   - Enter the code on `/verify-email` to activate the admin account and enter the portal.
+2. **Onboard Staff**:
+   - The Admin or HR Lead can add company employees directly from the **Employee Directory** tab, or team members can register themselves and verify their work emails.
+3. **Configure Company Shift Rules**:
+   - Go to the **Company Rules** tab in the Admin console to configure official office start/end times, punctuality grace periods, and half-day thresholds.
 
 ## 🛠️ Tech Stack
 
@@ -89,6 +88,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - Go to [vercel.com](https://vercel.com) and click **"Add New Project"**.
    - Select your Skyland repository.
 3. **Configure Environment Variables in Vercel**:
-   - `MONGODB_URI`: Your MongoDB Atlas connection URI (`mongodb+srv://...`).
-   - `JWT_SECRET`: Any random 32+ character secret string.
+   - `MONGODB_URI`: *(Your MongoDB Atlas connection URI from your Atlas dashboard)*
+   - `JWT_SECRET`: *(A random 32+ character secret string for signing JWT tokens)*
+   - `BREVO_API_KEY`: *(Your Brevo API Key)*
+   - `BREVO_SENDER_EMAIL`: *(Your verified Brevo sender email address)*
+   - `BREVO_SENDER_NAME`: `Skyland Attendance Portal`
 4. Click **Deploy**! 🚀

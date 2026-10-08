@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, Lock, Mail, ArrowRight, ShieldCheck, UserCheck, Users } from 'lucide-react';
+import { Building2, Lock, Mail, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,12 +12,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
-    if (e) e.preventDefault();
-    const loginEmail = customEmail || email;
-    const loginPassword = customPass || password;
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    if (!loginEmail || !loginPassword) {
+    if (!email || !password) {
       setError('Please provide email and password');
       return;
     }
@@ -26,13 +24,10 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // First ensure seed data exists if DB is empty
-      await fetch('/api/seed', { method: 'POST' });
-
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       const data = await res.json();
@@ -40,10 +35,10 @@ export default function LoginPage() {
         if (data.requiresVerification) {
           setError('Email verification required. Redirecting to verification page...');
           setTimeout(() => {
-            router.push(`/verify-email?email=${encodeURIComponent(data.email || loginEmail)}`);
+            router.push(`/verify-email?email=${encodeURIComponent(data.email || email)}`);
           }, 1000);
         } else {
-          setError(data.error || 'Login failed');
+          setError(data.error || 'Invalid credentials');
         }
       } else {
         router.push('/dashboard');
@@ -56,21 +51,14 @@ export default function LoginPage() {
     }
   };
 
-  const quickLogin = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('password123');
-    handleLogin(undefined, demoEmail, 'password123');
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        {/* Brand Icon */}
         <div className="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-100 mb-3">
           <Building2 className="w-6 h-6" />
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">SKYLAND</h2>
-        <p className="mt-1 text-sm text-slate-500">Corporate Attendance & Workforce Portal</p>
+        <p className="mt-1 text-sm text-slate-500">Corporate Workforce & Attendance Portal</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
@@ -81,7 +69,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={(e) => handleLogin(e)} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Company Email</label>
               <div className="relative">
@@ -89,7 +77,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   required
-                  placeholder="name@skyland.com"
+                  placeholder="name@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
@@ -130,48 +118,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Logins Section */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 text-center mb-3">
-              Fast Demo Accounts (One-Click)
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => quickLogin('admin@skyland.com')}
-                className="p-2.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/60 text-center transition-all cursor-pointer group"
-              >
-                <ShieldCheck className="w-4 h-4 text-purple-600 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                <span className="block text-[11px] font-bold text-purple-900">Admin</span>
-                <span className="block text-[10px] text-purple-600">Michael</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => quickLogin('hr@skyland.com')}
-                className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/60 text-center transition-all cursor-pointer group"
-              >
-                <UserCheck className="w-4 h-4 text-blue-600 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                <span className="block text-[11px] font-bold text-blue-900">HR Lead</span>
-                <span className="block text-[10px] text-blue-600">Pam</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => quickLogin('jim@skyland.com')}
-                className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/60 text-center transition-all cursor-pointer group"
-              >
-                <Users className="w-4 h-4 text-emerald-600 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                <span className="block text-[11px] font-bold text-emerald-900">Staff</span>
-                <span className="block text-[10px] text-emerald-600">Jim</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center text-xs text-slate-500">
-            New employee?{' '}
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-500">
+            Need an account?{' '}
             <Link href="/register" className="font-bold text-indigo-600 hover:text-indigo-700">
-              Create an account
+              Register here
             </Link>
           </div>
         </div>
