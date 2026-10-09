@@ -5,15 +5,15 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ClockWidget from '@/components/ClockWidget';
 import StatsCards from '@/components/StatsCards';
-import EmployeeCalendar from '@/components/EmployeeCalendar';
-import LeaveSection from '@/components/LeaveSection';
-import AdminRoster from '@/components/AdminRoster';
+import DeskRegister from '@/components/DeskRegister';
+import SalarySheet from '@/components/SalarySheet';
+import AttendanceCalendar from '@/components/AttendanceCalendar';
 import EmployeeDirectory from '@/components/EmployeeDirectory';
 import LeaveApprovals from '@/components/LeaveApprovals';
-import ExportReports from '@/components/ExportReports';
+import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
-import { Clock, Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal } from 'lucide-react';
+import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'punch' | 'leaves' | 'roster' | 'directory' | 'approvals' | 'export' | 'settings' | 'developer'>('punch');
+  const [activeTab, setActiveTab] = useState<string>('register');
 
   // Employee Punch & Today data
   const [todayData, setTodayData] = useState<any>(null);
@@ -54,13 +54,13 @@ export default function DashboardPage() {
         setActiveTab('developer');
         fetchAdminStats();
       } else if (['admin', 'manager'].includes(data.user.role)) {
-        setActiveTab('roster');
+        setActiveTab('register');
         fetchAdminStats();
       } else {
-        setActiveTab('punch');
+        setActiveTab('attendance');
       }
 
-      // Fetch employee punch state
+      // Fetch today's desk-marked state & employee monthly stats
       fetchTodayState();
       fetchEmployeeHistory(data.user);
     } catch (err) {
@@ -85,20 +85,45 @@ export default function DashboardPage() {
 
   const fetchEmployeeHistory = async (currentUser: any) => {
     try {
-      const currentMonth = (new Date().getMonth() + 1).toString();
-      const currentYear = new Date().getFullYear().toString();
-      const res = await fetch(`/api/attendance/history?month=${currentMonth}&year=${currentYear}`);
+      const today = new Date();
+      const monthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      const res = await fetch(`/api/attendance/history?month=${monthStr}`);
       const data = await res.json();
       if (data.success) {
         const records = data.records || [];
-        const presentCount = records.length;
-        const lateCount = records.filter((r: any) => r.status === 'LATE').length;
-        const totalMinutes = records.reduce((sum: number, r: any) => sum + (r.totalWorkMinutes || 0), 0);
+        let presentCount = 0;
+        let lateCount = 0;
+        let totalOffs = 0;
+        let totalHalfLeaves = 0;
+
+        for (const r of records) {
+          if (r.status === 'PRESENT') {
+            presentCount++;
+          } else if (r.status === 'LATE') {
+            lateCount++;
+            presentCount++;
+          } else if (r.status === 'HALF_LEAVE' || r.status === 'HALF_DAY') {
+            totalHalfLeaves++;
+          } else if (r.status === 'OFF' || r.status === 'ABSENT' || r.status === 'ON_LEAVE') {
+            totalOffs++;
+          }
+        }
+
+        const baseSalary = currentUser?.baseSalary || 30000;
+        const dailyRate = Math.round(baseSalary / 30);
+        const halfDayRate = Math.round(dailyRate / 2);
+        const excessOffs = Math.max(0, totalOffs - 1);
+        const excessHalfLeaves = Math.max(0, totalHalfLeaves - 1);
+        const deductions = (excessOffs * dailyRate) + (excessHalfLeaves * halfDayRate);
+        const netSalary = Math.max(0, baseSalary - deductions);
 
         setEmployeeStats({
           presentDays: presentCount,
           lateDays: lateCount,
-          totalHours: totalMinutes / 60,
+          totalOffs,
+          totalHalfLeaves,
+          baseSalary,
+          netSalary,
           leaveBalance: currentUser?.leaveBalance || { sick: 8, casual: 10, annual: 14 },
         });
       }
@@ -136,17 +161,17 @@ export default function DashboardPage() {
   const isManager = user?.role === 'manager';
 
   const getHeaderTitle = () => {
-    if (isDeveloper) return 'Developer Console & Root Operations';
-    if (isAdmin) return 'Administrative Management Portal';
-    if (isManager) return 'Executive Oversight & Management';
+    if (isDeveloper) return 'Developer Operations Console';
+    if (isAdmin) return 'Desk Reception & Administrative Portal';
+    if (isManager) return 'Management & Salary Overview';
     return `Welcome, ${user?.name}`;
   };
 
   const getHeaderSubtitle = () => {
-    if (isDeveloper) return 'Direct system telemetry, raw collection diagnostics, and full administrative control';
-    if (isAdmin) return 'Staff onboarding, shift policy rules, and company-wide attendance operations';
-    if (isManager) return 'Team presence monitoring, leave authorizations, and payroll timecards';
-    return 'Track daily attendance, shift punch clock, and personal leave balances';
+    if (isDeveloper) return 'Direct database control, desk register oversight, and payroll configuration';
+    if (isAdmin) return 'Daily desk attendance register, monthly leave limits, and salary calculations';
+    if (isManager) return 'Review employee attendance calendar, leave requests, and downloadable salary sheets';
+    return 'View your daily desk attendance, monthly calendar, and salary deduction sheet';
   };
 
   return (
@@ -172,11 +197,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Info Badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-2xl shadow-xs text-xs text-slate-600">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200 rounded-2xl shadow-xs text-xs text-slate-600">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Shift: 09:00 AM – 06:00 PM</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-slate-500">Grace: 15 mins</span>
+            <span>Policy: 1 Free Off & 1 Free Half Leave / mo</span>
           </div>
         </div>
 
@@ -187,7 +210,7 @@ export default function DashboardPage() {
           employeeStats={employeeStats}
         />
 
-        {/* Tab Navigation */}
+        {/* Simplistic Tab Navigation */}
         <div className="border-b border-slate-200">
           <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-px">
             {isElevatedUser ? (
@@ -207,18 +230,46 @@ export default function DashboardPage() {
                   </button>
                 )}
 
+                {/* Desk Register */}
                 <button
-                  onClick={() => setActiveTab('roster')}
+                  onClick={() => setActiveTab('register')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'roster'
+                    activeTab === 'register'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  <span>Desk Register</span>
+                </button>
+
+                {/* Salary Sheet & Payroll */}
+                <button
+                  onClick={() => setActiveTab('salary')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'salary'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Salary Sheet & Payroll</span>
+                </button>
+
+                {/* Monthly Visual Calendar */}
+                <button
+                  onClick={() => setActiveTab('calendar')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'calendar'
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>Daily Roster ("Who's in")</span>
+                  <span>Calendar View</span>
                 </button>
 
+                {/* Staff & Salaries */}
                 <button
                   onClick={() => setActiveTab('directory')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
@@ -228,9 +279,10 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Users className="w-4 h-4" />
-                  <span>Employee Directory</span>
+                  <span>Staff & Salaries</span>
                 </button>
 
+                {/* Leave Approvals */}
                 <button
                   onClick={() => setActiveTab('approvals')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
@@ -248,18 +300,6 @@ export default function DashboardPage() {
                   )}
                 </button>
 
-                <button
-                  onClick={() => setActiveTab('export')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'export'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>Payroll Excel Export</span>
-                </button>
-
                 {/* Rules & Settings for Developer and Admin */}
                 {(isDeveloper || isAdmin) && (
                   <button
@@ -274,31 +314,31 @@ export default function DashboardPage() {
                     <span>Company Rules</span>
                   </button>
                 )}
-
-                <button
-                  onClick={() => setActiveTab('punch')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'punch'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>Personal Punch</span>
-                </button>
               </>
             ) : (
               <>
                 <button
-                  onClick={() => setActiveTab('punch')}
+                  onClick={() => setActiveTab('attendance')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'punch'
+                    activeTab === 'attendance'
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  <Clock className="w-4 h-4" />
-                  <span>Punch & Attendance</span>
+                  <Calendar className="w-4 h-4" />
+                  <span>My Attendance & Calendar</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('salary')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'salary'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <DollarSign className="w-4 h-4" />
+                  <span>My Salary & Pay Sheet</span>
                 </button>
 
                 <button
@@ -310,7 +350,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Palmtree className="w-4 h-4" />
-                  <span>Time Off & Leave Requests</span>
+                  <span>Leave Requests</span>
                 </button>
               </>
             )}
@@ -319,43 +359,70 @@ export default function DashboardPage() {
 
         {/* Tab Content Panes */}
         <div className="space-y-8">
-          {/* Punch Tab */}
-          {activeTab === 'punch' && (
-            <div className="space-y-8">
+          {/* Desk Register Tab (Admin / Manager) */}
+          {activeTab === 'register' && isElevatedUser && (
+            <DeskRegister />
+          )}
+
+          {/* Salary Sheet Tab (Company-wide for management, Personal for employee) */}
+          {activeTab === 'salary' && (
+            <SalarySheet
+              isEmployeeOnly={!isElevatedUser}
+              userId={!isElevatedUser ? user?._id : undefined}
+            />
+          )}
+
+          {/* Calendar View Tab (Management View) */}
+          {activeTab === 'calendar' && isElevatedUser && (
+            <AttendanceCalendar
+              currentUserId={user?._id}
+              userRole={user?.role}
+            />
+          )}
+
+          {/* Employee Attendance & Calendar Tab */}
+          {activeTab === 'attendance' && !isElevatedUser && (
+            <div className="space-y-6">
+              {/* Today's status widget as marked by desk admin */}
               <ClockWidget
                 todayData={todayData}
                 onRefresh={() => {
                   fetchTodayState();
                   fetchEmployeeHistory(user);
-                  if (isElevatedUser) fetchAdminStats();
                 }}
               />
-              <EmployeeCalendar userId={user?._id} />
+              {/* Visual calendar */}
+              <AttendanceCalendar
+                currentUserId={user?._id}
+                userRole={user?.role}
+              />
             </div>
           )}
 
-          {/* Leaves Tab (for Employee) */}
-          {activeTab === 'leaves' && (
-            <LeaveSection leaveBalance={user?.leaveBalance} />
+          {/* Employee Directory Tab (Admin/HR) */}
+          {activeTab === 'directory' && isElevatedUser && (
+            <EmployeeDirectory />
           )}
 
-          {/* Daily Roster Tab (Admin/HR) */}
-          {activeTab === 'roster' && <AdminRoster />}
-
-          {/* Employee Directory Tab (Admin/HR) */}
-          {activeTab === 'directory' && <EmployeeDirectory />}
-
           {/* Leave Approvals Tab (Admin/HR) */}
-          {activeTab === 'approvals' && <LeaveApprovals />}
+          {activeTab === 'approvals' && isElevatedUser && (
+            <LeaveApprovals />
+          )}
 
-          {/* Export Reports Tab (Admin/HR) */}
-          {activeTab === 'export' && <ExportReports />}
+          {/* Leaves Tab (for Employee) */}
+          {activeTab === 'leaves' && !isElevatedUser && (
+            <LeaveSection userId={user?._id} />
+          )}
 
           {/* Company Settings Tab (Admin and Developer) */}
-          {activeTab === 'settings' && <CompanySettingsTab />}
+          {activeTab === 'settings' && (isDeveloper || isAdmin) && (
+            <CompanySettingsTab />
+          )}
 
           {/* Developer Console Tab (Developer only) */}
-          {activeTab === 'developer' && <DeveloperConsole />}
+          {activeTab === 'developer' && isDeveloper && (
+            <DeveloperConsole />
+          )}
         </div>
       </main>
     </div>

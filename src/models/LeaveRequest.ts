@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type LeaveType = 'SICK' | 'CASUAL' | 'ANNUAL' | 'UNPAID';
+export type LeaveType = 'FULL_OFF' | 'HALF_LEAVE' | 'SICK' | 'CASUAL' | 'ANNUAL' | 'UNPAID';
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface ILeaveRequest extends Document {
@@ -22,7 +22,7 @@ const LeaveRequestSchema = new Schema<ILeaveRequest>(
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     leaveType: {
       type: String,
-      enum: ['SICK', 'CASUAL', 'ANNUAL', 'UNPAID'],
+      enum: ['FULL_OFF', 'HALF_LEAVE', 'SICK', 'CASUAL', 'ANNUAL', 'UNPAID'],
       required: true,
     },
     startDate: { type: String, required: true },

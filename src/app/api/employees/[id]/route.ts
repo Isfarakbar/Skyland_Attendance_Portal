@@ -18,7 +18,7 @@ export async function PUT(
 
     await connectToDatabase();
 
-    const allowedFields = ['name', 'role', 'department', 'designation', 'phone', 'isActive', 'leaveBalance'];
+    const allowedFields = ['name', 'role', 'department', 'designation', 'phone', 'isActive', 'leaveBalance', 'baseSalary'];
     const updateData: Record<string, unknown> = {};
 
     for (const field of allowedFields) {

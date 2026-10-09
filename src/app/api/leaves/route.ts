@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import LeaveRequest from '@/models/LeaveRequest';
+import User from '@/models/User';
 import { differenceInBusinessDays, parseISO } from 'date-fns';
 
 export async function GET(req: NextRequest) {
@@ -63,11 +64,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'End date cannot be before start date' }, { status: 400 });
     }
 
-    // Calculate days count (inclusive)
+    // Calculate days count
+    const isHalfDay = (leaveType as string).toUpperCase() === 'HALF_LEAVE';
     const diff = differenceInBusinessDays(end, start) + 1;
-    const daysCount = Math.max(1, diff);
+    const daysCount = isHalfDay ? 0.5 : Math.max(1, diff);
 
     await connectToDatabase();
+
+    // Check for overlapping pending or approved leave requests
+    const overlapping = await LeaveRequest.findOne({
+      user: session.userId,
+      status: { $in: ['PENDING', 'APPROVED'] },
+      startDate: { $lte: endDate },
+      endDate: { $gte: startDate },
+    });
+
+    if (overlapping) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `You already have an active ${overlapping.status.toLowerCase()} leave request overlapping this period (${overlapping.startDate} to ${overlapping.endDate}).`,
+        },
+        { status: 400 }
+      );
+    }
 
     const leave = await LeaveRequest.create({
       user: session.userId,

@@ -13,12 +13,11 @@ export async function GET() {
     }
 
     await connectToDatabase();
-    const todayStr = getTodayDateString();
+    const settings = await CompanySettings.findOne();
+    const timezone = settings?.timezone || 'Asia/Karachi';
+    const todayStr = getTodayDateString(new Date(), timezone);
 
-    const [attendance, settings] = await Promise.all([
-      Attendance.findOne({ user: session.userId, date: todayStr }),
-      CompanySettings.findOne(),
-    ]);
+    const attendance = await Attendance.findOne({ user: session.userId, date: todayStr });
 
     let state = 'NOT_CLOCKED_IN';
     let currentBreak = null;

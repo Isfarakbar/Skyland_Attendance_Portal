@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
 import User from '@/models/User';
 import LeaveRequest from '@/models/LeaveRequest';
+import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString } from '@/lib/attendanceUtils';
 
 export async function GET(req: NextRequest) {
@@ -13,11 +14,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const date = searchParams.get('date') || getTodayDateString();
-    const department = searchParams.get('department');
-
     await connectToDatabase();
+    const settings = await CompanySettings.findOne();
+    const timezone = settings?.timezone || 'Asia/Karachi';
+
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get('date') || getTodayDateString(new Date(), timezone);
+    const department = searchParams.get('department');
 
     // Get all active users
     const userQuery: Record<string, unknown> = { isActive: true };

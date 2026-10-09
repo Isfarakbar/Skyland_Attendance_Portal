@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
 import User from '@/models/User';
 import LeaveRequest from '@/models/LeaveRequest';
+import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString } from '@/lib/attendanceUtils';
 
 export async function GET() {
@@ -14,7 +15,9 @@ export async function GET() {
     }
 
     await connectToDatabase();
-    const todayStr = getTodayDateString();
+    const settings = await CompanySettings.findOne();
+    const timezone = settings?.timezone || 'Asia/Karachi';
+    const todayStr = getTodayDateString(new Date(), timezone);
 
     const [totalEmployees, todayAttendances, pendingLeaves, approvedLeavesToday] = await Promise.all([
       User.countDocuments({ isActive: true }),

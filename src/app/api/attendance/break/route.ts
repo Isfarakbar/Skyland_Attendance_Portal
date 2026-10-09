@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
+import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString, calculateBreakMinutes } from '@/lib/attendanceUtils';
 import { differenceInMinutes } from 'date-fns';
 
@@ -14,8 +15,10 @@ export async function POST(req: NextRequest) {
 
     const { action, note } = await req.json(); // action: 'start' | 'end'
     await connectToDatabase();
-    const todayStr = getTodayDateString();
+    const settings = await CompanySettings.findOne();
+    const timezone = settings?.timezone || 'Asia/Karachi';
     const now = new Date();
+    const todayStr = getTodayDateString(now, timezone);
 
     const attendance = await Attendance.findOne({ user: session.userId, date: todayStr });
 

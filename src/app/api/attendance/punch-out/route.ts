@@ -14,8 +14,10 @@ export async function POST() {
     }
 
     await connectToDatabase();
-    const todayStr = getTodayDateString();
+    const settings = await CompanySettings.findOne();
+    const timezone = settings?.timezone || 'Asia/Karachi';
     const now = new Date();
+    const todayStr = getTodayDateString(now, timezone);
 
     const attendance = await Attendance.findOne({ user: session.userId, date: todayStr });
 
@@ -53,7 +55,6 @@ export async function POST() {
     attendance.totalWorkMinutes = totalWorkMinutes;
 
     // Check half-day threshold
-    const settings = await CompanySettings.findOne();
     const halfDayHours = settings?.halfDayThresholdHours || 4;
     if (totalWorkMinutes < halfDayHours * 60) {
       attendance.status = 'HALF_DAY';

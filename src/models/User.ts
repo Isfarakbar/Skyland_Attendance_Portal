@@ -23,6 +23,7 @@ export interface IUser extends Document {
     casual: number;
     annual: number;
   };
+  baseSalary: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +50,7 @@ const UserSchema = new Schema<IUser>(
     verificationCodeExpires: { type: Date, default: null },
     resetPasswordCode: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
+    baseSalary: { type: Number, default: 30000 },
     leaveBalance: {
       sick: { type: Number, default: 8 },
       casual: { type: Number, default: 10 },

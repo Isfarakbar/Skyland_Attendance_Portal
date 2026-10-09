@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Mail, Phone, Building, Briefcase, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X } from 'lucide-react';
 
 interface Employee {
   _id: string;
@@ -12,6 +12,7 @@ interface Employee {
   department: string;
   designation: string;
   phone?: string;
+  baseSalary?: number;
   isActive: boolean;
   leaveBalance?: { sick: number; casual: number; annual: number };
 }
@@ -30,7 +31,13 @@ export default function EmployeeDirectory() {
   const [department, setDepartment] = useState('Sales');
   const [designation, setDesignation] = useState('Sales Representative');
   const [phone, setPhone] = useState('');
+  const [baseSalary, setBaseSalary] = useState(30000);
   const [submitting, setSubmitting] = useState(false);
+
+  // Quick edit salary state
+  const [editingSalaryEmpId, setEditingSalaryEmpId] = useState<string | null>(null);
+  const [editingSalaryValue, setEditingSalaryValue] = useState<number>(30000);
+  const [salaryUpdating, setSalaryUpdating] = useState(false);
 
   useEffect(() => {
     fetchEmployees();
@@ -58,7 +65,16 @@ export default function EmployeeDirectory() {
       const res = await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, department, designation, phone }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role,
+          department,
+          designation,
+          phone,
+          baseSalary: Number(baseSalary) || 30000,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -66,6 +82,7 @@ export default function EmployeeDirectory() {
         setName('');
         setEmail('');
         setPhone('');
+        setBaseSalary(30000);
         fetchEmployees();
       } else {
         alert(data.error || 'Failed to create employee');
@@ -93,6 +110,28 @@ export default function EmployeeDirectory() {
     }
   };
 
+  const handleSaveSalary = async (empId: string) => {
+    setSalaryUpdating(true);
+    try {
+      const res = await fetch(`/api/employees/${empId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseSalary: Number(editingSalaryValue) || 30000 }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingSalaryEmpId(null);
+        fetchEmployees();
+      } else {
+        alert(data.error || 'Failed to update salary');
+      }
+    } catch {
+      alert('Error updating salary');
+    } finally {
+      setSalaryUpdating(false);
+    }
+  };
+
   const filteredEmployees = employees.filter((emp) =>
     emp.name.toLowerCase().includes(search.toLowerCase()) ||
     emp.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -108,7 +147,7 @@ export default function EmployeeDirectory() {
             <Users className="w-5 h-5 text-indigo-600" />
             Company Roster & Directory ({employees.length})
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">Manage team members, roles, designations, and account status</p>
+          <p className="text-xs text-slate-500 mt-0.5">Manage team members, roles, base salaries, and account status</p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -187,6 +226,56 @@ export default function EmployeeDirectory() {
                 <div className="flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
                   <span className="truncate">{emp.email}</span>
+                </div>
+
+                {/* Base Salary Line & Quick Edit */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Base Salary:</span>
+                  </div>
+
+                  {editingSalaryEmpId === emp._id ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={editingSalaryValue}
+                        onChange={(e) => setEditingSalaryValue(Number(e.target.value))}
+                        className="w-24 px-1.5 py-0.5 text-xs font-bold border border-indigo-400 rounded-md focus:outline-hidden"
+                      />
+                      <button
+                        onClick={() => handleSaveSalary(emp._id)}
+                        disabled={salaryUpdating}
+                        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md cursor-pointer"
+                        title="Save"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setEditingSalaryEmpId(null)}
+                        className="p-1 text-slate-400 hover:bg-slate-100 rounded-md cursor-pointer"
+                        title="Cancel"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-slate-900 text-xs">
+                        PKR {(emp.baseSalary || 30000).toLocaleString()}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEditingSalaryEmpId(emp._id);
+                          setEditingSalaryValue(emp.baseSalary || 30000);
+                        }}
+                        className="text-slate-400 hover:text-indigo-600 p-0.5 rounded-md cursor-pointer transition-colors"
+                        title="Edit Salary"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -279,6 +368,21 @@ export default function EmployeeDirectory() {
                   onChange={(e) => setDesignation(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Base Monthly Salary (PKR)</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="500"
+                  placeholder="30000"
+                  value={baseSalary}
+                  onChange={(e) => setBaseSalary(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                />
+                <span className="text-[11px] text-slate-400 mt-0.5 block">Used to calculate daily rate (Base / 30) for excess leaves</span>
               </div>
 
               <div>

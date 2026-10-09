@@ -8,6 +8,7 @@ export interface ICompanySettings extends Document {
   halfDayThresholdHours: number; // e.g., 4
   fullDayThresholdHours: number; // e.g., 8
   workingDays: number[]; // [1, 2, 3, 4, 5] (Monday to Friday)
+  timezone: string; // e.g., "Asia/Karachi"
 }
 
 const CompanySettingsSchema = new Schema<ICompanySettings>(
@@ -19,6 +20,7 @@ const CompanySettingsSchema = new Schema<ICompanySettings>(
     halfDayThresholdHours: { type: Number, default: 4 },
     fullDayThresholdHours: { type: Number, default: 8 },
     workingDays: { type: [Number], default: [1, 2, 3, 4, 5] },
+    timezone: { type: String, default: 'Asia/Karachi' },
   },
   {
     timestamps: true,

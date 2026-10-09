@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
-    const { name, email, password, role, department, designation, phone, employeeId } = await req.json();
+    const { name, email, password, role, department, designation, phone, employeeId, baseSalary } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json({ success: false, error: 'Name, email, and temporary password are required' }, { status: 400 });
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       department: department?.trim() || 'General',
       designation: designation?.trim() || 'Team Member',
       phone: phone?.trim() || '',
+      baseSalary: typeof baseSalary === 'number' ? baseSalary : (Number(baseSalary) || 30000),
       joinDate: new Date(),
       isActive: true,
       isEmailVerified: true,

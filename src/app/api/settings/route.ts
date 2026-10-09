@@ -15,6 +15,7 @@ export async function GET() {
         gracePeriodMinutes: 15,
         halfDayThresholdHours: 4,
         fullDayThresholdHours: 8,
+        timezone: 'Asia/Karachi',
       });
     }
 
@@ -49,6 +50,7 @@ export async function PUT(req: NextRequest) {
     if (body.gracePeriodMinutes !== undefined) settings.gracePeriodMinutes = Number(body.gracePeriodMinutes);
     if (body.halfDayThresholdHours !== undefined) settings.halfDayThresholdHours = Number(body.halfDayThresholdHours);
     if (body.fullDayThresholdHours !== undefined) settings.fullDayThresholdHours = Number(body.fullDayThresholdHours);
+    if (body.timezone !== undefined) settings.timezone = body.timezone;
 
     await settings.save();
 

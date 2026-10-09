@@ -48,13 +48,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Determine role:
+    // Determine role securely:
     const totalUsers = await User.countDocuments();
     let assignedRole: UserRole = 'employee';
-    if (role && ['developer', 'admin', 'manager', 'employee'].includes(role)) {
-      assignedRole = role as UserRole;
-    } else if (totalUsers === 0) {
-      assignedRole = 'developer';
+    if (totalUsers === 0) {
+      // First user registered in the system is designated as the developer / system admin
+      assignedRole = (role && ['developer', 'admin'].includes(role)) ? (role as UserRole) : 'developer';
+    } else {
+      // All subsequent public self-registrations MUST strictly be 'employee'
+      assignedRole = 'employee';
     }
 
     const hashedPassword = await hashPassword(password);

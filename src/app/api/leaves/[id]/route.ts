@@ -46,6 +46,17 @@ export async function PUT(
         }
       }
     }
+    // Refund leave balance if changing from APPROVED to REJECTED
+    else if (previousStatus === 'APPROVED' && status === 'REJECTED') {
+      const user = await User.findById(leave.user);
+      if (user) {
+        const type = leave.leaveType.toLowerCase() as 'sick' | 'casual' | 'annual';
+        if (user.leaveBalance && user.leaveBalance[type] !== undefined) {
+          user.leaveBalance[type] = user.leaveBalance[type] + leave.daysCount;
+          await user.save();
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -54,6 +65,62 @@ export async function PUT(
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error updating leave request';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    await connectToDatabase();
+
+    const leave = await LeaveRequest.findById(id);
+    if (!leave) {
+      return NextResponse.json({ success: false, error: 'Leave request not found' }, { status: 404 });
+    }
+
+    const isOwner = leave.user.toString() === session.userId;
+    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+
+    if (!isOwner && !isManagement) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (isOwner && !isManagement && leave.status !== 'PENDING') {
+      return NextResponse.json(
+        { success: false, error: 'Only pending leave requests can be cancelled by employee' },
+        { status: 400 }
+      );
+    }
+
+    // If deleting an approved leave, refund balance
+    if (leave.status === 'APPROVED') {
+      const user = await User.findById(leave.user);
+      if (user) {
+        const type = leave.leaveType.toLowerCase() as 'sick' | 'casual' | 'annual';
+        if (user.leaveBalance && user.leaveBalance[type] !== undefined) {
+          user.leaveBalance[type] = user.leaveBalance[type] + leave.daysCount;
+          await user.save();
+        }
+      }
+    }
+
+    await LeaveRequest.findByIdAndDelete(id);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Leave request cancelled successfully',
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error cancelling leave request';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

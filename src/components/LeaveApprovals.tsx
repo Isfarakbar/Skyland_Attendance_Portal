@@ -27,7 +27,12 @@ interface LeaveApplication {
 export default function LeaveApprovals() {
   const [leaves, setLeaves] = useState<LeaveApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [reviewModal, setReviewModal] = useState<{
+    leave: LeaveApplication;
+    action: 'APPROVED' | 'REJECTED';
+  } | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
 
   useEffect(() => {
     fetchLeaves();
@@ -48,23 +53,25 @@ export default function LeaveApprovals() {
     }
   };
 
-  const handleReview = async (id: string, status: 'APPROVED' | 'REJECTED') => {
-    const note = prompt(
-      status === 'APPROVED'
-        ? 'Optional approval note to employee:'
-        : 'Reason for rejection:'
-    );
-    if (note === null) return; // User cancelled prompt
+  const handleOpenReview = (leave: LeaveApplication, action: 'APPROVED' | 'REJECTED') => {
+    setReviewModal({ leave, action });
+    setReviewNote(action === 'APPROVED' ? 'Approved by Management' : '');
+  };
 
-    setActionLoading(id);
+  const handleConfirmReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewModal) return;
+
+    setActionLoading(true);
     try {
-      const res = await fetch(`/api/leaves/${id}`, {
+      const res = await fetch(`/api/leaves/${reviewModal.leave._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, reviewNote: note }),
+        body: JSON.stringify({ status: reviewModal.action, reviewNote: reviewNote.trim() }),
       });
       const data = await res.json();
       if (data.success) {
+        setReviewModal(null);
         fetchLeaves();
       } else {
         alert(data.error || 'Failed to update leave');
@@ -72,7 +79,7 @@ export default function LeaveApprovals() {
     } catch {
       alert('Error updating leave');
     } finally {
-      setActionLoading(null);
+      setActionLoading(false);
     }
   };
 
@@ -136,15 +143,15 @@ export default function LeaveApprovals() {
 
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                   <button
-                    onClick={() => handleReview(l._id, 'REJECTED')}
-                    disabled={actionLoading === l._id}
+                    onClick={() => handleOpenReview(l, 'REJECTED')}
+                    disabled={actionLoading}
                     className="px-4 py-2 border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
                   >
                     Reject
                   </button>
                   <button
-                    onClick={() => handleReview(l._id, 'APPROVED')}
-                    disabled={actionLoading === l._id}
+                    onClick={() => handleOpenReview(l, 'APPROVED')}
+                    disabled={actionLoading}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs shadow-emerald-200 transition-all cursor-pointer"
                   >
                     Approve
@@ -169,6 +176,7 @@ export default function LeaveApprovals() {
                   <th className="py-2.5 px-3">Dates</th>
                   <th className="py-2.5 px-3">Status</th>
                   <th className="py-2.5 px-3">Decision Note</th>
+                  <th className="py-2.5 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -191,10 +199,84 @@ export default function LeaveApprovals() {
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-slate-500">{l.reviewNote || '--'}</td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => handleOpenReview(l, l.status === 'APPROVED' ? 'REJECTED' : 'APPROVED')}
+                        className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold hover:underline cursor-pointer"
+                      >
+                        {l.status === 'APPROVED' ? 'Reverse & Reject' : 'Reverse & Approve'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-150">
+            <h3 className="font-bold text-slate-900 text-lg mb-1">
+              {reviewModal.action === 'APPROVED' ? 'Approve Leave Request' : 'Reject Leave Request'}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Decision for <span className="font-semibold text-slate-900">{reviewModal.leave.user?.name}</span> ({reviewModal.leave.leaveType}, {reviewModal.leave.daysCount} days)
+            </p>
+
+            <form onSubmit={handleConfirmReview} className="space-y-4">
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-600 space-y-1">
+                <p><strong>Dates:</strong> {reviewModal.leave.startDate} &rarr; {reviewModal.leave.endDate}</p>
+                <p><strong>Reason:</strong> {reviewModal.leave.reason}</p>
+                {reviewModal.action === 'APPROVED' && (
+                  <p className="text-emerald-700 font-medium pt-1">
+                    ✓ Approving will automatically deduct {reviewModal.leave.daysCount} day(s) from employee balance.
+                  </p>
+                )}
+                {reviewModal.action === 'REJECTED' && reviewModal.leave.status === 'APPROVED' && (
+                  <p className="text-amber-700 font-medium pt-1">
+                    ↺ Rejecting this previously approved leave will automatically refund {reviewModal.leave.daysCount} day(s) back to employee.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  {reviewModal.action === 'APPROVED' ? 'Approval Note (Optional)' : 'Rejection Reason'}
+                </label>
+                <textarea
+                  rows={3}
+                  required={reviewModal.action === 'REJECTED'}
+                  placeholder={reviewModal.action === 'APPROVED' ? 'e.g. Approved. Have a good break!' : 'e.g. Critical workload during these dates.'}
+                  value={reviewNote}
+                  onChange={(e) => setReviewNote(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReviewModal(null)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-xs cursor-pointer ${
+                    reviewModal.action === 'APPROVED'
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : 'bg-rose-600 hover:bg-rose-700'
+                  }`}
+                >
+                  {actionLoading ? 'Saving...' : reviewModal.action === 'APPROVED' ? 'Confirm Approval' : 'Confirm Rejection'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

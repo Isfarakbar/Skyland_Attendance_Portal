@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
     const year = searchParams.get('year'); // e.g. "2026"
 
     let queryUserId = session.userId;
-    // Allow Admin or HR to view another user's history
-    if (targetUserId && ['admin', 'hr'].includes(session.role)) {
+    // Allow Developer, Admin, or Manager to view another user's history
+    if (targetUserId && ['developer', 'admin', 'manager'].includes(session.role)) {
       queryUserId = targetUserId;
     }
 
@@ -25,7 +25,10 @@ export async function GET(req: NextRequest) {
 
     const query: Record<string, unknown> = { user: queryUserId };
 
-    if (year && month) {
+    if (month && month.includes('-')) {
+      // Formatted as "YYYY-MM"
+      query.date = { $regex: `^${month}` };
+    } else if (year && month) {
       const monthPadded = month.padStart(2, '0');
       query.date = { $regex: `^${year}-${monthPadded}` };
     }

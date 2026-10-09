@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type AttendanceStatus = 'PRESENT' | 'LATE' | 'HALF_DAY' | 'ABSENT' | 'ON_LEAVE';
+export type AttendanceStatus = 'PRESENT' | 'LATE' | 'HALF_DAY' | 'HALF_LEAVE' | 'ABSENT' | 'OFF' | 'ON_LEAVE';
 
 export interface IBreak {
   _id?: mongoose.Types.ObjectId;
@@ -44,7 +44,7 @@ const AttendanceSchema = new Schema<IAttendance>(
     breaks: [BreakSchema],
     status: {
       type: String,
-      enum: ['PRESENT', 'LATE', 'HALF_DAY', 'ABSENT', 'ON_LEAVE'],
+      enum: ['PRESENT', 'LATE', 'HALF_DAY', 'HALF_LEAVE', 'ABSENT', 'OFF', 'ON_LEAVE'],
       default: 'PRESENT',
     },
     totalWorkMinutes: { type: Number, default: 0 },

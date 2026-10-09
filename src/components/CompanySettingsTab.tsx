@@ -14,6 +14,7 @@ export default function CompanySettingsTab() {
   const [gracePeriodMinutes, setGracePeriodMinutes] = useState(15);
   const [halfDayThresholdHours, setHalfDayThresholdHours] = useState(4);
   const [fullDayThresholdHours, setFullDayThresholdHours] = useState(8);
+  const [timezone, setTimezone] = useState('Asia/Karachi');
 
   useEffect(() => {
     fetchSettings();
@@ -30,6 +31,7 @@ export default function CompanySettingsTab() {
         setGracePeriodMinutes(data.settings.gracePeriodMinutes || 15);
         setHalfDayThresholdHours(data.settings.halfDayThresholdHours || 4);
         setFullDayThresholdHours(data.settings.fullDayThresholdHours || 8);
+        setTimezone(data.settings.timezone || 'Asia/Karachi');
       }
     } catch (err) {
       console.error(err);
@@ -54,6 +56,7 @@ export default function CompanySettingsTab() {
           gracePeriodMinutes,
           halfDayThresholdHours,
           fullDayThresholdHours,
+          timezone,
         }),
       });
 
@@ -96,15 +99,38 @@ export default function CompanySettingsTab() {
         )}
 
         <form onSubmit={handleSave} className="space-y-5 mt-6">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Company / Organization Name</label>
-            <input
-              type="text"
-              required
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Company / Organization Name</label>
+              <input
+                type="text"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Company Office Timezone</label>
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="Asia/Karachi">Asia/Karachi (PKT - UTC+05:00)</option>
+                <option value="Asia/Dubai">Asia/Dubai (GST - UTC+04:00)</option>
+                <option value="Asia/Riyadh">Asia/Riyadh (AST - UTC+03:00)</option>
+                <option value="Asia/Kolkata">Asia/Kolkata (IST - UTC+05:30)</option>
+                <option value="Asia/Dhaka">Asia/Dhaka (BST - UTC+06:00)</option>
+                <option value="Asia/Singapore">Asia/Singapore (SGT - UTC+08:00)</option>
+                <option value="Europe/London">Europe/London (GMT/BST)</option>
+                <option value="America/New_York">America/New_York (EST - UTC-05:00)</option>
+                <option value="America/Los_Angeles">America/Los_Angeles (PST - UTC-08:00)</option>
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+              </select>
+              <p className="text-[11px] text-slate-400 mt-1">Daily dates and punctuality are calculated in this timezone</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

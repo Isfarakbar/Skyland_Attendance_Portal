@@ -13,8 +13,10 @@ export async function POST(req: NextRequest) {
     }
 
     await connectToDatabase();
-    const todayStr = getTodayDateString();
+    const settings = await CompanySettings.findOne();
+    const timezone = settings?.timezone || 'Asia/Karachi';
     const now = new Date();
+    const todayStr = getTodayDateString(now, timezone);
 
     let attendance = await Attendance.findOne({ user: session.userId, date: todayStr });
 
@@ -25,11 +27,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const settings = await CompanySettings.findOne();
     const startTimeStr = settings?.officeStartTime || '09:00';
     const graceMinutes = settings?.gracePeriodMinutes || 15;
 
-    const evaluatedStatus = evaluateAttendanceStatus(now, startTimeStr, graceMinutes);
+    const evaluatedStatus = evaluateAttendanceStatus(now, startTimeStr, graceMinutes, timezone);
 
     // Client IP
     const forwarded = req.headers.get('x-forwarded-for');
