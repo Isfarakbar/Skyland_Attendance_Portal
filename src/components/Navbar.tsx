@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Shield, User as UserIcon, Clock, Building2, ChevronDown, Smartphone } from 'lucide-react';
+import { LogOut, Clock, Building2, ChevronDown, Smartphone, Sun } from 'lucide-react';
 
 interface AuthUser {
   id: string;
@@ -53,11 +53,11 @@ export default function Navbar({ user }: NavbarProps) {
   const getRoleBadge = (role?: string) => {
     switch (role) {
       case 'developer':
-        return 'bg-violet-100 text-violet-800 border-violet-300 font-mono';
+        return 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-mono';
       case 'admin':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'bg-orange-500/20 text-orange-300 border-orange-500/40';
       default:
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
     }
   };
 
@@ -73,30 +73,30 @@ export default function Navbar({ user }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-40 bg-[#0d120f]/80 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-              <Building2 className="w-5 h-5" />
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+              <Sun className="w-5 h-5 text-white animate-spin-slow" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-lg text-slate-900 tracking-tight">SKYLAND</span>
-                <span className="text-xs uppercase tracking-wider font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
-                  Portal
+                <span className="font-black text-lg text-white tracking-wider">SKYLAND</span>
+                <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full border border-orange-500/30">
+                  Solar
                 </span>
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block">Employee Attendance & HR Suite</p>
+              <p className="text-[11px] text-slate-400 hidden sm:block">Workforce &amp; Attendance Hub</p>
             </div>
           </div>
 
           {/* Center: Live Digital Clock */}
-          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full text-slate-700">
-            <Clock className="w-4 h-4 text-indigo-600 animate-pulse" />
-            <span className="text-xs font-medium text-slate-500">Live Clock:</span>
-            <span className="text-sm font-mono font-semibold text-slate-900 tracking-wide">{time || '--:--:--'}</span>
+          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 glass-card rounded-full text-slate-300">
+            <Clock className="w-4 h-4 text-orange-400 animate-pulse" />
+            <span className="text-xs text-slate-400">Live Clock:</span>
+            <span className="text-sm font-mono font-bold text-white tracking-wider">{time || '--:--:--'}</span>
           </div>
 
           {/* User Profile & Actions */}
@@ -108,10 +108,10 @@ export default function Navbar({ user }: NavbarProps) {
                   window.dispatchEvent(new CustomEvent('open-pwa-install'));
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 rounded-xl transition-all cursor-pointer shadow-xs active:scale-95"
               title="Install / Download Skyland App on your Phone"
             >
-              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <Smartphone className="w-3.5 h-3.5 text-orange-400" />
               <span className="hidden sm:inline">Install App</span>
             </button>
 
@@ -119,18 +119,18 @@ export default function Navbar({ user }: NavbarProps) {
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-3 p-1.5 pl-3 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+                  className="flex items-center gap-3 p-1.5 pl-3 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
                 >
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-semibold text-slate-800 leading-tight">{user.name}</p>
+                    <p className="text-sm font-bold text-white leading-tight">{user.name}</p>
                     <div className="flex items-center justify-end gap-1.5 mt-0.5">
                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${getRoleBadge(user.role)}`}>
                         {getRoleLabel(user.role)}
                       </span>
-                      <span className="text-[11px] text-slate-500">{user.employeeId}</span>
+                      <span className="text-[11px] font-mono text-slate-400">{user.employeeId}</span>
                     </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-orange-500/30">
                     {user.name.charAt(0)}
                   </div>
                   <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -138,20 +138,20 @@ export default function Navbar({ user }: NavbarProps) {
 
                 {/* Dropdown Menu */}
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-4 py-2 border-b border-slate-100">
-                      <p className="text-xs text-slate-400">Signed in as</p>
-                      <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                      <p className="text-xs text-indigo-600 mt-1 font-medium">{user.department} • {user.designation}</p>
+                  <div className="absolute right-0 mt-2 w-64 glass-panel rounded-3xl shadow-2xl py-2 z-50 border border-white/10 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-4 py-3 border-b border-white/10">
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Signed in as</p>
+                      <p className="text-sm font-black text-white truncate mt-0.5">{user.name}</p>
+                      <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                      <p className="text-xs text-orange-400 mt-1 font-semibold">{user.department} • {user.designation}</p>
                     </div>
 
                     <div className="pt-1">
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition-colors cursor-pointer"
                       >
-                        <LogOut className="w-4 h-4 text-red-500" />
+                        <LogOut className="w-4 h-4 text-rose-400" />
                         Sign Out
                       </button>
                     </div>
@@ -162,13 +162,13 @@ export default function Navbar({ user }: NavbarProps) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => router.push('/login')}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600"
+                  className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white"
                 >
                   Log In
                 </button>
                 <button
                   onClick={() => router.push('/register')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs shadow-indigo-200 transition-all"
+                  className="px-4 py-2 text-xs font-bold text-white btn-orange-glow rounded-xl"
                 >
                   Sign Up
                 </button>
