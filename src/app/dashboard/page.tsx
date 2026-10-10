@@ -15,8 +15,7 @@ import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
 import DailyTaskSection from '@/components/DailyTaskSection';
-import BottomNav from '@/components/BottomNav';
-import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare, Sparkles } from 'lucide-react';
+import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -177,31 +176,31 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen pb-24 text-slate-100">
+    <div className="min-h-screen bg-slate-50/60 pb-16">
       {/* Top Navbar */}
       <Navbar user={user} />
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-5 sm:pt-8 space-y-6 sm:space-y-8">
-        {/* Welcome Glass Banner */}
-        <div className="glass-panel-orange rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        {/* Welcome Banner */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                 {getHeaderTitle()}
               </h1>
-              <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-500/30">
+              <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {user?.department}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               {getHeaderSubtitle()}
             </p>
           </div>
 
           {/* Quick Info Badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 glass-card rounded-full text-xs text-orange-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Policy: 1 Free Off &amp; 1 Free Half Leave / mo</span>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200 rounded-2xl shadow-xs text-xs text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Policy: 1 Free Off & 1 Free Half Leave / mo</span>
           </div>
         </div>
 
@@ -212,22 +211,22 @@ export default function DashboardPage() {
           employeeStats={employeeStats}
         />
 
-        {/* Desktop Tab Navigation (Also synced with floating mobile nav) */}
-        <div className="hidden md:block border-b border-white/10">
-          <nav className="flex space-x-2 overflow-x-auto pb-px">
+        {/* Simplistic Tab Navigation */}
+        <div className="border-b border-slate-200">
+          <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-px">
             {isElevatedUser ? (
               <>
                 {/* Developer Diagnostic Console tab */}
                 {isDeveloper && (
                   <button
                     onClick={() => setActiveTab('developer')}
-                    className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                       activeTab === 'developer'
-                        ? 'border-orange-500 text-orange-400 font-black'
-                        : 'border-transparent text-slate-400 hover:text-white'
+                        ? 'border-violet-600 text-violet-700'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    <Terminal className="w-4 h-4 text-orange-400" />
+                    <Terminal className="w-4 h-4 text-violet-600" />
                     <span>Master Control</span>
                   </button>
                 )}
@@ -235,10 +234,10 @@ export default function DashboardPage() {
                 {/* Desk Register (Mark daily for Admin / Dev) */}
                 <button
                   onClick={() => setActiveTab('register')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'register'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <ClipboardList className="w-4 h-4" />
@@ -248,10 +247,10 @@ export default function DashboardPage() {
                 {/* Staff & Salaries */}
                 <button
                   onClick={() => setActiveTab('directory')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'directory'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Users className="w-4 h-4" />
@@ -261,10 +260,10 @@ export default function DashboardPage() {
                 {/* Salary Sheet & Payroll */}
                 <button
                   onClick={() => setActiveTab('salary')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'salary'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
@@ -274,10 +273,10 @@ export default function DashboardPage() {
                 {/* Work Tasks / Daily Progress */}
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'tasks'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <CheckSquare className="w-4 h-4" />
@@ -287,10 +286,10 @@ export default function DashboardPage() {
                 {/* Monthly Visual Calendar */}
                 <button
                   onClick={() => setActiveTab('calendar')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'calendar'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
@@ -300,16 +299,16 @@ export default function DashboardPage() {
                 {/* Leave Approvals */}
                 <button
                   onClick={() => setActiveTab('approvals')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'approvals'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Palmtree className="w-4 h-4" />
                   <span>Leave Approvals</span>
                   {adminStats?.pendingLeaves > 0 && (
-                    <span className="ml-1 px-1.5 py-0.2 bg-orange-500 text-white rounded-full text-[10px] font-bold">
+                    <span className="ml-1 px-1.5 py-0.2 bg-red-100 text-red-700 rounded-full text-[10px]">
                       {adminStats.pendingLeaves}
                     </span>
                   )}
@@ -318,10 +317,10 @@ export default function DashboardPage() {
                 {/* Rules & Settings */}
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'settings'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Sliders className="w-4 h-4" />
@@ -332,22 +331,22 @@ export default function DashboardPage() {
               <>
                 <button
                   onClick={() => setActiveTab('attendance')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'attendance'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>{user?.workMode === 'FIELD' ? 'Site Check-In' : 'My Attendance & Status'}</span>
+                  <span>My Attendance & Calendar</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'tasks'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <CheckSquare className="w-4 h-4" />
@@ -356,22 +355,22 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setActiveTab('salary')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'salary'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <DollarSign className="w-4 h-4" />
-                  <span>My Salary &amp; Pay Sheet</span>
+                  <span>My Salary & Pay Sheet</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('leaves')}
-                  className={`py-3 px-4 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                     activeTab === 'leaves'
-                      ? 'border-orange-500 text-orange-400 font-black'
-                      : 'border-transparent text-slate-400 hover:text-white'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <Palmtree className="w-4 h-4" />
@@ -466,15 +465,6 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
-
-      {/* Floating Glassmorphic Mobile Bottom Navigation */}
-      <BottomNav
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        role={user?.role}
-        workMode={user?.workMode}
-        pendingLeaves={adminStats?.pendingLeaves || 0}
-      />
     </div>
   );
 }
