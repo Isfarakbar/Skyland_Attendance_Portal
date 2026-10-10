@@ -20,8 +20,8 @@ export async function GET(req: NextRequest) {
     const timezone = settings?.timezone || DEFAULT_TIMEZONE;
     const date = searchParams.get('date') || getTodayDateString(new Date(), timezone);
 
-    // Fetch all active employees
-    const employees = await User.find({ isActive: true })
+    // Fetch all active employees (excluding super-admin / developer)
+    const employees = await User.find({ isActive: true, role: { $ne: 'developer' } })
       .select('_id name email employeeId department designation baseSalary role workMode')
       .sort({ name: 1 })
       .lean();

@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
     const userQuery: Record<string, unknown> = { isActive: true };
     if (targetUserId) {
       userQuery._id = targetUserId;
+    } else {
+      userQuery.role = { $ne: 'developer' };
     }
 
     const employees = await User.find(userQuery)

@@ -62,9 +62,11 @@ export default function DashboardPage() {
         setActiveTab('attendance');
       }
 
-      // Fetch today's desk-marked state & employee monthly stats
-      fetchTodayState();
-      fetchEmployeeHistory(data.user);
+      // Fetch today's desk-marked state & employee monthly stats (only for non-developer staff)
+      if (data.user.role !== 'developer') {
+        fetchTodayState();
+        fetchEmployeeHistory(data.user);
+      }
     } catch (err) {
       console.error(err);
       router.push('/login');

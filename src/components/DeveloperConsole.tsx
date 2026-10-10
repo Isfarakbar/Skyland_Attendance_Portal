@@ -318,7 +318,7 @@ export default function DeveloperConsole() {
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-sm font-bold text-emerald-400 truncate">isfarakbar94@gmail.com</span>
+              <span className="text-sm font-bold text-emerald-400 truncate">isfarakbar.dev@gmail.com</span>
             </div>
           </div>
         </div>

@@ -20,7 +20,7 @@ export async function GET() {
     const todayStr = getTodayDateString(new Date(), timezone);
 
     const [totalEmployees, todayAttendances, pendingLeaves, approvedLeavesToday] = await Promise.all([
-      User.countDocuments({ isActive: true }),
+      User.countDocuments({ isActive: true, role: { $ne: 'developer' } }),
       Attendance.find({ date: todayStr }).populate('user', 'name email employeeId department designation').lean(),
       LeaveRequest.countDocuments({ status: 'PENDING' }),
       LeaveRequest.countDocuments({
