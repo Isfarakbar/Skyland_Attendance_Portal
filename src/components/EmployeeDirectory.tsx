@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin } from 'lucide-react';
+import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye } from 'lucide-react';
+import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 
 interface Employee {
   _id: string;
@@ -40,6 +41,9 @@ export default function EmployeeDirectory() {
   const [editingSalaryEmpId, setEditingSalaryEmpId] = useState<string | null>(null);
   const [editingSalaryValue, setEditingSalaryValue] = useState<number>(30000);
   const [salaryUpdating, setSalaryUpdating] = useState(false);
+
+  // 360 Employee Dossier Modal
+  const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -335,7 +339,16 @@ export default function EmployeeDirectory() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => setInspectingEmpId(emp._id)}
+                  className="w-full mt-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>View Progress &amp; Attendance</span>
+                </button>
+
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="text-[11px] text-slate-400">
                     {emp.isActive ? 'Active Member' : 'Deactivated'}
                   </span>
@@ -486,6 +499,13 @@ export default function EmployeeDirectory() {
             </form>
           </div>
         </div>
+      )}
+      {/* 360 Employee Dossier Modal */}
+      {inspectingEmpId && (
+        <EmployeeProfileModal
+          employeeId={inspectingEmpId}
+          onClose={() => setInspectingEmpId(null)}
+        />
       )}
     </div>
   );

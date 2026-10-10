@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, Clock, Save, Search, AlertCircle, Sparkles, Check, HelpCircle, MapPin, ExternalLink } from 'lucide-react';
 import { AttendanceStatus } from '@/models/Attendance';
+import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 
 interface RegisterEmployee {
   userId: string;
@@ -31,6 +32,7 @@ export default function DeskRegister() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRegister(date);
@@ -273,7 +275,14 @@ export default function DeskRegister() {
                       {/* Employee Info */}
                       <td className="py-3 pl-2 pr-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 leading-tight">{emp.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setInspectingEmpId(emp.userId)}
+                            className="font-bold text-slate-900 leading-tight hover:text-indigo-600 hover:underline cursor-pointer text-left"
+                            title="Click to view full progress, GPS & attendance"
+                          >
+                            {emp.name}
+                          </button>
                           {emp.workMode === 'FIELD' && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                               <MapPin className="w-2.5 h-2.5 text-amber-600" /> Field
@@ -407,6 +416,13 @@ export default function DeskRegister() {
           </button>
         </div>
       </div>
+      {/* 360 Employee Dossier Modal */}
+      {inspectingEmpId && (
+        <EmployeeProfileModal
+          employeeId={inspectingEmpId}
+          onClose={() => setInspectingEmpId(null)}
+        />
+      )}
     </div>
   );
 }

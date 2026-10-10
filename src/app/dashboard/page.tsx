@@ -14,7 +14,8 @@ import LeaveApprovals from '@/components/LeaveApprovals';
 import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
-import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign } from 'lucide-react';
+import DailyTaskSection from '@/components/DailyTaskSection';
+import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -301,6 +302,19 @@ export default function DashboardPage() {
                   )}
                 </button>
 
+                {/* Daily Tasks / Work Reports */}
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'tasks'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  <span>Work Tasks</span>
+                </button>
+
                 {/* Rules & Settings for Developer and Admin */}
                 {(isDeveloper || isAdmin) && (
                   <button
@@ -328,6 +342,18 @@ export default function DashboardPage() {
                 >
                   <Calendar className="w-4 h-4" />
                   <span>My Attendance & Calendar</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'tasks'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  <span>Submit Daily Tasks</span>
                 </button>
 
                 <button
@@ -409,6 +435,11 @@ export default function DashboardPage() {
                 userRole={user?.role}
               />
             </div>
+          )}
+
+          {/* Daily Tasks Tab (Both Management overview and Employee submission) */}
+          {activeTab === 'tasks' && (
+            <DailyTaskSection userId={!isElevatedUser ? user?._id : undefined} />
           )}
 
           {/* Employee Directory Tab (Admin/HR) */}
