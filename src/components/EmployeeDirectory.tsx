@@ -269,12 +269,10 @@ export default function EmployeeDirectory() {
                   </div>
 
                   <select
-                    value={emp.role}
+                    value={emp.role === 'admin' ? 'admin' : 'employee'}
                     onChange={(e) => handleChangeRole(emp._id, e.target.value)}
                     className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border cursor-pointer focus:outline-hidden transition-all ${
-                      emp.role === 'manager'
-                        ? 'bg-purple-50 text-purple-900 border-purple-300 font-extrabold'
-                        : emp.role === 'admin'
+                      emp.role === 'admin'
                         ? 'bg-blue-50 text-blue-900 border-blue-300 font-extrabold'
                         : emp.role === 'developer'
                         ? 'bg-slate-900 text-white border-slate-700 font-black'
@@ -284,7 +282,6 @@ export default function EmployeeDirectory() {
                   >
                     <option value="employee">Staff Employee</option>
                     <option value="admin">Operations Admin</option>
-                    <option value="manager">Company CEO / Manager</option>
                   </select>
                 </div>
 

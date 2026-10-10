@@ -55,9 +55,6 @@ export default function DashboardPage() {
       if (data.user.role === 'developer') {
         setActiveTab('developer');
         fetchAdminStats();
-      } else if (data.user.role === 'manager') {
-        setActiveTab('directory'); // CEO lands directly on Staff & 360 Dossiers
-        fetchAdminStats();
       } else if (data.user.role === 'admin') {
         setActiveTab('register'); // Admin receptionist lands directly on Desk Register
         fetchAdminStats();
@@ -162,22 +159,19 @@ export default function DashboardPage() {
     );
   }
 
-  const isElevatedUser = user && ['developer', 'admin', 'manager'].includes(user.role);
+  const isElevatedUser = user && ['developer', 'admin'].includes(user.role);
   const isDeveloper = user?.role === 'developer';
   const isAdmin = user?.role === 'admin';
-  const isManager = user?.role === 'manager';
 
   const getHeaderTitle = () => {
     if (isDeveloper) return 'Master Operations Console';
-    if (isManager) return 'CEO Executive Suite';
-    if (isAdmin) return 'Desk Reception & Administrative Portal';
+    if (isAdmin) return 'Operations & Administrative Management';
     return `Welcome, ${user?.name}`;
   };
 
   const getHeaderSubtitle = () => {
-    if (isDeveloper) return 'Direct database control, desk register oversight, and payroll configuration';
-    if (isManager) return 'Executive workforce oversight, employee 360 dossiers, daily progress tasks, and company payroll';
-    if (isAdmin) return 'Daily desk attendance register, monthly leave limits, and salary calculations';
+    if (isDeveloper) return 'Master root authority: portal designer, database record purge, and user roles';
+    if (isAdmin) return 'Desk attendance register, salary configuration, and leave approvals';
     return 'View your daily desk attendance, monthly calendar, and salary deduction sheet';
   };
 
@@ -233,24 +227,35 @@ export default function DashboardPage() {
                     }`}
                   >
                     <Terminal className="w-4 h-4 text-violet-600" />
-                    <span>Developer Console</span>
+                    <span>Master Control</span>
                   </button>
                 )}
 
-                {/* For CEO / Manager: Staff & 360 Dossiers is priority #1 */}
-                {isManager && (
-                  <button
-                    onClick={() => setActiveTab('directory')}
-                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                      activeTab === 'directory'
-                        ? 'border-indigo-600 text-indigo-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>Staff &amp; 360 Profiles</span>
-                  </button>
-                )}
+                {/* Desk Register (Mark daily for Admin / Dev) */}
+                <button
+                  onClick={() => setActiveTab('register')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'register'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  <span>Desk Register</span>
+                </button>
+
+                {/* Staff & Salaries */}
+                <button
+                  onClick={() => setActiveTab('directory')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'directory'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Staff &amp; Salaries</span>
+                </button>
 
                 {/* Salary Sheet & Payroll */}
                 <button
@@ -291,21 +296,6 @@ export default function DashboardPage() {
                   <span>Attendance Calendar</span>
                 </button>
 
-                {/* Staff & Salaries for Developer and Admin */}
-                {!isManager && (
-                  <button
-                    onClick={() => setActiveTab('directory')}
-                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                      activeTab === 'directory'
-                        ? 'border-indigo-600 text-indigo-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>Staff &amp; Salaries</span>
-                  </button>
-                )}
-
                 {/* Leave Approvals */}
                 <button
                   onClick={() => setActiveTab('approvals')}
@@ -324,33 +314,18 @@ export default function DashboardPage() {
                   )}
                 </button>
 
-                {/* Desk Register (Audit view for CEO, Daily mark for Admin/Dev) */}
+                {/* Rules & Settings */}
                 <button
-                  onClick={() => setActiveTab('register')}
+                  onClick={() => setActiveTab('settings')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'register'
+                    activeTab === 'settings'
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  <ClipboardList className="w-4 h-4" />
-                  <span>{isManager ? 'Desk Register Audit' : 'Desk Register'}</span>
+                  <Sliders className="w-4 h-4" />
+                  <span>Company Rules</span>
                 </button>
-
-                {/* Rules & Settings for Developer and Admin */}
-                {(isDeveloper || isAdmin) && (
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                      activeTab === 'settings'
-                        ? 'border-indigo-600 text-indigo-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Sliders className="w-4 h-4" />
-                    <span>Company Rules</span>
-                  </button>
-                )}
               </>
             ) : (
               <>
