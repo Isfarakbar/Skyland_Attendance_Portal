@@ -15,6 +15,7 @@ import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
 import DailyTaskSection from '@/components/DailyTaskSection';
+import MobileBottomBar from '@/components/MobileBottomBar';
 import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -176,7 +177,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-16">
+    <div className="min-h-screen bg-slate-50/60 pb-24 md:pb-16">
       {/* Top Navbar */}
       <Navbar user={user} />
 
@@ -465,6 +466,15 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* 4-Button Mobile Navigation Bar (Clean Corporate Design) */}
+      <MobileBottomBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        role={user?.role}
+        workMode={user?.workMode}
+        pendingLeaves={adminStats?.pendingLeaves || 0}
+      />
     </div>
   );
 }
