@@ -66,7 +66,7 @@ export default function DashboardPage() {
       }
 
       // Fetch today's desk-marked state & employee monthly stats (only for regular employees)
-      if (!['developer', 'manager'].includes(data.user.role)) {
+      if (data.user.role === 'employee') {
         fetchTodayState();
         fetchEmployeeHistory(data.user);
       }

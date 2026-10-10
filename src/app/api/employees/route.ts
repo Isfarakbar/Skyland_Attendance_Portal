@@ -12,10 +12,11 @@ export async function GET() {
 
     await connectToDatabase();
 
-    // Ghost profile: Hide developer / master accounts from CEO, Admin, Manager, and Employees
+    // Ghost profiles: Admin, Manager (CEO), and Developer are ghost management accounts.
+    // In Staff Directory, show only regular staff employees to non-developers.
     const query: Record<string, unknown> = {};
     if (session.role !== 'developer') {
-      query.role = { $ne: 'developer' };
+      query.role = 'employee';
     }
 
     const employees = await User.find(query)

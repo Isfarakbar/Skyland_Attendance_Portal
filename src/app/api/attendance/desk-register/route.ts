@@ -20,8 +20,8 @@ export async function GET(req: NextRequest) {
     const timezone = settings?.timezone || DEFAULT_TIMEZONE;
     const date = searchParams.get('date') || getTodayDateString(new Date(), timezone);
 
-    // Fetch all active staff employees (excluding super-admin and CEO/Manager)
-    const employees = await User.find({ isActive: true, role: { $nin: ['developer', 'manager'] } })
+    // Fetch all active staff employees (Admin, Manager/CEO, and Developer are ghost management)
+    const employees = await User.find({ isActive: true, role: 'employee' })
       .select('_id name email employeeId department designation baseSalary role workMode')
       .sort({ name: 1 })
       .lean();
