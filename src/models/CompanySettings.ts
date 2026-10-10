@@ -2,6 +2,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ICompanySettings extends Document {
   companyName: string;
+  portalTitle?: string;
+  portalTagline?: string;
   officeStartTime: string; // e.g., "09:00"
   officeEndTime: string; // e.g., "18:00"
   gracePeriodMinutes: number; // e.g., 15
@@ -9,11 +11,15 @@ export interface ICompanySettings extends Document {
   fullDayThresholdHours: number; // e.g., 8
   workingDays: number[]; // [1, 2, 3, 4, 5] (Monday to Friday)
   timezone: string; // e.g., "Asia/Karachi"
+  allowedFreeLeaves?: number; // default: 1
+  allowedFreeHalfLeaves?: number; // default: 1
 }
 
 const CompanySettingsSchema = new Schema<ICompanySettings>(
   {
     companyName: { type: String, default: 'Skyland' },
+    portalTitle: { type: String, default: 'Skyland Attendance Portal' },
+    portalTagline: { type: String, default: 'Solar Energy Workforce & Attendance Hub' },
     officeStartTime: { type: String, default: '09:00' },
     officeEndTime: { type: String, default: '18:00' },
     gracePeriodMinutes: { type: Number, default: 15 },
@@ -21,6 +27,8 @@ const CompanySettingsSchema = new Schema<ICompanySettings>(
     fullDayThresholdHours: { type: Number, default: 8 },
     workingDays: { type: [Number], default: [1, 2, 3, 4, 5] },
     timezone: { type: String, default: 'Asia/Karachi' },
+    allowedFreeLeaves: { type: Number, default: 1 },
+    allowedFreeHalfLeaves: { type: Number, default: 1 },
   },
   {
     timestamps: true,

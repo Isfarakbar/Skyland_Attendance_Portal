@@ -61,3 +61,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const attendanceId = searchParams.get('id');
+    const userId = searchParams.get('userId');
+    const date = searchParams.get('date');
+
+    if (!attendanceId && (!userId || !date)) {
+      return NextResponse.json(
+        { success: false, error: 'Either attendance ID or both userId and date are required' },
+        { status: 400 }
+      );
+    }
+
+    await connectToDatabase();
+
+    let deleted = null;
+    if (attendanceId) {
+      deleted = await Attendance.findByIdAndDelete(attendanceId);
+    } else if (userId && date) {
+      deleted = await Attendance.findOneAndDelete({ user: userId, date });
+    }
+
+    if (!deleted) {
+      return NextResponse.json({ success: false, error: 'Attendance record not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Attendance record successfully deleted',
+      deletedId: deleted._id,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error deleting attendance record';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+

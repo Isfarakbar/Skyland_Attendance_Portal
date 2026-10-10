@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Clock, Save, Search, AlertCircle, Sparkles, Check, HelpCircle, MapPin, ExternalLink } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Save, Search, AlertCircle, Sparkles, Check, HelpCircle, MapPin, ExternalLink, Trash2, Eye } from 'lucide-react';
 import { AttendanceStatus } from '@/models/Attendance';
 import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 
@@ -100,6 +100,29 @@ export default function DeskRegister() {
         clockInTime: emp.clockInTime || '09:00',
       }))
     );
+  };
+
+  const handleDeleteRecord = async (userId: string, empName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete/reset the attendance record of ${empName} for ${date}?`)) return;
+    try {
+      const res = await fetch(`/api/attendance/adjust?userId=${userId}&date=${date}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ text: `Attendance record deleted for ${empName} on ${date}`, type: 'success' });
+        fetchRegister(date);
+      } else {
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            emp.userId === userId
+              ? { ...emp, status: null, clockInTime: '', clockOutTime: '', notes: '', isSaved: false }
+              : emp
+          )
+        );
+        setMessage({ text: `Unsaved entry cleared for ${empName}`, type: 'success' });
+      }
+    } catch {
+      setMessage({ text: 'Error deleting record', type: 'error' });
+    }
   };
 
   const handleSaveRegister = async () => {
@@ -265,6 +288,7 @@ export default function DeskRegister() {
                   <th className="pb-3 text-center">Time In</th>
                   <th className="pb-3 text-center">Time Out</th>
                   <th className="pb-3">Register Notes / Reason</th>
+                  <th className="pb-3 text-right pr-2">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -392,6 +416,28 @@ export default function DeskRegister() {
                           onChange={(e) => handleNotesChange(emp.userId, e.target.value)}
                           className="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                         />
+                      </td>
+
+                      {/* Master / Admin Actions */}
+                      <td className="py-3 pr-2 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setInspectingEmpId(emp.userId)}
+                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="View Full 360 Progress & Attendance Dossier"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRecord(emp.userId, emp.name)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete / Reset Attendance Record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

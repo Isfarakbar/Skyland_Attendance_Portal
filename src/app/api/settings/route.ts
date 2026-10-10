@@ -45,12 +45,16 @@ export async function PUT(req: NextRequest) {
     }
 
     if (body.companyName !== undefined) settings.companyName = body.companyName;
+    if (body.portalTitle !== undefined) settings.portalTitle = body.portalTitle;
+    if (body.portalTagline !== undefined) settings.portalTagline = body.portalTagline;
     if (body.officeStartTime !== undefined) settings.officeStartTime = body.officeStartTime;
     if (body.officeEndTime !== undefined) settings.officeEndTime = body.officeEndTime;
     if (body.gracePeriodMinutes !== undefined) settings.gracePeriodMinutes = Number(body.gracePeriodMinutes);
     if (body.halfDayThresholdHours !== undefined) settings.halfDayThresholdHours = Number(body.halfDayThresholdHours);
     if (body.fullDayThresholdHours !== undefined) settings.fullDayThresholdHours = Number(body.fullDayThresholdHours);
     if (body.timezone !== undefined) settings.timezone = body.timezone;
+    if (body.allowedFreeLeaves !== undefined) settings.allowedFreeLeaves = Number(body.allowedFreeLeaves);
+    if (body.allowedFreeHalfLeaves !== undefined) settings.allowedFreeHalfLeaves = Number(body.allowedFreeHalfLeaves);
 
     await settings.save();
 

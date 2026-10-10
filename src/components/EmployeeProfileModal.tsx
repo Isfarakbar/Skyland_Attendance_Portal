@@ -17,7 +17,8 @@ import {
   FileText,
   Navigation,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -30,6 +31,7 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'tasks' | 'attendance'>('tasks');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchOverview();
@@ -47,6 +49,42 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
       // error
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm('Are you sure you want to permanently delete this daily task report?')) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/tasks?id=${taskId}`, { method: 'DELETE' });
+      const resData = await res.json();
+      if (resData.success) {
+        fetchOverview();
+      } else {
+        alert(resData.error || 'Failed to delete task');
+      }
+    } catch {
+      alert('Error deleting task');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteAttendance = async (attendanceId: string) => {
+    if (!confirm('Are you sure you want to permanently delete this attendance record?')) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/attendance/adjust?id=${attendanceId}`, { method: 'DELETE' });
+      const resData = await res.json();
+      if (resData.success) {
+        fetchOverview();
+      } else {
+        alert(resData.error || 'Failed to delete attendance record');
+      }
+    } catch {
+      alert('Error deleting attendance record');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -305,6 +343,15 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                                 {task.hoursSpent} hrs
                               </span>
                             ) : null}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTask(task._id)}
+                              disabled={actionLoading}
+                              className="text-slate-400 hover:text-rose-600 p-1 rounded-md transition-colors cursor-pointer"
+                              title="Delete task report"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
 
@@ -342,7 +389,8 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                           <th className="pb-2.5">Time In</th>
                           <th className="pb-2.5">Time Out</th>
                           <th className="pb-2.5">Notes / Site</th>
-                          <th className="pb-2.5 text-right">GPS Map</th>
+                          <th className="pb-2.5">GPS Map</th>
+                          <th className="pb-2.5 text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -359,7 +407,7 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                             <td className="py-2.5 text-slate-600 max-w-xs truncate" title={rec.notes}>
                               {rec.notes || rec.location?.siteName || '—'}
                             </td>
-                            <td className="py-2.5 text-right">
+                            <td className="py-2.5">
                               {rec.location?.latitude && rec.location?.longitude ? (
                                 <a
                                   href={`https://www.google.com/maps?q=${rec.location.latitude},${rec.location.longitude}`}
@@ -372,6 +420,17 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                               ) : (
                                 <span className="text-slate-300">—</span>
                               )}
+                            </td>
+                            <td className="py-2.5 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAttendance(rec._id)}
+                                disabled={actionLoading}
+                                className="text-slate-400 hover:text-rose-600 p-1 rounded-md transition-colors cursor-pointer inline-flex items-center gap-1"
+                                title="Delete attendance record"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </td>
                           </tr>
                         ))}

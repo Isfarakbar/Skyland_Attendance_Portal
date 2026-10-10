@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye } from 'lucide-react';
+import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2 } from 'lucide-react';
 import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 
 interface Employee {
@@ -156,6 +156,28 @@ export default function EmployeeDirectory() {
       alert('Error updating salary');
     } finally {
       setSalaryUpdating(false);
+    }
+  };
+
+  const handleDeleteEmployee = async (emp: Employee) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete ${emp.name}? This will remove their user account, attendance records, tasks, and leave data.`
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(`/api/employees/${emp._id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        alert(`Employee ${emp.name} deleted successfully.`);
+        fetchEmployees();
+      } else {
+        alert(data.error || 'Failed to delete employee');
+      }
+    } catch {
+      alert('Error deleting employee');
     }
   };
 
@@ -352,16 +374,25 @@ export default function EmployeeDirectory() {
                   <span className="text-[11px] text-slate-400">
                     {emp.isActive ? 'Active Member' : 'Deactivated'}
                   </span>
-                  <button
-                    onClick={() => handleToggleStatus(emp)}
-                    className={`text-[11px] font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                      emp.isActive
-                        ? 'text-red-600 hover:bg-red-50'
-                        : 'text-emerald-600 hover:bg-emerald-50'
-                    }`}
-                  >
-                    {emp.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleToggleStatus(emp)}
+                      className={`text-[11px] font-semibold px-2 py-1 rounded-md transition-colors cursor-pointer ${
+                        emp.isActive
+                          ? 'text-amber-600 hover:bg-amber-50'
+                          : 'text-emerald-600 hover:bg-emerald-50'
+                      }`}
+                    >
+                      {emp.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEmployee(emp)}
+                      className="text-[11px] font-semibold text-rose-600 hover:bg-rose-50 p-1 rounded-md transition-colors cursor-pointer"
+                      title="Permanently Delete Employee"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
