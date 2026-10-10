@@ -70,7 +70,7 @@ export default function Navbar({ user }: NavbarProps) {
       case 'admin':
         return 'Admin';
       case 'manager':
-        return 'Manager / Boss';
+        return 'CEO / Executive';
       default:
         return 'Employee';
     }

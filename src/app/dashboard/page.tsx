@@ -55,15 +55,18 @@ export default function DashboardPage() {
       if (data.user.role === 'developer') {
         setActiveTab('developer');
         fetchAdminStats();
-      } else if (['admin', 'manager'].includes(data.user.role)) {
-        setActiveTab('register');
+      } else if (data.user.role === 'manager') {
+        setActiveTab('directory'); // CEO lands directly on Staff & 360 Dossiers
+        fetchAdminStats();
+      } else if (data.user.role === 'admin') {
+        setActiveTab('register'); // Admin receptionist lands directly on Desk Register
         fetchAdminStats();
       } else {
         setActiveTab('attendance');
       }
 
-      // Fetch today's desk-marked state & employee monthly stats (only for non-developer staff)
-      if (data.user.role !== 'developer') {
+      // Fetch today's desk-marked state & employee monthly stats (only for regular employees)
+      if (!['developer', 'manager'].includes(data.user.role)) {
         fetchTodayState();
         fetchEmployeeHistory(data.user);
       }
@@ -165,16 +168,16 @@ export default function DashboardPage() {
   const isManager = user?.role === 'manager';
 
   const getHeaderTitle = () => {
-    if (isDeveloper) return 'Developer Operations Console';
+    if (isDeveloper) return 'Master Operations Console';
+    if (isManager) return 'CEO Executive Suite';
     if (isAdmin) return 'Desk Reception & Administrative Portal';
-    if (isManager) return 'Management & Salary Overview';
     return `Welcome, ${user?.name}`;
   };
 
   const getHeaderSubtitle = () => {
     if (isDeveloper) return 'Direct database control, desk register oversight, and payroll configuration';
+    if (isManager) return 'Executive workforce oversight, employee 360 dossiers, daily progress tasks, and company payroll';
     if (isAdmin) return 'Daily desk attendance register, monthly leave limits, and salary calculations';
-    if (isManager) return 'Review employee attendance calendar, leave requests, and downloadable salary sheets';
     return 'View your daily desk attendance, monthly calendar, and salary deduction sheet';
   };
 
@@ -234,18 +237,20 @@ export default function DashboardPage() {
                   </button>
                 )}
 
-                {/* Desk Register */}
-                <button
-                  onClick={() => setActiveTab('register')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'register'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <ClipboardList className="w-4 h-4" />
-                  <span>Desk Register</span>
-                </button>
+                {/* For CEO / Manager: Staff & 360 Dossiers is priority #1 */}
+                {isManager && (
+                  <button
+                    onClick={() => setActiveTab('directory')}
+                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                      activeTab === 'directory'
+                        ? 'border-indigo-600 text-indigo-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Staff &amp; 360 Profiles</span>
+                  </button>
+                )}
 
                 {/* Salary Sheet & Payroll */}
                 <button
@@ -257,7 +262,20 @@ export default function DashboardPage() {
                   }`}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
-                  <span>Salary Sheet & Payroll</span>
+                  <span>Salary Sheet &amp; Payroll</span>
+                </button>
+
+                {/* Work Tasks / Daily Progress */}
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'tasks'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  <span>Daily Work Tasks</span>
                 </button>
 
                 {/* Monthly Visual Calendar */}
@@ -270,21 +288,23 @@ export default function DashboardPage() {
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>Calendar View</span>
+                  <span>Attendance Calendar</span>
                 </button>
 
-                {/* Staff & Salaries */}
-                <button
-                  onClick={() => setActiveTab('directory')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'directory'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Staff & Salaries</span>
-                </button>
+                {/* Staff & Salaries for Developer and Admin */}
+                {!isManager && (
+                  <button
+                    onClick={() => setActiveTab('directory')}
+                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                      activeTab === 'directory'
+                        ? 'border-indigo-600 text-indigo-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Staff &amp; Salaries</span>
+                  </button>
+                )}
 
                 {/* Leave Approvals */}
                 <button
@@ -304,17 +324,17 @@ export default function DashboardPage() {
                   )}
                 </button>
 
-                {/* Daily Tasks / Work Reports */}
+                {/* Desk Register (Audit view for CEO, Daily mark for Admin/Dev) */}
                 <button
-                  onClick={() => setActiveTab('tasks')}
+                  onClick={() => setActiveTab('register')}
                   className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-                    activeTab === 'tasks'
+                    activeTab === 'register'
                       ? 'border-indigo-600 text-indigo-600'
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  <CheckSquare className="w-4 h-4" />
-                  <span>Work Tasks</span>
+                  <ClipboardList className="w-4 h-4" />
+                  <span>{isManager ? 'Desk Register Audit' : 'Desk Register'}</span>
                 </button>
 
                 {/* Rules & Settings for Developer and Admin */}

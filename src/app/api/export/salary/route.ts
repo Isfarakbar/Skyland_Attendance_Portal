@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     if (targetUserId) {
       userQuery._id = targetUserId;
     } else {
-      userQuery.role = { $ne: 'developer' };
+      userQuery.role = { $nin: ['developer', 'manager'] };
     }
 
     const employees = await User.find(userQuery)
