@@ -6,7 +6,7 @@ import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, role, department, designation, employeeId } = await req.json();
+    const { name, email, password, role, department, designation, employeeId, workMode } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
       role: assignedRole,
       department: department?.trim() || 'General',
       designation: designation?.trim() || 'Team Member',
+      workMode: workMode === 'FIELD' ? 'FIELD' : 'OFFICE',
       joinDate: new Date(),
       isActive: true,
       isEmailVerified: false,

@@ -24,7 +24,7 @@ export default function ClockWidget({ todayData }: ClockWidgetProps) {
         badgeBg: 'bg-slate-100 text-slate-700 border-slate-200',
         dotBg: 'bg-slate-400',
         title: 'Pending Desk Entry',
-        description: 'The desk admin has not recorded today\'s attendance on the register yet.',
+        description: 'Office attendance is recorded daily on the desk register by Admin or Manager.',
       };
     }
 
@@ -34,14 +34,14 @@ export default function ClockWidget({ todayData }: ClockWidgetProps) {
           badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
           dotBg: 'bg-emerald-500',
           title: 'Marked Present',
-          description: 'Desk admin has marked you present on today\'s register.',
+          description: 'Marked present on today\'s register by Admin / Manager.',
         };
       case 'LATE':
         return {
           badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
           dotBg: 'bg-amber-500',
           title: 'Marked Late',
-          description: 'Desk admin recorded arrival after the official office start time.',
+          description: 'Arrival recorded after the official office start time.',
         };
       case 'HALF_LEAVE':
       case 'HALF_DAY':
