@@ -15,7 +15,8 @@ import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
 import DailyTaskSection from '@/components/DailyTaskSection';
-import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare } from 'lucide-react';
+import EditProfileModal from '@/components/EditProfileModal';
+import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare, Edit3 } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -31,6 +32,9 @@ export default function DashboardPage() {
 
   // Admin Dashboard stats
   const [adminStats, setAdminStats] = useState<any>(null);
+
+  // Profile Modal State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   useEffect(() => {
     fetchSessionAndData();
@@ -178,29 +182,59 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50/60 pb-16">
       {/* Top Navbar */}
-      <Navbar user={user} />
+      <Navbar user={user} onOpenEditProfile={() => setIsEditProfileOpen(true)} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         {/* Welcome Banner */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {getHeaderTitle()}
-              </h1>
-              <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-                {user?.department}
-              </span>
+          <div className="flex items-center gap-3.5">
+            {/* User Avatar with Edit Overlay */}
+            <div
+              onClick={() => setIsEditProfileOpen(true)}
+              className="relative w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-md shadow-indigo-100 cursor-pointer group shrink-0 border-2 border-white"
+              title="Click to change profile picture or name"
+            >
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{user?.name?.charAt(0) || 'U'}</span>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                <Edit3 className="w-4 h-4" />
+              </div>
             </div>
-            <p className="text-sm text-slate-500 mt-1">
-              {getHeaderSubtitle()}
-            </p>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {getHeaderTitle()}
+                </h1>
+                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  {user?.department}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="text-slate-400 hover:text-indigo-600 transition-colors p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                  title="Edit profile & photo"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mt-1">
+                {getHeaderSubtitle()}
+              </p>
+            </div>
           </div>
 
           {/* Quick Info Badge */}
           <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200 rounded-2xl shadow-xs text-xs text-slate-600">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Policy: 1 Free Off & 1 Free Half Leave / mo</span>
+            <span>Policy: 1 Free Off &amp; 1 Free Half Leave / mo</span>
           </div>
         </div>
 
@@ -465,6 +499,17 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* Employee Profile Edit Modal */}
+      {isEditProfileOpen && user && (
+        <EditProfileModal
+          user={user}
+          onClose={() => setIsEditProfileOpen(false)}
+          onProfileUpdated={(updated) => {
+            setUser((prev: any) => ({ ...prev, ...updated }));
+          }}
+        />
+      )}
     </div>
   );
 }

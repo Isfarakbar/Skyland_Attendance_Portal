@@ -12,13 +12,15 @@ interface AuthUser {
   employeeId: string;
   department: string;
   designation: string;
+  avatarUrl?: string;
 }
 
 interface NavbarProps {
   user: AuthUser | null;
+  onOpenEditProfile?: () => void;
 }
 
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar({ user, onOpenEditProfile }: NavbarProps) {
   const router = useRouter();
   const [time, setTime] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -130,8 +132,16 @@ export default function Navbar({ user }: NavbarProps) {
                       <span className="text-[11px] text-slate-500">{user.employeeId}</span>
                     </div>
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    {user.name.charAt(0)}
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-xs border border-indigo-200">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      user.name.charAt(0)
+                    )}
                   </div>
                   <ChevronDown className="w-4 h-4 text-slate-400" />
                 </button>
@@ -139,14 +149,40 @@ export default function Navbar({ user }: NavbarProps) {
                 {/* Dropdown Menu */}
                 {isMenuOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-4 py-2 border-b border-slate-100">
-                      <p className="text-xs text-slate-400">Signed in as</p>
-                      <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                      <p className="text-xs text-indigo-600 mt-1 font-medium">{user.department} • {user.designation}</p>
+                    <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold text-base shrink-0">
+                        {user.avatarUrl ? (
+                          <img
+                            src={user.avatarUrl}
+                            alt={user.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          user.name.charAt(0)
+                        )}
+                      </div>
+                      <div className="truncate">
+                        <p className="text-xs text-slate-400">Signed in as</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
+                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                      </div>
                     </div>
 
                     <div className="pt-1">
+                      {onOpenEditProfile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            onOpenEditProfile();
+                          }}
+                          className="w-full px-4 py-2 text-left text-xs text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 transition-colors font-bold cursor-pointer"
+                        >
+                          <UserIcon className="w-4 h-4 text-indigo-600" />
+                          Edit Profile &amp; Photo
+                        </button>
+                      )}
+
                       <button
                         onClick={handleLogout}
                         className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium cursor-pointer"

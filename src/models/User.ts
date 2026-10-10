@@ -11,6 +11,9 @@ export interface IUser extends Document {
   department: string;
   designation: string;
   phone?: string;
+  avatarUrl?: string;
+  bio?: string;
+  emergencyContact?: string;
   joinDate: Date;
   isActive: boolean;
   isEmailVerified: boolean;
@@ -44,6 +47,9 @@ const UserSchema = new Schema<IUser>(
     department: { type: String, default: 'General', trim: true },
     designation: { type: String, default: 'Team Member', trim: true },
     phone: { type: String, default: '' },
+    avatarUrl: { type: String, default: '' },
+    bio: { type: String, default: '' },
+    emergencyContact: { type: String, default: '' },
     joinDate: { type: Date, default: () => new Date() },
     isActive: { type: Boolean, default: true },
     isEmailVerified: { type: Boolean, default: false },
