@@ -12,7 +12,13 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const employees = await User.find({})
+    // Ghost profile: Hide developer / master accounts from CEO, Admin, Manager, and Employees
+    const query: Record<string, unknown> = {};
+    if (session.role !== 'developer') {
+      query.role = { $ne: 'developer' };
+    }
+
+    const employees = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
       .lean();

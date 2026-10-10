@@ -29,7 +29,9 @@ export async function GET(req: NextRequest) {
       .populate('user', 'name email employeeId department designation')
       .lean();
 
-    const reportRows = records.map((r) => {
+    const reportRows = records
+      .filter((r) => ((r.user as any)?.role !== 'developer'))
+      .map((r) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = (r.user as any) || {};
       const clockInStr = r.clockIn ? format(new Date(r.clockIn), 'hh:mm:ss a') : '--';

@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date') || getTodayDateString(new Date(), timezone);
     const department = searchParams.get('department');
 
-    // Get all active users
-    const userQuery: Record<string, unknown> = { isActive: true };
+    // Get all active users (excluding ghost developer)
+    const userQuery: Record<string, unknown> = { isActive: true, role: { $ne: 'developer' } };
     if (department && department !== 'All') {
       userQuery.department = department;
     }
