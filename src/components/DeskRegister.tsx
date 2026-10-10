@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Clock, Save, Search, AlertCircle, Sparkles, Check, HelpCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Save, Search, AlertCircle, Sparkles, Check, HelpCircle, MapPin, ExternalLink } from 'lucide-react';
 import { AttendanceStatus } from '@/models/Attendance';
 
 interface RegisterEmployee {
@@ -11,6 +11,9 @@ interface RegisterEmployee {
   department: string;
   designation: string;
   baseSalary: number;
+  workMode?: 'OFFICE' | 'FIELD';
+  isFieldCheckIn?: boolean;
+  location?: { latitude?: number; longitude?: number; siteName?: string; accuracy?: number } | null;
   status: AttendanceStatus | null;
   clockInTime: string;
   clockOutTime: string;
@@ -269,12 +272,34 @@ export default function DeskRegister() {
                     <tr key={emp.userId} className="hover:bg-slate-50/70 transition-colors">
                       {/* Employee Info */}
                       <td className="py-3 pl-2 pr-4">
-                        <div className="font-bold text-slate-900 leading-tight">{emp.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 leading-tight">{emp.name}</span>
+                          {emp.workMode === 'FIELD' && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <MapPin className="w-2.5 h-2.5 text-amber-600" /> Field
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                           <span className="font-mono">{emp.employeeId}</span>
                           <span>•</span>
                           <span>{emp.designation}</span>
                         </div>
+                        {emp.isFieldCheckIn && emp.location && (
+                          <div className="mt-1 text-[10px] text-indigo-700 flex items-center gap-1.5">
+                            <span className="font-semibold">Site: {emp.location.siteName || 'Solar Field'}</span>
+                            {emp.location.latitude && emp.location.longitude && (
+                              <a
+                                href={`https://www.google.com/maps?q=${emp.location.latitude},${emp.location.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-0.5 text-indigo-600 hover:underline font-bold"
+                              >
+                                [GPS Map]
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Status Selector Pills */}

@@ -24,6 +24,7 @@ export interface IUser extends Document {
     annual: number;
   };
   baseSalary: number;
+  workMode: 'OFFICE' | 'FIELD';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,6 +52,11 @@ const UserSchema = new Schema<IUser>(
     resetPasswordCode: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
     baseSalary: { type: Number, default: 30000 },
+    workMode: {
+      type: String,
+      enum: ['OFFICE', 'FIELD'],
+      default: 'OFFICE',
+    },
     leaveBalance: {
       sick: { type: Number, default: 8 },
       casual: { type: Number, default: 10 },

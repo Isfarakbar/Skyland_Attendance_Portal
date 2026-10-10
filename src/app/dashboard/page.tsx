@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import ClockWidget from '@/components/ClockWidget';
+import FieldCheckInWidget from '@/components/FieldCheckInWidget';
 import StatsCards from '@/components/StatsCards';
 import DeskRegister from '@/components/DeskRegister';
 import SalarySheet from '@/components/SalarySheet';
@@ -383,14 +384,25 @@ export default function DashboardPage() {
           {/* Employee Attendance & Calendar Tab */}
           {activeTab === 'attendance' && !isElevatedUser && (
             <div className="space-y-6">
-              {/* Today's status widget as marked by desk admin */}
-              <ClockWidget
-                todayData={todayData}
-                onRefresh={() => {
-                  fetchTodayState();
-                  fetchEmployeeHistory(user);
-                }}
-              />
+              {/* If employee is assigned to Field duty, render GPS Field Check-In; if Office staff, show Desk status */}
+              {user?.workMode === 'FIELD' ? (
+                <FieldCheckInWidget
+                  todayData={todayData}
+                  onRefresh={() => {
+                    fetchTodayState();
+                    fetchEmployeeHistory(user);
+                  }}
+                />
+              ) : (
+                <ClockWidget
+                  todayData={todayData}
+                  onRefresh={() => {
+                    fetchTodayState();
+                    fetchEmployeeHistory(user);
+                  }}
+                />
+              )}
+
               {/* Visual calendar */}
               <AttendanceCalendar
                 currentUserId={user?._id}

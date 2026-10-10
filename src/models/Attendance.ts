@@ -10,6 +10,13 @@ export interface IBreak {
   note?: string;
 }
 
+export interface IFieldLocation {
+  latitude?: number;
+  longitude?: number;
+  siteName?: string;
+  accuracy?: number;
+}
+
 export interface IAttendance extends Document {
   user: mongoose.Types.ObjectId;
   date: string; // "YYYY-MM-DD"
@@ -21,6 +28,8 @@ export interface IAttendance extends Document {
   totalBreakMinutes: number;
   notes?: string;
   ipAddress?: string;
+  isFieldCheckIn?: boolean;
+  location?: IFieldLocation;
   isRegularized: boolean;
   regularizedReason?: string;
   regularizedBy?: mongoose.Types.ObjectId;
@@ -51,6 +60,13 @@ const AttendanceSchema = new Schema<IAttendance>(
     totalBreakMinutes: { type: Number, default: 0 },
     notes: { type: String, default: '' },
     ipAddress: { type: String, default: '' },
+    isFieldCheckIn: { type: Boolean, default: false },
+    location: {
+      latitude: { type: Number },
+      longitude: { type: Number },
+      siteName: { type: String, default: '' },
+      accuracy: { type: Number },
+    },
     isRegularized: { type: Boolean, default: false },
     regularizedReason: { type: String, default: '' },
     regularizedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },

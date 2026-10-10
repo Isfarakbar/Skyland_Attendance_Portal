@@ -27,6 +27,8 @@ export async function GET() {
         department: user.department,
         designation: user.designation,
         phone: user.phone,
+        baseSalary: user.baseSalary || 30000,
+        workMode: user.workMode || 'OFFICE',
         leaveBalance: user.leaveBalance,
         joinDate: user.joinDate,
       },

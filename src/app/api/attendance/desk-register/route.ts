@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     // Fetch all active employees
     const employees = await User.find({ isActive: true })
-      .select('_id name email employeeId department designation baseSalary role')
+      .select('_id name email employeeId department designation baseSalary role workMode')
       .sort({ name: 1 })
       .lean();
 
@@ -77,10 +77,13 @@ export async function GET(req: NextRequest) {
         department: emp.department,
         designation: emp.designation,
         baseSalary: emp.baseSalary || 30000,
+        workMode: (emp as any).workMode || 'OFFICE',
         status: (record?.status as AttendanceStatus) || null,
         clockInTime: clockInTimeStr,
         clockOutTime: clockOutTimeStr,
         notes: record?.notes || '',
+        isFieldCheckIn: !!record?.isFieldCheckIn,
+        location: record?.location || null,
         isSaved: !!record,
       };
     });
