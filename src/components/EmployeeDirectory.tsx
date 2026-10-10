@@ -137,6 +137,24 @@ export default function EmployeeDirectory() {
     }
   };
 
+  const handleChangeRole = async (empId: string, newRole: string) => {
+    try {
+      const res = await fetch(`/api/employees/${empId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchEmployees();
+      } else {
+        alert(data.error || 'Failed to update role');
+      }
+    } catch {
+      alert('Error updating role');
+    }
+  };
+
   const handleSaveSalary = async (empId: string) => {
     setSalaryUpdating(true);
     try {
@@ -250,19 +268,19 @@ export default function EmployeeDirectory() {
                     </div>
                   </div>
 
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      emp.role === 'developer'
-                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : emp.role === 'admin'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : emp.role === 'manager'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  <select
+                    value={emp.role === 'manager' || emp.role === 'admin' ? 'admin' : 'employee'}
+                    onChange={(e) => handleChangeRole(emp._id, e.target.value)}
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border cursor-pointer focus:outline-hidden transition-all ${
+                      emp.role === 'manager' || emp.role === 'admin'
+                        ? 'bg-amber-50 text-amber-900 border-amber-300 font-extrabold'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-300'
                     }`}
+                    title="Click to change account role"
                   >
-                    {emp.role === 'manager' ? 'Boss / Manager' : emp.role}
-                  </span>
+                    <option value="employee">Staff Member</option>
+                    <option value="admin">Management (CEO / Admin)</option>
+                  </select>
                 </div>
 
                 {/* Work Mode Badge */}
@@ -434,16 +452,14 @@ export default function EmployeeDirectory() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Role</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Account Role</label>
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-semibold"
                   >
-                    <option value="employee">Employee</option>
-                    <option value="manager">Boss / Manager</option>
-                    <option value="admin">Administrator</option>
-                    <option value="developer">Developer</option>
+                    <option value="employee">Staff Member / Employee</option>
+                    <option value="admin">Management (CEO / Admin)</option>
                   </select>
                 </div>
 
