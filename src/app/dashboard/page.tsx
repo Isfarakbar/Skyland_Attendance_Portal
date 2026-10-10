@@ -211,22 +211,22 @@ export default function DashboardPage() {
           employeeStats={employeeStats}
         />
 
-        {/* Simplistic Tab Navigation */}
-        <div className="border-b border-slate-200">
-          <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto pb-px">
+        {/* Responsive Touch-Friendly Tab Navigation */}
+        <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 shadow-xs">
+          <nav className="flex space-x-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
             {isElevatedUser ? (
               <>
                 {/* Developer Diagnostic Console tab */}
                 {isDeveloper && (
                   <button
                     onClick={() => setActiveTab('developer')}
-                    className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                       activeTab === 'developer'
-                        ? 'border-violet-600 text-violet-700'
-                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                        ? 'bg-violet-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
-                    <Terminal className="w-4 h-4 text-violet-600" />
+                    <Terminal className="w-4 h-4" />
                     <span>Master Control</span>
                   </button>
                 )}
@@ -234,10 +234,10 @@ export default function DashboardPage() {
                 {/* Desk Register (Mark daily for Admin / Dev) */}
                 <button
                   onClick={() => setActiveTab('register')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'register'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <ClipboardList className="w-4 h-4" />
@@ -247,10 +247,10 @@ export default function DashboardPage() {
                 {/* Staff & Salaries */}
                 <button
                   onClick={() => setActiveTab('directory')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'directory'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Users className="w-4 h-4" />
@@ -260,55 +260,55 @@ export default function DashboardPage() {
                 {/* Salary Sheet & Payroll */}
                 <button
                   onClick={() => setActiveTab('salary')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'salary'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
-                  <span>Salary Sheet &amp; Payroll</span>
+                  <span>Salary Sheet</span>
                 </button>
 
                 {/* Work Tasks / Daily Progress */}
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'tasks'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <CheckSquare className="w-4 h-4" />
-                  <span>Daily Work Tasks</span>
+                  <span>Work Tasks</span>
                 </button>
 
                 {/* Monthly Visual Calendar */}
                 <button
                   onClick={() => setActiveTab('calendar')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'calendar'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>Attendance Calendar</span>
+                  <span>Calendar</span>
                 </button>
 
                 {/* Leave Approvals */}
                 <button
                   onClick={() => setActiveTab('approvals')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'approvals'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Palmtree className="w-4 h-4" />
-                  <span>Leave Approvals</span>
+                  <span>Leaves</span>
                   {adminStats?.pendingLeaves > 0 && (
-                    <span className="ml-1 px-1.5 py-0.2 bg-red-100 text-red-700 rounded-full text-[10px]">
+                    <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold">
                       {adminStats.pendingLeaves}
                     </span>
                   )}
@@ -317,60 +317,60 @@ export default function DashboardPage() {
                 {/* Rules & Settings */}
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'settings'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Sliders className="w-4 h-4" />
-                  <span>Company Rules</span>
+                  <span>Rules</span>
                 </button>
               </>
             ) : (
               <>
                 <button
                   onClick={() => setActiveTab('attendance')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'attendance'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>My Attendance & Calendar</span>
+                  <span>{user?.workMode === 'FIELD' ? 'Site Check-In' : 'Attendance & Status'}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'tasks'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <CheckSquare className="w-4 h-4" />
-                  <span>Submit Daily Tasks</span>
+                  <span>Daily Tasks</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('salary')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'salary'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <DollarSign className="w-4 h-4" />
-                  <span>My Salary & Pay Sheet</span>
+                  <span>My Salary</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('leaves')}
-                  className={`py-3 px-4 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                     activeTab === 'leaves'
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <Palmtree className="w-4 h-4" />
