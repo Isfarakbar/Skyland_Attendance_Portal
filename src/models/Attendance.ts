@@ -30,6 +30,7 @@ export interface IAttendance extends Document {
   ipAddress?: string;
   isFieldCheckIn?: boolean;
   location?: IFieldLocation;
+  source?: 'WEB' | 'BIOMETRIC' | 'FIELD';
   isRegularized: boolean;
   regularizedReason?: string;
   regularizedBy?: mongoose.Types.ObjectId;
@@ -66,6 +67,11 @@ const AttendanceSchema = new Schema<IAttendance>(
       longitude: { type: Number },
       siteName: { type: String, default: '' },
       accuracy: { type: Number },
+    },
+    source: {
+      type: String,
+      enum: ['WEB', 'BIOMETRIC', 'FIELD'],
+      default: 'WEB',
     },
     isRegularized: { type: Boolean, default: false },
     regularizedReason: { type: String, default: '' },

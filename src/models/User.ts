@@ -2,6 +2,20 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type UserRole = 'developer' | 'admin' | 'manager' | 'employee';
 
+export interface IUserDevice {
+  name: string;
+  model: string;
+  serialNumber: string;
+  assignedDate?: string;
+  status?: string;
+}
+
+export interface IUserPension {
+  enrolled: boolean;
+  contributionPercent: number;
+  monthlyAmount: number;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -14,6 +28,19 @@ export interface IUser extends Document {
   avatarUrl?: string;
   bio?: string;
   emergencyContact?: string;
+  emergencyRelation?: string;
+  address?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  cnic?: string;
+  shiftTiming?: string;
+  reportingManager?: string;
+  employmentType?: string;
+  bankName?: string;
+  accountNumber?: string;
+  iban?: string;
+  devices?: IUserDevice[];
+  pensionFund?: IUserPension;
   joinDate: Date;
   isActive: boolean;
   isEmailVerified: boolean;
@@ -28,6 +55,7 @@ export interface IUser extends Document {
   };
   baseSalary: number;
   workMode: 'OFFICE' | 'FIELD';
+  biometricUserId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +78,49 @@ const UserSchema = new Schema<IUser>(
     avatarUrl: { type: String, default: '' },
     bio: { type: String, default: '' },
     emergencyContact: { type: String, default: '' },
+    emergencyRelation: { type: String, default: 'Family' },
+    address: { type: String, default: '' },
+    dateOfBirth: { type: String, default: '' },
+    gender: { type: String, default: 'Unspecified' },
+    cnic: { type: String, default: '' },
+    shiftTiming: { type: String, default: '09:00 AM - 06:00 PM' },
+    reportingManager: { type: String, default: 'Department Lead' },
+    employmentType: { type: String, default: 'Full-time Permanent' },
+    bankName: { type: String, default: 'Standard Chartered' },
+    accountNumber: { type: String, default: '' },
+    iban: { type: String, default: '' },
+    devices: {
+      type: [
+        {
+          name: { type: String, default: 'MacBook Air' },
+          model: { type: String, default: 'Apple M1 / 16GB / 512GB' },
+          serialNumber: { type: String, default: 'SKY-MBP-8921' },
+          assignedDate: { type: String, default: '2024-01-15' },
+          status: { type: String, default: 'Active' },
+        },
+      ],
+      default: [
+        {
+          name: 'MacBook Air',
+          model: 'Version M1',
+          serialNumber: 'SKY-MBP-8921',
+          assignedDate: '2024-01-15',
+          status: 'Active',
+        },
+      ],
+    },
+    pensionFund: {
+      type: {
+        enrolled: { type: Boolean, default: true },
+        contributionPercent: { type: Number, default: 8 },
+        monthlyAmount: { type: Number, default: 7600 },
+      },
+      default: {
+        enrolled: true,
+        contributionPercent: 8,
+        monthlyAmount: 7600,
+      },
+    },
     joinDate: { type: Date, default: () => new Date() },
     isActive: { type: Boolean, default: true },
     isEmailVerified: { type: Boolean, default: false },
@@ -68,6 +139,7 @@ const UserSchema = new Schema<IUser>(
       casual: { type: Number, default: 10 },
       annual: { type: Number, default: 14 },
     },
+    biometricUserId: { type: String, default: null, trim: true },
   },
   {
     timestamps: true,

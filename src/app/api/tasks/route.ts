@@ -132,3 +132,47 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id, status, title } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Task ID is required' }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    const task = await DailyTask.findById(id);
+    if (!task) {
+      return NextResponse.json({ success: false, error: 'Task not found' }, { status: 404 });
+    }
+
+    const isOwner = String(task.user) === session.userId;
+    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+
+    if (!isOwner && !isManagement) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (status !== undefined) task.status = status;
+    if (title !== undefined) task.title = title;
+
+    await task.save();
+
+    return NextResponse.json({
+      success: true,
+      message: 'Task updated successfully',
+      task,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error updating task';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}

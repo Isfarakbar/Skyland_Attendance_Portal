@@ -182,6 +182,28 @@ export default function AdminRoster() {
               className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
             />
           </div>
+
+          {/* Sync Biometric Device Button */}
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const res = await fetch('/api/attendance/device-sync');
+                const data = await res.json();
+                if (data.success) {
+                  fetchRoster();
+                  alert('Biometric sync check complete! Roster refreshed.');
+                }
+              } catch {
+                fetchRoster();
+              }
+            }}
+            title="Sync latest punches from Dahua Fingerprint Machine"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Sync Device</span>
+          </button>
         </div>
       </div>
 

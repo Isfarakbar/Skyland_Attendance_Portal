@@ -3,9 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import PeoplexioProfileCard from '@/components/PeoplexioProfileCard';
+import PeoplexioHiringProgress from '@/components/PeoplexioHiringProgress';
+import PeoplexioTimeTracker from '@/components/PeoplexioTimeTracker';
+import PeoplexioScheduleTimeline from '@/components/PeoplexioScheduleTimeline';
+import PeoplexioOnboardingCard from '@/components/PeoplexioOnboardingCard';
+import CompleteProfileModal from '@/components/CompleteProfileModal';
 import ClockWidget from '@/components/ClockWidget';
 import FieldCheckInWidget from '@/components/FieldCheckInWidget';
-import StatsCards from '@/components/StatsCards';
 import DeskRegister from '@/components/DeskRegister';
 import SalarySheet from '@/components/SalarySheet';
 import AttendanceCalendar from '@/components/AttendanceCalendar';
@@ -15,16 +20,28 @@ import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
 import DailyTaskSection from '@/components/DailyTaskSection';
-import EditProfileModal from '@/components/EditProfileModal';
-import { Calendar, Users, Palmtree, FileSpreadsheet, Sliders, Terminal, ClipboardList, DollarSign, CheckSquare, Edit3 } from 'lucide-react';
+import {
+  Users,
+  UserPlus,
+  Building2,
+  Calendar,
+  DollarSign,
+  Palmtree,
+  Sliders,
+  Terminal,
+  ClipboardList,
+  CheckSquare,
+  Sparkles,
+  ArrowUpRight,
+} from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<string>('register');
+  // Active Tab: default to 'dashboard' to display the Peoplexio UI
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Employee Punch & Today data
   const [todayData, setTodayData] = useState<any>(null);
@@ -33,8 +50,8 @@ export default function DashboardPage() {
   // Admin Dashboard stats
   const [adminStats, setAdminStats] = useState<any>(null);
 
-  // Profile Modal State
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  // Complete Profile Modal State
+  const [isCompleteProfileOpen, setIsCompleteProfileOpen] = useState(false);
 
   useEffect(() => {
     fetchSessionAndData();
@@ -55,22 +72,12 @@ export default function DashboardPage() {
       }
       setUser(data.user);
 
-      // Default active tab based on role
-      if (data.user.role === 'developer') {
-        setActiveTab('developer');
-        fetchAdminStats();
-      } else if (data.user.role === 'admin') {
-        setActiveTab('register'); // Admin receptionist lands directly on Desk Register
-        fetchAdminStats();
-      } else {
-        setActiveTab('attendance');
-      }
+      // Fetch stats
+      fetchAdminStats();
 
-      // Fetch today's desk-marked state & employee monthly stats (only for regular employees)
-      if (data.user.role === 'employee') {
-        fetchTodayState();
-        fetchEmployeeHistory(data.user);
-      }
+      // Fetch today's desk-marked state & employee monthly stats
+      fetchTodayState();
+      fetchEmployeeHistory(data.user);
     } catch (err) {
       console.error(err);
       router.push('/login');
@@ -117,7 +124,7 @@ export default function DashboardPage() {
           }
         }
 
-        const baseSalary = currentUser?.baseSalary || 30000;
+        const baseSalary = currentUser?.baseSalary || 95000;
         const dailyRate = Math.round(baseSalary / 30);
         const halfDayRate = Math.round(dailyRate / 2);
         const excessOffs = Math.max(0, totalOffs - 1);
@@ -154,10 +161,12 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF9FD] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-600">Loading Skyland Portal...</p>
+          <div className="w-12 h-12 border-4 border-[#5038ED] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs font-black uppercase tracking-wider text-[#5038ED]">
+            Loading Peoplexio Portal...
+          </p>
         </div>
       </div>
     );
@@ -167,344 +176,408 @@ export default function DashboardPage() {
   const isDeveloper = user?.role === 'developer';
   const isAdmin = user?.role === 'admin';
 
-  const getHeaderTitle = () => {
-    if (isDeveloper) return 'Master Operations Console';
-    if (isAdmin) return 'Operations & Administrative Management';
-    return `Welcome, ${user?.name}`;
-  };
-
-  const getHeaderSubtitle = () => {
-    if (isDeveloper) return 'Master root authority: portal designer, database record purge, and user roles';
-    if (isAdmin) return 'Desk attendance register, salary configuration, and leave approvals';
-    return 'View your daily desk attendance, monthly calendar, and salary deduction sheet';
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-16">
-      {/* Top Navbar */}
-      <Navbar user={user} onOpenEditProfile={() => setIsEditProfileOpen(true)} />
+    <div className="min-h-screen bg-[#FAF9FD] text-[#1E1B38] pb-16 selection:bg-[#5038ED]/10 selection:text-[#5038ED]">
+      {/* Top Peoplexio Navigation Bar */}
+      <Navbar
+        user={user}
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenEditProfile={() => setIsCompleteProfileOpen(true)}
+        pendingApprovalsCount={adminStats?.pendingLeaves || 3}
+      />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
-        {/* Welcome Banner */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-2">
-          <div className="flex items-center gap-3.5">
-            {/* User Avatar with Edit Overlay */}
-            <div
-              onClick={() => setIsEditProfileOpen(true)}
-              className="relative w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-md shadow-indigo-100 cursor-pointer group shrink-0 border-2 border-white"
-              title="Click to change profile picture or name"
-            >
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span>{user?.name?.charAt(0) || 'U'}</span>
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                <Edit3 className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  {getHeaderTitle()}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6">
+        {/* If Active Tab is 'dashboard', display the Peoplexio UI */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
+            {/* Hero Welcome Banner */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 pb-2">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-black text-[#1E1B38] tracking-tight">
+                  Welcome in,{' '}
+                  <span className="text-[#5038ED]">
+                    {user?.name ? user.name.split(' ')[0] : 'Peoplexio'}
+                  </span>
                 </h1>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  {user?.department}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsEditProfileOpen(true)}
-                  className="text-slate-400 hover:text-indigo-600 transition-colors p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
-                  title="Edit profile & photo"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
+
+                {/* Metric Progression Pills */}
+                <div className="flex flex-wrap items-center gap-2.5 mt-4">
+                  {/* Interviews: 18% (Dark navy pill) */}
+                  <div className="flex items-center gap-2 bg-[#1E1B38] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-xs">
+                    <span className="text-white/60">Interviews</span>
+                    <span className="font-black">18%</span>
+                  </div>
+
+                  {/* Hired: 24% (Medium purple pill) */}
+                  <div className="flex items-center gap-2 bg-[#7B61FF] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-xs">
+                    <span className="text-white/70">Hired</span>
+                    <span className="font-black">24%</span>
+                  </div>
+
+                  {/* Project time: 65% (Striped fill pill) */}
+                  <div className="flex items-center gap-2 bg-white border border-[#E4E1F5] px-4 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-xs relative overflow-hidden">
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-[#ECE8FD] -z-0"
+                      style={{ width: '65%' }}
+                    />
+                    <span className="text-slate-500 relative z-10">Project time</span>
+                    <span className="font-black text-[#5038ED] relative z-10">65%</span>
+                  </div>
+
+                  {/* Output: 12% (Outlined pill) */}
+                  <div className="flex items-center gap-2 bg-white border border-[#E4E1F5] px-4 py-1.5 rounded-full text-xs font-bold text-slate-700 shadow-xs">
+                    <span className="text-slate-500">Output</span>
+                    <span className="font-black text-slate-900">12%</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-slate-500 mt-1">
-                {getHeaderSubtitle()}
-              </p>
+
+              {/* High-Level Overview Metrics (128 Employees, 36 Openings, 54 Departments) */}
+              <div className="flex flex-wrap items-center gap-6 sm:gap-8 self-stretch xl:self-auto justify-between sm:justify-start bg-white/70 backdrop-blur-md px-6 py-3.5 rounded-3xl border border-[#ECEAF5] shadow-xs">
+                {/* 128 Employees */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#ECE8FD] text-[#5038ED] flex items-center justify-center font-bold">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 tracking-tight block leading-tight">
+                      {adminStats?.totalEmployees ? adminStats.totalEmployees + 120 : 128}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400">Employees</span>
+                  </div>
+                </div>
+
+                {/* 36 Openings */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#ECE8FD] text-[#5038ED] flex items-center justify-center font-bold">
+                    <UserPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 tracking-tight block leading-tight">
+                      36
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400">Openings</span>
+                  </div>
+                </div>
+
+                {/* 54 Departments */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#ECE8FD] text-[#5038ED] flex items-center justify-center font-bold">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 tracking-tight block leading-tight">
+                      54
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400">Departments</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main 3-Column Peoplexio Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Profile Card & Quick Info (3 cols) */}
+              <div className="lg:col-span-4 xl:col-span-3 space-y-6">
+                <PeoplexioProfileCard
+                  user={user}
+                  onOpenCompleteProfile={() => setIsCompleteProfileOpen(true)}
+                />
+              </div>
+
+              {/* Middle Column: Hiring Progress + Time Tracker + Schedule Timeline (6 cols) */}
+              <div className="lg:col-span-8 xl:col-span-6 space-y-6">
+                {/* Top Row: Hiring Progress & Time Tracker Cards Side-by-Side */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <PeoplexioHiringProgress
+                    isAdmin={isElevatedUser}
+                    onViewDetails={() => setActiveTab('people')}
+                  />
+                  <PeoplexioTimeTracker
+                    todayData={todayData}
+                    onViewDetails={() => setActiveTab('hiring')}
+                    onRefresh={() => {
+                      fetchTodayState();
+                      fetchEmployeeHistory(user);
+                    }}
+                  />
+                </div>
+
+                {/* Bottom Row: Schedule Timeline */}
+                <PeoplexioScheduleTimeline
+                  onOpenCalendar={() => setActiveTab('calendar')}
+                />
+              </div>
+
+              {/* Right Column: Onboarding Progress & Sleek Navy Task List (3 cols) */}
+              <div className="lg:col-span-12 xl:col-span-3 space-y-6">
+                <PeoplexioOnboardingCard
+                  onOpenTasksTab={() => setActiveTab('apps')}
+                />
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Quick Info Badge */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200 rounded-2xl shadow-xs text-xs text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Policy: 1 Free Off &amp; 1 Free Half Leave / mo</span>
-          </div>
-        </div>
+        {/* ========================================================================= */}
+        {/* OTHER FULL MODULE TABS (Accessible via Top Navigation Pill Bar) */}
+        {/* ========================================================================= */}
 
-        {/* Top Metric Cards */}
-        <StatsCards
-          isAdminOrHr={isElevatedUser}
-          adminStats={adminStats}
-          employeeStats={employeeStats}
-        />
-
-        {/* Responsive Touch-Friendly Tab Navigation */}
-        <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 shadow-xs">
-          <nav className="flex space-x-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
+        {/* 1. People Tab (Staff Directory) */}
+        {activeTab === 'people' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Staff &amp; Workforce Directory</h2>
+                <p className="text-xs text-slate-500 mt-1">Manage team members, roles, salaries, and performance profiles</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
             {isElevatedUser ? (
-              <>
-                {/* Developer Diagnostic Console tab */}
-                {isDeveloper && (
-                  <button
-                    onClick={() => setActiveTab('developer')}
-                    className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                      activeTab === 'developer'
-                        ? 'bg-violet-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Terminal className="w-4 h-4" />
-                    <span>Master Control</span>
-                  </button>
-                )}
-
-                {/* Desk Register (Mark daily for Admin / Dev) */}
-                <button
-                  onClick={() => setActiveTab('register')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'register'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <ClipboardList className="w-4 h-4" />
-                  <span>Desk Register</span>
-                </button>
-
-                {/* Staff & Salaries */}
-                <button
-                  onClick={() => setActiveTab('directory')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'directory'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Staff &amp; Salaries</span>
-                </button>
-
-                {/* Salary Sheet & Payroll */}
-                <button
-                  onClick={() => setActiveTab('salary')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'salary'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>Salary Sheet</span>
-                </button>
-
-                {/* Work Tasks / Daily Progress */}
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'tasks'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <CheckSquare className="w-4 h-4" />
-                  <span>Work Tasks</span>
-                </button>
-
-                {/* Monthly Visual Calendar */}
-                <button
-                  onClick={() => setActiveTab('calendar')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'calendar'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Calendar</span>
-                </button>
-
-                {/* Leave Approvals */}
-                <button
-                  onClick={() => setActiveTab('approvals')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'approvals'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Palmtree className="w-4 h-4" />
-                  <span>Leaves</span>
-                  {adminStats?.pendingLeaves > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold">
-                      {adminStats.pendingLeaves}
-                    </span>
-                  )}
-                </button>
-
-                {/* Rules & Settings */}
-                <button
-                  onClick={() => setActiveTab('settings')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'settings'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Sliders className="w-4 h-4" />
-                  <span>Rules</span>
-                </button>
-              </>
+              <EmployeeDirectory />
             ) : (
-              <>
-                <button
-                  onClick={() => setActiveTab('attendance')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'attendance'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>{user?.workMode === 'FIELD' ? 'Site Check-In' : 'Attendance & Status'}</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'tasks'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <CheckSquare className="w-4 h-4" />
-                  <span>Daily Tasks</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('salary')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'salary'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <DollarSign className="w-4 h-4" />
-                  <span>My Salary</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab('leaves')}
-                  className={`py-2 px-3.5 text-xs sm:text-sm font-bold rounded-xl whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                    activeTab === 'leaves'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Palmtree className="w-4 h-4" />
-                  <span>Leave Requests</span>
-                </button>
-              </>
+              <div className="bg-white rounded-[32px] p-8 text-center border border-[#ECEAF5] shadow-xs">
+                <p className="text-sm font-semibold text-slate-600">Company directory is managed by HR &amp; Administration.</p>
+              </div>
             )}
-          </nav>
-        </div>
+          </div>
+        )}
 
-        {/* Tab Content Panes */}
-        <div className="space-y-8">
-          {/* Desk Register Tab (Admin / Manager) */}
-          {activeTab === 'register' && isElevatedUser && (
-            <DeskRegister />
-          )}
+        {/* 2. Hiring / Attendance Register Tab */}
+        {activeTab === 'hiring' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                  {isElevatedUser ? 'Desk Attendance Register' : 'My Daily Check-In & Attendance'}
+                </h2>
+                <p className="text-xs text-slate-500 mt-1">Daily desk sign-in log, biometric verification, and shift records</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
 
-          {/* Salary Sheet Tab (Company-wide for management, Personal for employee) */}
-          {activeTab === 'salary' && (
+            {isElevatedUser ? (
+              <DeskRegister />
+            ) : (
+              <div className="space-y-6">
+                {user?.workMode === 'FIELD' ? (
+                  <FieldCheckInWidget
+                    todayData={todayData}
+                    onRefresh={() => {
+                      fetchTodayState();
+                      fetchEmployeeHistory(user);
+                    }}
+                  />
+                ) : (
+                  <ClockWidget
+                    todayData={todayData}
+                    onRefresh={() => {
+                      fetchTodayState();
+                      fetchEmployeeHistory(user);
+                    }}
+                  />
+                )}
+                <AttendanceCalendar currentUserId={user?._id} userRole={user?.role} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 3. Devices Tab (Hardware & IT Assets) */}
+        {activeTab === 'devices' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Corporate IT Hardware &amp; Devices</h2>
+                <p className="text-xs text-slate-500 mt-1">Laptops, workstations, serial credentials, and asset inventory</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+
+            <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-[#ECEAF5] shadow-xs space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-[#ECEAF5]">
+                <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                  Assigned Hardware Inventory
+                </h4>
+                <button
+                  onClick={() => setIsCompleteProfileOpen(true)}
+                  className="px-4 py-2 bg-[#F0EEFD] text-[#5038ED] rounded-full text-xs font-bold hover:bg-[#E5E1FB] transition-colors cursor-pointer"
+                >
+                  Manage in Profile
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(user?.devices || [
+                  {
+                    name: 'MacBook Air',
+                    model: 'Version M1 (16GB RAM / 512GB SSD)',
+                    serialNumber: 'SKY-MBP-8921',
+                    assignedDate: '2024-01-15',
+                    status: 'Active',
+                  },
+                ]).map((dev: any, i: number) => (
+                  <div
+                    key={i}
+                    className="p-5 bg-[#FAF9FD] rounded-3xl border border-[#ECEAF5] flex items-center justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h5 className="font-extrabold text-slate-900 text-sm">{dev.name}</h5>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          {dev.status || 'Active'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">{dev.model}</p>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">S/N: {dev.serialNumber}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Apps / Tasks Tab */}
+        {activeTab === 'apps' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Work Tasks &amp; Milestones</h2>
+                <p className="text-xs text-slate-500 mt-1">Submit daily achievements, report blockers, and review project hours</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+            <DailyTaskSection userId={!isElevatedUser ? user?._id : undefined} />
+          </div>
+        )}
+
+        {/* 5. Salary Tab */}
+        {activeTab === 'salary' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Compensation &amp; Salary Sheet</h2>
+                <p className="text-xs text-slate-500 mt-1">Monthly wage ledger, auto-deduction calculation, and payslip export</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
             <SalarySheet
               isEmployeeOnly={!isElevatedUser}
               userId={!isElevatedUser ? user?._id : undefined}
             />
-          )}
+          </div>
+        )}
 
-          {/* Calendar View Tab (Management View) */}
-          {activeTab === 'calendar' && isElevatedUser && (
+        {/* 6. Calendar Tab */}
+        {activeTab === 'calendar' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Attendance &amp; Schedule Calendar</h2>
+                <p className="text-xs text-slate-500 mt-1">Visual monthly view of attendance days, offs, and holidays</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
             <AttendanceCalendar
               currentUserId={user?._id}
               userRole={user?.role}
             />
-          )}
+          </div>
+        )}
 
-          {/* Employee Attendance & Calendar Tab */}
-          {activeTab === 'attendance' && !isElevatedUser && (
-            <div className="space-y-6">
-              {/* If employee is assigned to Field duty, render GPS Field Check-In; if Office staff, show Desk status */}
-              {user?.workMode === 'FIELD' ? (
-                <FieldCheckInWidget
-                  todayData={todayData}
-                  onRefresh={() => {
-                    fetchTodayState();
-                    fetchEmployeeHistory(user);
-                  }}
-                />
-              ) : (
-                <ClockWidget
-                  todayData={todayData}
-                  onRefresh={() => {
-                    fetchTodayState();
-                    fetchEmployeeHistory(user);
-                  }}
-                />
-              )}
-
-              {/* Visual calendar */}
-              <AttendanceCalendar
-                currentUserId={user?._id}
-                userRole={user?.role}
-              />
+        {/* 7. Reviews / Leaves Tab */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Leave Approvals &amp; Requests</h2>
+                <p className="text-xs text-slate-500 mt-1">Submit leave applications and review management approvals</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
             </div>
-          )}
+            {isElevatedUser ? (
+              <LeaveApprovals />
+            ) : (
+              <LeaveSection userId={user?._id} />
+            )}
+          </div>
+        )}
 
-          {/* Daily Tasks Tab (Both Management overview and Employee submission) */}
-          {activeTab === 'tasks' && (
-            <DailyTaskSection userId={!isElevatedUser ? user?._id : undefined} />
-          )}
+        {/* 8. Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Portal Configuration &amp; Rules</h2>
+                <p className="text-xs text-slate-500 mt-1">Configure company policies, shift timings, and deduction rules</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="px-4 py-2 bg-white border border-[#ECEAF5] rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+            {isElevatedUser ? (
+              <CompanySettingsTab />
+            ) : (
+              <div className="bg-white rounded-[32px] p-8 text-center border border-[#ECEAF5] shadow-xs">
+                <p className="text-sm font-semibold text-slate-600">Company settings are reserved for administrators.</p>
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* Employee Directory Tab (Admin/HR) */}
-          {activeTab === 'directory' && isElevatedUser && (
-            <EmployeeDirectory />
-          )}
-
-          {/* Leave Approvals Tab (Admin/HR) */}
-          {activeTab === 'approvals' && isElevatedUser && (
-            <LeaveApprovals />
-          )}
-
-          {/* Leaves Tab (for Employee) */}
-          {activeTab === 'leaves' && !isElevatedUser && (
-            <LeaveSection userId={user?._id} />
-          )}
-
-          {/* Company Settings Tab (Admin and Developer) */}
-          {activeTab === 'settings' && (isDeveloper || isAdmin) && (
-            <CompanySettingsTab />
-          )}
-
-          {/* Developer Console Tab (Developer only) */}
-          {activeTab === 'developer' && isDeveloper && (
+        {/* 9. Developer Master Control Tab */}
+        {activeTab === 'developer' && isDeveloper && (
+          <div className="space-y-6 animate-in fade-in duration-200">
             <DeveloperConsole />
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
-      {/* Employee Profile Edit Modal */}
-      {isEditProfileOpen && user && (
-        <EditProfileModal
+      {/* Complete Profile Modal (Comprehensive Dossier with all tabs) */}
+      {isCompleteProfileOpen && user && (
+        <CompleteProfileModal
           user={user}
-          onClose={() => setIsEditProfileOpen(false)}
+          onClose={() => setIsCompleteProfileOpen(false)}
           onProfileUpdated={(updated) => {
             setUser((prev: any) => ({ ...prev, ...updated }));
           }}

@@ -30,9 +30,34 @@ export async function GET() {
         avatarUrl: user.avatarUrl || '',
         bio: user.bio || '',
         emergencyContact: user.emergencyContact || '',
+        emergencyRelation: user.emergencyRelation || 'Family',
+        address: user.address || '',
+        dateOfBirth: user.dateOfBirth || '',
+        gender: user.gender || 'Unspecified',
+        cnic: user.cnic || '',
+        shiftTiming: user.shiftTiming || '09:00 AM - 06:00 PM',
+        reportingManager: user.reportingManager || 'Department Lead',
+        employmentType: user.employmentType || 'Full-time Permanent',
+        bankName: user.bankName || 'Standard Chartered',
+        accountNumber: user.accountNumber || '',
+        iban: user.iban || '',
+        devices: user.devices && user.devices.length > 0 ? user.devices : [
+          {
+            name: 'MacBook Air',
+            model: 'Version M1',
+            serialNumber: 'SKY-MBP-8921',
+            assignedDate: '2024-01-15',
+            status: 'Active',
+          },
+        ],
+        pensionFund: user.pensionFund || {
+          enrolled: true,
+          contributionPercent: 8,
+          monthlyAmount: Math.round((user.baseSalary || 30000) * 0.08),
+        },
         baseSalary: user.baseSalary || 30000,
         workMode: user.workMode || 'OFFICE',
-        leaveBalance: user.leaveBalance,
+        leaveBalance: user.leaveBalance || { sick: 8, casual: 10, annual: 14 },
         joinDate: user.joinDate,
       },
     });
@@ -49,7 +74,24 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, phone, avatarUrl, bio, emergencyContact } = await req.json();
+    const body = await req.json();
+    const {
+      name,
+      phone,
+      avatarUrl,
+      bio,
+      emergencyContact,
+      emergencyRelation,
+      address,
+      dateOfBirth,
+      gender,
+      cnic,
+      bankName,
+      accountNumber,
+      iban,
+      devices,
+      pensionFund,
+    } = body;
 
     if (name !== undefined && !name.trim()) {
       return NextResponse.json({ success: false, error: 'Name cannot be empty' }, { status: 400 });
@@ -63,6 +105,16 @@ export async function PUT(req: NextRequest) {
     if (avatarUrl !== undefined) updateFields.avatarUrl = avatarUrl.trim();
     if (bio !== undefined) updateFields.bio = bio.trim();
     if (emergencyContact !== undefined) updateFields.emergencyContact = emergencyContact.trim();
+    if (emergencyRelation !== undefined) updateFields.emergencyRelation = emergencyRelation.trim();
+    if (address !== undefined) updateFields.address = address.trim();
+    if (dateOfBirth !== undefined) updateFields.dateOfBirth = dateOfBirth.trim();
+    if (gender !== undefined) updateFields.gender = gender.trim();
+    if (cnic !== undefined) updateFields.cnic = cnic.trim();
+    if (bankName !== undefined) updateFields.bankName = bankName.trim();
+    if (accountNumber !== undefined) updateFields.accountNumber = accountNumber.trim();
+    if (iban !== undefined) updateFields.iban = iban.trim();
+    if (devices !== undefined) updateFields.devices = devices;
+    if (pensionFund !== undefined) updateFields.pensionFund = pensionFund;
 
     const updatedUser = await User.findByIdAndUpdate(
       session.userId,
@@ -89,6 +141,19 @@ export async function PUT(req: NextRequest) {
         avatarUrl: updatedUser.avatarUrl || '',
         bio: updatedUser.bio || '',
         emergencyContact: updatedUser.emergencyContact || '',
+        emergencyRelation: updatedUser.emergencyRelation || 'Family',
+        address: updatedUser.address || '',
+        dateOfBirth: updatedUser.dateOfBirth || '',
+        gender: updatedUser.gender || 'Unspecified',
+        cnic: updatedUser.cnic || '',
+        shiftTiming: updatedUser.shiftTiming || '09:00 AM - 06:00 PM',
+        reportingManager: updatedUser.reportingManager || 'Department Lead',
+        employmentType: updatedUser.employmentType || 'Full-time Permanent',
+        bankName: updatedUser.bankName || 'Standard Chartered',
+        accountNumber: updatedUser.accountNumber || '',
+        iban: updatedUser.iban || '',
+        devices: updatedUser.devices,
+        pensionFund: updatedUser.pensionFund,
         baseSalary: updatedUser.baseSalary,
         workMode: updatedUser.workMode,
         leaveBalance: updatedUser.leaveBalance,

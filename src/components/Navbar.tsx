@@ -1,46 +1,51 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Shield, User as UserIcon, Clock, Building2, ChevronDown, Smartphone } from 'lucide-react';
+import {
+  Bell,
+  Settings,
+  User as UserIcon,
+  LogOut,
+  ChevronDown,
+  Smartphone,
+  Shield,
+  Laptop,
+  CheckCircle2,
+  Sparkles,
+} from 'lucide-react';
 
 interface AuthUser {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   email: string;
   role: 'developer' | 'admin' | 'manager' | 'employee' | string;
-  employeeId: string;
-  department: string;
-  designation: string;
+  employeeId?: string;
+  department?: string;
+  designation?: string;
   avatarUrl?: string;
+  baseSalary?: number;
 }
 
 interface NavbarProps {
   user: AuthUser | null;
   onOpenEditProfile?: () => void;
+  activeTab?: string;
+  onSelectTab?: (tab: string) => void;
+  pendingApprovalsCount?: number;
 }
 
-export default function Navbar({ user, onOpenEditProfile }: NavbarProps) {
+export default function Navbar({
+  user,
+  onOpenEditProfile,
+  activeTab = 'dashboard',
+  onSelectTab,
+  pendingApprovalsCount = 3,
+}: NavbarProps) {
   const router = useRouter();
-  const [time, setTime] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTime(
-        now.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true,
-        })
-      );
-    };
-    updateTime();
-    const timer = setInterval(updateTime, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -52,105 +57,152 @@ export default function Navbar({ user, onOpenEditProfile }: NavbarProps) {
     }
   };
 
-  const getRoleBadge = (role?: string) => {
-    switch (role) {
-      case 'developer':
-        return 'bg-violet-100 text-violet-800 border-violet-300 font-mono';
-      case 'admin':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      default:
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-    }
-  };
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'people', label: 'People' },
+    { id: 'hiring', label: user?.role === 'employee' ? 'Attendance' : 'Hiring' },
+    { id: 'devices', label: 'Devices' },
+    { id: 'apps', label: 'Tasks' },
+    { id: 'salary', label: 'Salary' },
+    { id: 'calendar', label: 'Calendar' },
+    { id: 'reviews', label: 'Reviews' },
+  ];
 
-  const getRoleLabel = (role?: string) => {
-    switch (role) {
-      case 'developer':
-        return 'Super Admin';
-      case 'admin':
-        return 'Admin';
-      default:
-        return 'Staff Member';
+  const handleTabClick = (id: string) => {
+    if (onSelectTab) {
+      onSelectTab(id);
     }
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-40 bg-[#FAF9FD]/90 backdrop-blur-xl border-b border-[#ECEAF5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-              <Building2 className="w-5 h-5" />
+        <div className="flex items-center justify-between h-20 gap-4">
+          {/* Left Brand: Peoplexio Purple Mark */}
+          <div
+            onClick={() => handleTabClick('dashboard')}
+            className="flex items-center gap-3 cursor-pointer shrink-0 select-none"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#5038ED] via-[#6A4FF5] to-[#8F79FC] flex items-center justify-center text-white shadow-lg shadow-[#5038ED]/25">
+              {/* Stylized 'P' icon */}
+              <span className="font-black text-2xl font-sans tracking-tighter">P</span>
             </div>
+
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg text-slate-900 tracking-tight">SKYLAND</span>
-                <span className="text-xs uppercase tracking-wider font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
-                  Portal
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-xl text-[#1E1B38] tracking-tight">
+                  Peoplexio
                 </span>
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block">Employee Attendance & HR Suite</p>
+              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                Empower. Engage. Elevate.
+              </p>
             </div>
           </div>
 
-          {/* Center: Live Digital Clock */}
-          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-full text-slate-700">
-            <Clock className="w-4 h-4 text-indigo-600 animate-pulse" />
-            <span className="text-xs font-medium text-slate-500">Live Clock:</span>
-            <span className="text-sm font-mono font-semibold text-slate-900 tracking-wide">{time || '--:--:--'}</span>
-          </div>
+          {/* Center: Floating Pill Navigation Bar (matching image) */}
+          <nav className="hidden lg:flex items-center bg-white/80 border border-[#ECEAF5] rounded-full p-1.5 shadow-[0_2px_12px_rgba(30,27,56,0.03)] space-x-1">
+            {navItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabClick(item.id)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#3D299E] text-white shadow-md shadow-[#3D299E]/20'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-[#FAF9FD]'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* User Profile & Actions */}
+          {/* Right Section: Settings Pill, Notification Bell with 3 badge, and User Avatar */}
           <div className="flex items-center gap-3">
-            {/* Install App Quick Action */}
+            {/* Settings Pill Button */}
             <button
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('open-pwa-install'));
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
-              title="Install / Download Skyland App on your Phone"
+              onClick={() => handleTabClick('settings')}
+              className={`hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-[#3D299E] text-white border-transparent'
+                  : 'bg-white/80 hover:bg-white text-slate-700 border-[#ECEAF5] shadow-xs'
+              }`}
             >
-              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden sm:inline">Install App</span>
+              <Settings className="w-3.5 h-3.5" />
+              <span>Settings</span>
             </button>
 
+            {/* Notification Bell with Badge 3 */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="relative w-10 h-10 rounded-full bg-white/80 hover:bg-white border border-[#ECEAF5] flex items-center justify-center text-slate-700 shadow-xs transition-all cursor-pointer"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {pendingApprovalsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#3D299E] text-white text-[10px] font-black flex items-center justify-center shadow-md border-2 border-white">
+                    {pendingApprovalsCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-[#ECEAF5] p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h5 className="font-black text-xs text-slate-900 uppercase tracking-wider">
+                      Pending Alerts &amp; Activities
+                    </h5>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ECE8FD] text-[#3D299E]">
+                      {pendingApprovalsCount} New
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5 pt-3 text-xs">
+                    <div className="p-2.5 rounded-2xl bg-[#FAF9FD] hover:bg-[#F3F0FD] transition-colors cursor-pointer">
+                      <p className="font-bold text-slate-900">Desk Attendance Marked</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Reception recorded arrival time at 09:15 AM</p>
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-[#FAF9FD] hover:bg-[#F3F0FD] transition-colors cursor-pointer">
+                      <p className="font-bold text-slate-900">Salary Slip Ready</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Monthly payroll summary processed</p>
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-[#FAF9FD] hover:bg-[#F3F0FD] transition-colors cursor-pointer">
+                      <p className="font-bold text-slate-900">Device Audit Completed</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">MacBook Air M1 verified active</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile Avatar Pill & Dropdown */}
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-3 p-1.5 pl-3 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+                  className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md bg-gradient-to-tr from-[#5038ED] to-[#8F79FC] flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:scale-105 transition-transform"
                 >
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-semibold text-slate-800 leading-tight">{user.name}</p>
-                    <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${getRoleBadge(user.role)}`}>
-                        {getRoleLabel(user.role)}
-                      </span>
-                      <span className="text-[11px] text-slate-500">{user.employeeId}</span>
-                    </div>
-                  </div>
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-xs border border-indigo-200">
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      user.name.charAt(0)
-                    )}
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{user.name?.charAt(0) || 'U'}</span>
+                  )}
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Profile Popover Menu */}
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold text-base shrink-0">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-3xl shadow-2xl border border-[#ECEAF5] p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-3 border-b border-[#F0EEF8] flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl overflow-hidden bg-[#ECE8FD] text-[#5038ED] flex items-center justify-center font-bold text-base shrink-0">
                         {user.avatarUrl ? (
                           <img
                             src={user.avatarUrl}
@@ -158,17 +210,23 @@ export default function Navbar({ user, onOpenEditProfile }: NavbarProps) {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          user.name.charAt(0)
+                          <span>{user.name?.charAt(0) || 'U'}</span>
                         )}
                       </div>
                       <div className="truncate">
-                        <p className="text-xs text-slate-400">Signed in as</p>
-                        <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
-                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                        <p className="text-sm font-extrabold text-slate-900 truncate">
+                          {user.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {user.designation || 'Team Member'}
+                        </p>
+                        <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#ECE8FD] text-[#5038ED]">
+                          {user.role}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="pt-1">
+                    <div className="pt-2 space-y-1">
                       {onOpenEditProfile && (
                         <button
                           type="button"
@@ -176,41 +234,60 @@ export default function Navbar({ user, onOpenEditProfile }: NavbarProps) {
                             setIsMenuOpen(false);
                             onOpenEditProfile();
                           }}
-                          className="w-full px-4 py-2 text-left text-xs text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 transition-colors font-bold cursor-pointer"
+                          className="w-full px-3 py-2 text-left text-xs font-bold text-[#5038ED] hover:bg-[#F0EEFD] rounded-xl flex items-center gap-2 transition-colors cursor-pointer"
                         >
-                          <UserIcon className="w-4 h-4 text-indigo-600" />
-                          Edit Profile &amp; Photo
+                          <Sparkles className="w-4 h-4 text-[#5038ED]" />
+                          <span>View Complete Profile</span>
                         </button>
                       )}
 
                       <button
-                        onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium cursor-pointer"
+                        type="button"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('open-pwa-install'));
+                          }
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-slate-100 rounded-xl flex items-center gap-2 transition-colors cursor-pointer"
                       >
-                        <LogOut className="w-4 h-4 text-red-500" />
-                        Sign Out
+                        <Smartphone className="w-4 h-4 text-slate-500" />
+                        <span>Install App</span>
+                      </button>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500" />
+                        <span>Sign Out</span>
                       </button>
                     </div>
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => router.push('/login')}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600"
-                >
-                  Log In
-                </button>
-                <button
-                  onClick={() => router.push('/register')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs shadow-indigo-200 transition-all"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
+            ) : null}
           </div>
+        </div>
+
+        {/* Mobile Subnavigation Pill Row */}
+        <div className="lg:hidden flex items-center space-x-1 overflow-x-auto no-scrollbar py-2.5 border-t border-[#ECEAF5]">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleTabClick(item.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#3D299E] text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-white'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </header>

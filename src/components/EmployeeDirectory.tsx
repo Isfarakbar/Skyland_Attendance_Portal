@@ -15,6 +15,7 @@ interface Employee {
   phone?: string;
   baseSalary?: number;
   workMode?: 'OFFICE' | 'FIELD';
+  biometricUserId?: string;
   isActive: boolean;
   leaveBalance?: { sick: number; casual: number; annual: number };
 }
@@ -35,6 +36,7 @@ export default function EmployeeDirectory() {
   const [phone, setPhone] = useState('');
   const [baseSalary, setBaseSalary] = useState(30000);
   const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>('OFFICE');
+  const [biometricUserId, setBiometricUserId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Quick edit salary state
@@ -81,6 +83,7 @@ export default function EmployeeDirectory() {
           phone,
           baseSalary: Number(baseSalary) || 30000,
           workMode,
+          biometricUserId: biometricUserId.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -91,6 +94,7 @@ export default function EmployeeDirectory() {
         setPhone('');
         setBaseSalary(30000);
         setWorkMode('OFFICE');
+        setBiometricUserId('');
         fetchEmployees();
       } else {
         alert(data.error || 'Failed to create employee');
@@ -516,6 +520,22 @@ export default function EmployeeDirectory() {
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
                 />
                 <span className="text-[11px] text-slate-400 mt-0.5 block">Used to calculate daily rate (Base / 30) for excess leaves</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Biometric Device ID (Fingerprint Terminal ID)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1, 101, or machine User ID"
+                  value={biometricUserId}
+                  onChange={(e) => setBiometricUserId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                />
+                <span className="text-[11px] text-slate-400 mt-0.5 block">
+                  Maps the employee to their fingerprint on the Dahua ASA1222G machine
+                </span>
               </div>
 
               <div>
