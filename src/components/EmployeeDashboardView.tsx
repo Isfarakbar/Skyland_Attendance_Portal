@@ -188,7 +188,7 @@ export default function EmployeeDashboardView({
             {presentDays} Days
           </p>
           <p className="text-[11px] text-slate-400 font-medium mt-1">
-            {lateDays > 0 ? `${lateDays} late arrival${lateDays > 1 ? 's' : ''}` : 'Punctual record'}
+            {lateDays > 0 ? `${lateDays} late arrival${lateDays > 1 ? 's' : ''} (record only)` : 'Punctual record'}
           </p>
         </div>
 

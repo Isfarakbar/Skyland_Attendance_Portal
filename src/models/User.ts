@@ -41,6 +41,11 @@ export interface IUser extends Document {
   iban?: string;
   devices?: IUserDevice[];
   pensionFund?: IUserPension;
+  taxSettings?: {
+    isExempt?: boolean;
+    customRate?: number;
+    customFixedAmount?: number;
+  };
   joinDate: Date;
   isActive: boolean;
   isEmailVerified: boolean;
@@ -112,6 +117,14 @@ const UserSchema = new Schema<IUser>(
         contributionPercent: 8,
         monthlyAmount: 7600,
       },
+    },
+    taxSettings: {
+      type: {
+        isExempt: { type: Boolean, default: false },
+        customRate: { type: Number, default: null },
+        customFixedAmount: { type: Number, default: null },
+      },
+      default: { isExempt: false },
     },
     joinDate: { type: Date, default: () => new Date() },
     isActive: { type: Boolean, default: true },

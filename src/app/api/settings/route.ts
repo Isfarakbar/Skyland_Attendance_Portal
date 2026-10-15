@@ -16,6 +16,12 @@ export async function GET() {
         halfDayThresholdHours: 4,
         fullDayThresholdHours: 8,
         timezone: 'Asia/Karachi',
+        allowedFreeLeaves: 1,
+        allowedFreeHalfLeaves: 2,
+        salaryCalculationDays: 30,
+        taxDeductionEnabled: false,
+        taxExemptionThreshold: 50000,
+        taxRate: 2.5,
       });
     }
 
@@ -29,9 +35,9 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo'].includes(session.role)) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized: Only Developer or Administrator can modify company settings' },
+        { success: false, error: 'Unauthorized: Only Administration can modify company settings' },
         { status: 403 }
       );
     }
@@ -55,6 +61,10 @@ export async function PUT(req: NextRequest) {
     if (body.timezone !== undefined) settings.timezone = body.timezone;
     if (body.allowedFreeLeaves !== undefined) settings.allowedFreeLeaves = Number(body.allowedFreeLeaves);
     if (body.allowedFreeHalfLeaves !== undefined) settings.allowedFreeHalfLeaves = Number(body.allowedFreeHalfLeaves);
+    if (body.salaryCalculationDays !== undefined) settings.salaryCalculationDays = Number(body.salaryCalculationDays) || 30;
+    if (body.taxDeductionEnabled !== undefined) settings.taxDeductionEnabled = Boolean(body.taxDeductionEnabled);
+    if (body.taxExemptionThreshold !== undefined) settings.taxExemptionThreshold = Math.max(0, Number(body.taxExemptionThreshold) || 0);
+    if (body.taxRate !== undefined) settings.taxRate = Math.max(0, Number(body.taxRate) || 0);
 
     await settings.save();
 

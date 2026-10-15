@@ -68,6 +68,11 @@ interface EmployeeData {
     contributionPercent: number;
     monthlyAmount: number;
   };
+  taxSettings?: {
+    isExempt?: boolean;
+    customRate?: number | null;
+    customFixedAmount?: number | null;
+  };
 }
 
 interface AdminEditEmployeeModalProps {
@@ -117,6 +122,16 @@ export default function AdminEditEmployeeModal({
   const [bankName, setBankName] = useState(employee.bankName || 'Meezan Bank');
   const [accountNumber, setAccountNumber] = useState(employee.accountNumber || '');
   const [iban, setIban] = useState(employee.iban || '');
+
+  // Tax Configuration
+  const [taxMode, setTaxMode] = useState<'COMPANY_DEFAULT' | 'EXEMPT' | 'CUSTOM_RATE' | 'FIXED'>(() => {
+    if (employee.taxSettings?.isExempt) return 'EXEMPT';
+    if (typeof employee.taxSettings?.customFixedAmount === 'number' && employee.taxSettings.customFixedAmount >= 0) return 'FIXED';
+    if (typeof employee.taxSettings?.customRate === 'number' && employee.taxSettings.customRate >= 0) return 'CUSTOM_RATE';
+    return 'COMPANY_DEFAULT';
+  });
+  const [taxCustomRate, setTaxCustomRate] = useState<number>(employee.taxSettings?.customRate ?? 2.5);
+  const [taxFixedAmount, setTaxFixedAmount] = useState<number>(employee.taxSettings?.customFixedAmount ?? 1000);
 
   // Devices & Hardware
   const [devices, setDevices] = useState<DeviceItem[]>(
@@ -209,6 +224,11 @@ export default function AdminEditEmployeeModal({
           annual: Number(annualLeaves) || 0,
         },
         devices,
+        taxSettings: {
+          isExempt: taxMode === 'EXEMPT',
+          customRate: taxMode === 'CUSTOM_RATE' ? Number(taxCustomRate) || 0 : null,
+          customFixedAmount: taxMode === 'FIXED' ? Number(taxFixedAmount) || 0 : null,
+        },
       };
 
       const res = await fetch(`/api/employees/${employee._id}`, {
@@ -637,6 +657,77 @@ export default function AdminEditEmployeeModal({
                     PKR {Math.round(Number(baseSalary || 0) / 30).toLocaleString()} / day
                   </span>
                   <span className="text-[10px] text-slate-500 block mt-0.5">Applied to unexcused absences</span>
+                </div>
+              </div>
+
+              {/* Tax Withholding Configuration Card */}
+              <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                    Income Tax Withholding (FBR / Corporate)
+                  </span>
+                  <span className="text-[11px] text-slate-400">Payroll Tax Deduction</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tax Mode</label>
+                    <select
+                      value={taxMode}
+                      onChange={(e) => setTaxMode(e.target.value as any)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-hidden focus:border-[#FF6B00]"
+                    >
+                      <option value="COMPANY_DEFAULT">Follow Company Policy (Automatic)</option>
+                      <option value="EXEMPT">Exempt from Tax (0% Deduction)</option>
+                      <option value="CUSTOM_RATE">Custom Tax Rate (%)</option>
+                      <option value="FIXED">Fixed Monthly Tax (PKR)</option>
+                    </select>
+                  </div>
+
+                  {taxMode === 'CUSTOM_RATE' && (
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                        Custom Tax Rate (% above threshold)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        step="0.5"
+                        value={taxCustomRate}
+                        onChange={(e) => setTaxCustomRate(Number(e.target.value))}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-hidden focus:border-[#FF6B00]"
+                      />
+                    </div>
+                  )}
+
+                  {taxMode === 'FIXED' && (
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                        Fixed Monthly Tax Deduction (PKR)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={taxFixedAmount}
+                        onChange={(e) => setTaxFixedAmount(Number(e.target.value))}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-hidden focus:border-[#FF6B00]"
+                      />
+                    </div>
+                  )}
+
+                  {taxMode === 'COMPANY_DEFAULT' && (
+                    <div className="flex items-center text-xs text-slate-400 p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                      Calculates standard tax based on the global exemption threshold set in Company Settings.
+                    </div>
+                  )}
+
+                  {taxMode === 'EXEMPT' && (
+                    <div className="flex items-center text-xs text-emerald-400 font-semibold p-2 rounded-xl bg-emerald-950/20 border border-emerald-900/40">
+                      No tax will be deducted from this employee&apos;s payslip.
+                    </div>
+                  )}
                 </div>
               </div>
 

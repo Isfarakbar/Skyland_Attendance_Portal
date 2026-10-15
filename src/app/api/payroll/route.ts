@@ -26,6 +26,9 @@ export interface PayrollRecord {
   excessHalfLeaves: number;
   offDeduction: number;
   halfLeaveDeduction: number;
+  leaveDeduction: number;
+  taxableIncome: number;
+  taxDeduction: number;
   totalDeduction: number;
   netSalary: number;
 }
@@ -63,7 +66,7 @@ export async function GET(req: NextRequest) {
     }
 
     const employees = await User.find(userQuery)
-      .select('_id name email employeeId department designation baseSalary role')
+      .select('_id name email employeeId department designation baseSalary role taxSettings')
       .sort({ name: 1 })
       .lean();
 
@@ -97,7 +100,7 @@ export async function GET(req: NextRequest) {
           presentDays++;
         } else if (rec.status === 'LATE') {
           lateDays++;
-          presentDays++; // Present, but recorded as late
+          presentDays++; // Present, but recorded as late (record only, no penalty)
         } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
           totalHalfLeaves++;
         } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
@@ -106,19 +109,42 @@ export async function GET(req: NextRequest) {
       }
 
       const baseSalary = typeof emp.baseSalary === 'number' && emp.baseSalary > 0 ? emp.baseSalary : 30000;
-      const dailyRate = Math.round(baseSalary / 30);
+      const salaryDays = typeof settings?.salaryCalculationDays === 'number' && settings.salaryCalculationDays > 0 ? settings.salaryCalculationDays : 30;
+      const dailyRate = Math.round(baseSalary / salaryDays);
       const halfDayRate = Math.round(dailyRate / 2);
 
-      // Office policy: allowed free leaves/half leaves from settings or default 1
+      // Office policy: allowed free leaves/half leaves from settings (defaults: 1 off, 2 half leaves)
       const allowedOffs = typeof settings?.allowedFreeLeaves === 'number' ? settings.allowedFreeLeaves : 1;
-      const allowedHalfLeaves = typeof settings?.allowedFreeHalfLeaves === 'number' ? settings.allowedFreeHalfLeaves : 1;
+      const allowedHalfLeaves = typeof settings?.allowedFreeHalfLeaves === 'number' ? settings.allowedFreeHalfLeaves : 2;
 
       const excessOffs = Math.max(0, totalOffs - allowedOffs);
       const excessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);
 
       const offDeduction = excessOffs * dailyRate;
       const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
-      const totalDeduction = offDeduction + halfLeaveDeduction;
+      const leaveDeduction = offDeduction + halfLeaveDeduction;
+
+      // Tax Calculation
+      const taxableIncome = Math.max(0, baseSalary - leaveDeduction);
+      let taxDeduction = 0;
+      const userTax = (emp as any).taxSettings;
+
+      if (userTax?.isExempt) {
+        taxDeduction = 0;
+      } else if (typeof userTax?.customFixedAmount === 'number' && userTax.customFixedAmount >= 0) {
+        taxDeduction = userTax.customFixedAmount;
+      } else if (typeof userTax?.customRate === 'number' && userTax.customRate >= 0) {
+        const threshold = typeof settings?.taxExemptionThreshold === 'number' ? settings.taxExemptionThreshold : 50000;
+        const taxableOverThreshold = Math.max(0, taxableIncome - threshold);
+        taxDeduction = Math.round((taxableOverThreshold * userTax.customRate) / 100);
+      } else if (settings?.taxDeductionEnabled) {
+        const threshold = typeof settings?.taxExemptionThreshold === 'number' ? settings.taxExemptionThreshold : 50000;
+        const rate = typeof settings?.taxRate === 'number' ? settings.taxRate : 2.5;
+        const taxableOverThreshold = Math.max(0, taxableIncome - threshold);
+        taxDeduction = Math.round((taxableOverThreshold * rate) / 100);
+      }
+
+      const totalDeduction = leaveDeduction + taxDeduction;
       const netSalary = Math.max(0, baseSalary - totalDeduction);
 
       return {
@@ -141,6 +167,9 @@ export async function GET(req: NextRequest) {
         excessHalfLeaves,
         offDeduction,
         halfLeaveDeduction,
+        leaveDeduction,
+        taxableIncome,
+        taxDeduction,
         totalDeduction,
         netSalary,
       };
@@ -148,6 +177,8 @@ export async function GET(req: NextRequest) {
 
     const totalPayroll = payrollList.reduce((sum, p) => sum + p.netSalary, 0);
     const totalDeductions = payrollList.reduce((sum, p) => sum + p.totalDeduction, 0);
+    const totalLeaveDeductions = payrollList.reduce((sum, p) => sum + p.leaveDeduction, 0);
+    const totalTaxDeductions = payrollList.reduce((sum, p) => sum + p.taxDeduction, 0);
     const totalBaseSalary = payrollList.reduce((sum, p) => sum + p.baseSalary, 0);
 
     return NextResponse.json({
@@ -156,6 +187,8 @@ export async function GET(req: NextRequest) {
       summary: {
         totalEmployees: payrollList.length,
         totalBaseSalary,
+        totalLeaveDeductions,
+        totalTaxDeductions,
         totalDeductions,
         totalPayroll,
       },

@@ -16,7 +16,11 @@ export default function CompanySettingsTab() {
   const [fullDayThresholdHours, setFullDayThresholdHours] = useState(8);
   const [timezone, setTimezone] = useState('Asia/Karachi');
   const [allowedFreeLeaves, setAllowedFreeLeaves] = useState(1);
-  const [allowedFreeHalfLeaves, setAllowedFreeHalfLeaves] = useState(1);
+  const [allowedFreeHalfLeaves, setAllowedFreeHalfLeaves] = useState(2);
+  const [salaryCalculationDays, setSalaryCalculationDays] = useState(30);
+  const [taxDeductionEnabled, setTaxDeductionEnabled] = useState(false);
+  const [taxExemptionThreshold, setTaxExemptionThreshold] = useState(50000);
+  const [taxRate, setTaxRate] = useState(2.5);
 
   useEffect(() => {
     fetchSettings();
@@ -35,7 +39,11 @@ export default function CompanySettingsTab() {
         setFullDayThresholdHours(data.settings.fullDayThresholdHours ?? 8);
         setTimezone(data.settings.timezone || 'Asia/Karachi');
         setAllowedFreeLeaves(data.settings.allowedFreeLeaves ?? 1);
-        setAllowedFreeHalfLeaves(data.settings.allowedFreeHalfLeaves ?? 1);
+        setAllowedFreeHalfLeaves(data.settings.allowedFreeHalfLeaves ?? 2);
+        setSalaryCalculationDays(data.settings.salaryCalculationDays ?? 30);
+        setTaxDeductionEnabled(data.settings.taxDeductionEnabled ?? false);
+        setTaxExemptionThreshold(data.settings.taxExemptionThreshold ?? 50000);
+        setTaxRate(data.settings.taxRate ?? 2.5);
       }
     } catch (err) {
       console.error(err);
@@ -63,6 +71,10 @@ export default function CompanySettingsTab() {
           timezone,
           allowedFreeLeaves,
           allowedFreeHalfLeaves,
+          salaryCalculationDays,
+          taxDeductionEnabled,
+          taxExemptionThreshold,
+          taxRate,
         }),
       });
 
@@ -92,8 +104,8 @@ export default function CompanySettingsTab() {
             <Sliders className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Shift, Leave &amp; Attendance Rules</h3>
-            <p className="text-xs text-slate-400">Configure standard working hours, punctuality grace periods, and monthly free leave quota</p>
+            <h3 className="text-lg font-bold text-white">Shift, Leave &amp; Tax Rules</h3>
+            <p className="text-xs text-slate-400">Configure standard working hours, monthly free leave quotas, and income tax withholding</p>
           </div>
         </div>
 
@@ -104,7 +116,8 @@ export default function CompanySettingsTab() {
           </div>
         )}
 
-        <form onSubmit={handleSave} className="space-y-5 mt-6">
+        <form onSubmit={handleSave} className="space-y-6 mt-6">
+          {/* Organization & Timezone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Company / Organization Name</label>
@@ -139,6 +152,7 @@ export default function CompanySettingsTab() {
             </div>
           </div>
 
+          {/* Shift Hours */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Office Start Time</label>
@@ -165,6 +179,7 @@ export default function CompanySettingsTab() {
             </div>
           </div>
 
+          {/* Thresholds & Punctuality Grace */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Grace Period (Minutes)</label>
@@ -177,7 +192,7 @@ export default function CompanySettingsTab() {
                 onChange={(e) => setGracePeriodMinutes(Number(e.target.value))}
                 className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
-              <p className="text-[11px] text-slate-400 mt-1">Arrival after this is marked Late</p>
+              <p className="text-[11px] text-slate-400 mt-1">Arrival after this is marked Late (record only)</p>
             </div>
 
             <div>
@@ -191,7 +206,7 @@ export default function CompanySettingsTab() {
                 onChange={(e) => setHalfDayThresholdHours(Number(e.target.value))}
                 className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
-              <p className="text-[11px] text-slate-400 mt-1">Threshold for Half Day status</p>
+              <p className="text-[11px] text-slate-400 mt-1">Minimum hours for Half Day</p>
             </div>
 
             <div>
@@ -205,39 +220,132 @@ export default function CompanySettingsTab() {
                 onChange={(e) => setFullDayThresholdHours(Number(e.target.value))}
                 className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
-              <p className="text-[11px] text-slate-400 mt-1">Expected work duration</p>
+              <p className="text-[11px] text-slate-400 mt-1">Standard full day work duration</p>
             </div>
           </div>
 
-          {/* Monthly Leave Policy & Quota */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Allowed Free Offs / Month</label>
-              <input
-                type="number"
-                min={0}
-                max={15}
-                required
-                value={allowedFreeLeaves}
-                onChange={(e) => setAllowedFreeLeaves(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">Offs exceeding this limit will incur 1 day salary deduction (Pay ÷ 30)</p>
+          {/* Monthly Leave Quotas & Calculation Basis */}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                Monthly Leave Allowance &amp; Deduction Formulas
+              </span>
+              <span className="text-[11px] text-orange-400 font-semibold">1 Off + 2 Half Leaves Free</span>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Allowed Free Half Leaves / Month</label>
-              <input
-                type="number"
-                min={0}
-                max={15}
-                required
-                value={allowedFreeHalfLeaves}
-                onChange={(e) => setAllowedFreeHalfLeaves(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-              />
-              <p className="text-[11px] text-slate-400 mt-1">Half leaves exceeding this limit will incur half-day salary deduction (Pay ÷ 60)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Allowed Free Offs / Month</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={15}
+                  required
+                  value={allowedFreeLeaves}
+                  onChange={(e) => setAllowedFreeLeaves(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Full-day offs without salary deduction (default: 1)</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Allowed Free Half Leaves / Month</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={15}
+                  required
+                  value={allowedFreeHalfLeaves}
+                  onChange={(e) => setAllowedFreeHalfLeaves(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Half-day leaves without salary deduction (default: 2)</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Salary Day Divisor</label>
+                <input
+                  type="number"
+                  min={20}
+                  max={31}
+                  required
+                  value={salaryCalculationDays}
+                  onChange={(e) => setSalaryCalculationDays(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Daily rate = Base Salary ÷ Divisor (default: 30)</p>
+              </div>
             </div>
+          </div>
+
+          {/* Income Tax Withholding Rules */}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div>
+                <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                  Income Tax Withholding (FBR / Corporate Slabs)
+                </span>
+                <p className="text-[11px] text-slate-400 mt-0.5">Automate monthly salary tax deductions</p>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={taxDeductionEnabled}
+                  onChange={(e) => setTaxDeductionEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF6B00]"></div>
+                <span className="ml-2 text-xs font-bold text-slate-300">
+                  {taxDeductionEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
+            </div>
+
+            {taxDeductionEnabled ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 animate-in fade-in duration-150">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                    Monthly Tax Exemption Threshold (PKR)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">PKR</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step="5000"
+                      value={taxExemptionThreshold}
+                      onChange={(e) => setTaxExemptionThreshold(Number(e.target.value))}
+                      className="w-full pl-12 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">Monthly income below this threshold incurs 0% tax (default: 50,000)</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                    Tax Slab Rate (%) above Threshold
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      max={50}
+                      step="0.5"
+                      value={taxRate}
+                      onChange={(e) => setTaxRate(Number(e.target.value))}
+                      className="w-full pr-8 pl-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">%</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">Applied to taxable amount exceeding exemption threshold (e.g. 2.5%)</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 italic">
+                Tax deduction is currently disabled. All employees receive full gross pay minus excess leave cuts.
+              </p>
+            )}
           </div>
 
           <div className="pt-4 border-t border-slate-800 flex items-center justify-end">

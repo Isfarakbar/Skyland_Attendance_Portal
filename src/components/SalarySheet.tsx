@@ -86,7 +86,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               {isEmployeeOnly ? 'My Salary & Leave Fine Details' : 'Monthly Salary Sheet & Leave Fines'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Policy: 1 free Off & 1 free Half Leave per month. Fines are calculated from your per-day income (Monthly Pay ÷ 30).
+              Policy: 1 free Off &amp; 2 free Half Leaves per month. Late arrivals are logged for attendance records with zero salary penalty.
             </p>
           </div>
 
@@ -125,15 +125,15 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
         </div>
 
         {/* Summary Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
           <div className="p-4 bg-[#131E36] border border-slate-800 rounded-2xl">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               {isEmployeeOnly ? 'Base Salary' : 'Total Base Salaries'}
             </div>
-            <div className="text-2xl font-black text-white mt-1">
+            <div className="text-xl font-black text-white mt-1">
               PKR {summary.totalBaseSalary.toLocaleString()}
             </div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Before leave deductions</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Gross monthly earnings</div>
           </div>
 
           <div className="p-4 bg-rose-950/20 border border-rose-900/40 rounded-2xl">
@@ -141,20 +141,31 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               <ArrowDownRight className="w-3.5 h-3.5" />
               Excess Leave Deductions
             </div>
-            <div className="text-2xl font-black text-rose-400 mt-1">
-              - PKR {summary.totalDeductions.toLocaleString()}
+            <div className="text-xl font-black text-rose-400 mt-1">
+              - PKR {(summary as any).totalLeaveDeductions !== undefined ? (summary as any).totalLeaveDeductions.toLocaleString() : summary.totalDeductions.toLocaleString()}
             </div>
-            <div className="text-[11px] text-rose-300/70 mt-0.5">Exceeding 1 off / 1 half leave limit</div>
+            <div className="text-[11px] text-rose-300/70 mt-0.5">Exceeding 1 off / 2 half leaves</div>
+          </div>
+
+          <div className="p-4 bg-amber-950/20 border border-amber-900/40 rounded-2xl">
+            <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+              <ArrowDownRight className="w-3.5 h-3.5" />
+              Tax Withholding
+            </div>
+            <div className="text-xl font-black text-amber-400 mt-1">
+              - PKR {((summary as any).totalTaxDeductions ?? 0).toLocaleString()}
+            </div>
+            <div className="text-[11px] text-amber-300/70 mt-0.5">FBR / Income tax deduction</div>
           </div>
 
           <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-2xl">
             <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
               {isEmployeeOnly ? 'Net Payable Salary' : 'Total Net Payroll'}
             </div>
-            <div className="text-2xl font-black text-emerald-400 mt-1">
+            <div className="text-xl font-black text-emerald-400 mt-1">
               PKR {summary.totalPayroll.toLocaleString()}
             </div>
-            <div className="text-[11px] text-emerald-300/70 mt-0.5">Final amount after calculation</div>
+            <div className="text-[11px] text-emerald-300/70 mt-0.5">Final take-home amount</div>
           </div>
         </div>
 
@@ -196,13 +207,15 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                   <th className="pb-3 pl-2">Employee</th>
-                  <th className="pb-3 text-right">Monthly Pay</th>
-                  <th className="pb-3 text-right">Per Day Rate (Pay÷30)</th>
+                  <th className="pb-3 text-right">Base Salary</th>
+                  <th className="pb-3 text-right">Per Day Rate</th>
                   <th className="pb-3 text-center">Present</th>
+                  <th className="pb-3 text-center">Late Count</th>
                   <th className="pb-3 text-center">Offs (Used / Free)</th>
                   <th className="pb-3 text-center">Half Leaves (Used / Free)</th>
-                  <th className="pb-3 text-right">Leave Fines</th>
-                  <th className="pb-3 text-right">Net Salary</th>
+                  <th className="pb-3 text-right">Leave Cuts</th>
+                  <th className="pb-3 text-right">Income Tax</th>
+                  <th className="pb-3 text-right">Net Pay</th>
                   <th className="pb-3 text-center">Export</th>
                 </tr>
               </thead>
@@ -237,6 +250,20 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                       </span>
                     </td>
 
+                    {/* Late Count (Record only - no penalty) */}
+                    <td className="py-3.5 px-3 text-center">
+                      {record.lateDays > 0 ? (
+                        <div className="inline-flex flex-col items-center">
+                          <span className="inline-block px-2 py-0.5 rounded-md font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 text-[11px]">
+                            {record.lateDays} Late
+                          </span>
+                          <span className="text-[9px] text-slate-500 mt-0.5">Record Only</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 text-xs font-mono">0</span>
+                      )}
+                    </td>
+
                     {/* Offs */}
                     <td className="py-3.5 px-3 text-center">
                       <div className="text-white font-semibold">
@@ -244,7 +271,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                       </div>
                       {record.excessOffs > 0 && (
                         <div className="text-[10px] text-rose-400 font-bold">
-                          {record.excessOffs} excess fine: -PKR {record.offDeduction.toLocaleString()}
+                          {record.excessOffs} excess: -PKR {record.offDeduction.toLocaleString()}
                         </div>
                       )}
                     </td>
@@ -255,15 +282,26 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                         {record.totalHalfLeaves} <span className="text-slate-400 font-normal">/ {record.allowedHalfLeaves} free</span>
                       </div>
                       {record.excessHalfLeaves > 0 && (
-                        <div className="text-[10px] text-amber-400 font-bold">
-                          {record.excessHalfLeaves} excess fine: -PKR {record.halfLeaveDeduction.toLocaleString()}
+                        <div className="text-[10px] text-rose-400 font-bold">
+                          {record.excessHalfLeaves} excess: -PKR {record.halfLeaveDeduction.toLocaleString()}
                         </div>
                       )}
                     </td>
 
-                    {/* Total Leave Fines */}
+                    {/* Leave Cuts */}
                     <td className="py-3.5 px-3 text-right font-bold text-rose-400">
-                      {record.totalDeduction > 0 ? `-PKR ${record.totalDeduction.toLocaleString()}` : 'PKR 0'}
+                      {(record as any).leaveDeduction !== undefined && (record as any).leaveDeduction > 0
+                        ? `-PKR ${(record as any).leaveDeduction.toLocaleString()}`
+                        : record.totalDeduction > 0 && !((record as any).taxDeduction)
+                        ? `-PKR ${record.totalDeduction.toLocaleString()}`
+                        : 'PKR 0'}
+                    </td>
+
+                    {/* Income Tax */}
+                    <td className="py-3.5 px-3 text-right font-bold text-amber-400">
+                      {(record as any).taxDeduction > 0
+                        ? `-PKR ${(record as any).taxDeduction.toLocaleString()}`
+                        : 'PKR 0'}
                     </td>
 
                     {/* Net Salary */}

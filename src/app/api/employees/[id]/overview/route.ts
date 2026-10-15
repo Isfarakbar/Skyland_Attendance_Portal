@@ -66,13 +66,38 @@ export async function GET(
     }
 
     const baseSalary = employee.baseSalary || 30000;
-    const dailyRate = Math.round(baseSalary / 30);
+    const salaryDays = typeof settings?.salaryCalculationDays === 'number' && settings.salaryCalculationDays > 0 ? settings.salaryCalculationDays : 30;
+    const dailyRate = Math.round(baseSalary / salaryDays);
     const halfDayRate = Math.round(dailyRate / 2);
-    const excessOffs = Math.max(0, totalOffs - 1);
-    const excessHalfLeaves = Math.max(0, totalHalfLeaves - 1);
+    const allowedOffs = typeof settings?.allowedFreeLeaves === 'number' ? settings.allowedFreeLeaves : 1;
+    const allowedHalfLeaves = typeof settings?.allowedFreeHalfLeaves === 'number' ? settings.allowedFreeHalfLeaves : 2;
+    const excessOffs = Math.max(0, totalOffs - allowedOffs);
+    const excessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);
     const offDeduction = excessOffs * dailyRate;
     const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
-    const totalDeduction = offDeduction + halfLeaveDeduction;
+    const leaveDeduction = offDeduction + halfLeaveDeduction;
+
+    // Tax calculation
+    const taxableIncome = Math.max(0, baseSalary - leaveDeduction);
+    let taxDeduction = 0;
+    const userTax = (employee as any).taxSettings;
+
+    if (userTax?.isExempt) {
+      taxDeduction = 0;
+    } else if (typeof userTax?.customFixedAmount === 'number' && userTax.customFixedAmount >= 0) {
+      taxDeduction = userTax.customFixedAmount;
+    } else if (typeof userTax?.customRate === 'number' && userTax.customRate >= 0) {
+      const threshold = typeof settings?.taxExemptionThreshold === 'number' ? settings.taxExemptionThreshold : 50000;
+      const taxableOverThreshold = Math.max(0, taxableIncome - threshold);
+      taxDeduction = Math.round((taxableOverThreshold * userTax.customRate) / 100);
+    } else if (settings?.taxDeductionEnabled) {
+      const threshold = typeof settings?.taxExemptionThreshold === 'number' ? settings.taxExemptionThreshold : 50000;
+      const rate = typeof settings?.taxRate === 'number' ? settings.taxRate : 2.5;
+      const taxableOverThreshold = Math.max(0, taxableIncome - threshold);
+      taxDeduction = Math.round((taxableOverThreshold * rate) / 100);
+    }
+
+    const totalDeduction = leaveDeduction + taxDeduction;
     const netSalary = Math.max(0, baseSalary - totalDeduction);
 
     // 3. Daily Tasks Submissions (recent 50)
@@ -102,9 +127,14 @@ export async function GET(
         presentDays,
         lateDays,
         totalOffs,
+        allowedOffs,
         excessOffs,
         totalHalfLeaves,
+        allowedHalfLeaves,
         excessHalfLeaves,
+        leaveDeduction,
+        taxDeduction,
+        taxableIncome,
         totalDeduction,
         netSalary,
       },

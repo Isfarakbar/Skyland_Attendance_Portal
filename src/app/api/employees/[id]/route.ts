@@ -75,6 +75,7 @@ export async function PUT(
       'iban',
       'devices',
       'pensionFund',
+      'taxSettings',
     ];
     const updateData: Record<string, unknown> = {};
 
