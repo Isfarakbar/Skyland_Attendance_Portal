@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Bell,
+  Fingerprint,
 } from 'lucide-react';
 
 interface AuthUser {
@@ -71,6 +72,7 @@ export default function Sidebar({
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'people', label: 'Staff Directory', icon: Users },
         { id: 'hiring', label: 'Attendance Register', icon: Clock },
+        { id: 'biometric', label: 'Biometric Devices', icon: Fingerprint },
         { id: 'apps', label: 'Task Reports', icon: CheckSquare },
         { id: 'salary', label: 'Salary Sheet', icon: DollarSign },
         { id: 'calendar', label: 'Calendar', icon: Calendar },

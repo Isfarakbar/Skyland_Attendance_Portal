@@ -19,6 +19,7 @@ import LeaveSection from '@/components/LeaveSection';
 import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
 import DailyTaskSection from '@/components/DailyTaskSection';
+import BiometricDeviceManager from '@/components/BiometricDeviceManager';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -328,6 +329,38 @@ export default function DashboardPage() {
                     />
                   )}
                   <AttendanceCalendar currentUserId={user?._id} userRole={user?.role} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* BIOMETRIC DEVICES & FINGERPRINT MANAGER TAB */}
+          {/* ========================================================================= */}
+          {activeTab === 'biometric' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800/80">
+                <div>
+                  <h2 className="text-2xl font-black text-white tracking-tight">Biometric Device Integration</h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Manage Dahua fingerprint terminal connections, map employee device IDs, and monitor punch sync
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-full text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors shadow-xs cursor-pointer self-start sm:self-auto"
+                >
+                  ← Back to Dashboard
+                </button>
+              </div>
+
+              {isElevatedUser ? (
+                <BiometricDeviceManager />
+              ) : (
+                <div className="bg-[#131E36] rounded-[32px] p-8 text-center border border-slate-800 shadow-xs">
+                  <p className="text-sm font-semibold text-slate-400">
+                    Biometric device configurations are reserved for operations administrators.
+                  </p>
                 </div>
               )}
             </div>
