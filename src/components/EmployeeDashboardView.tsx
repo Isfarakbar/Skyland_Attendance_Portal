@@ -55,33 +55,33 @@ export default function EmployeeDashboardView({
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
                 isFieldWorker
-                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  ? 'bg-amber-950/80 text-amber-300 border-amber-800'
+                  : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
               }`}
             >
               {isFieldWorker ? (
                 <>
-                  <MapPin className="w-3.5 h-3.5 text-amber-700" />
+                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
                   Site Solar Engineer
                 </>
               ) : (
                 <>
-                  <Building className="w-3.5 h-3.5 text-emerald-700" />
+                  <Building className="w-3.5 h-3.5 text-emerald-400" />
                   Office Staff Member
                 </>
               )}
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
             Welcome back,{' '}
-            <span className="text-emerald-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-orange-400">
               {user?.name ? user.name.split(' ')[0] : 'Team Member'}
             </span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             {isFieldWorker
               ? 'Mark your live GPS site attendance and submit your daily work milestones.'
               : 'Scan your fingerprint on the office Dahua machine and log your daily work achievements.'}
@@ -90,9 +90,9 @@ export default function EmployeeDashboardView({
 
         <button
           onClick={onOpenCompleteProfile}
-          className="px-4 py-2.5 bg-white hover:bg-slate-50 text-[#1E1B38] text-xs font-bold rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2 transition-all cursor-pointer hover:border-slate-300"
+          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 shadow-xs flex items-center gap-2 transition-all cursor-pointer"
         >
-          <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
+          <Edit3 className="w-3.5 h-3.5 text-[#FF6B00]" />
           <span>Edit My Profile</span>
         </button>
       </div>
@@ -107,29 +107,29 @@ export default function EmployeeDashboardView({
             <FieldCheckInWidget todayData={todayData} onRefresh={onRefresh} />
           ) : (
             /* Office Employee: Dahua Biometric Punch Status */
-            <div className="bg-white rounded-[32px] p-6 sm:p-7 border border-[#ECEAF5] shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="bg-[#131E36] rounded-[32px] p-6 sm:p-7 border border-slate-800 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+                  <div className="w-11 h-11 rounded-2xl bg-orange-950/80 text-orange-400 flex items-center justify-center shrink-0 border border-orange-800/80">
                     <Fingerprint className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                    <h2 className="text-lg font-black text-white tracking-tight">
                       Office Fingerprint Attendance
                     </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-400 mt-0.5">
                       Dahua ASA1222G Biometric Terminal (Reception)
                     </p>
                   </div>
                 </div>
 
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
                     isCheckedIn
                       ? attendance?.status === 'LATE'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-emerald-100 text-emerald-800'
-                      : 'bg-slate-100 text-slate-600'
+                        ? 'bg-amber-950 text-amber-300 border-amber-800'
+                        : 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                      : 'bg-slate-900 text-slate-400 border-slate-800'
                   }`}
                 >
                   {isCheckedIn
@@ -141,20 +141,20 @@ export default function EmployeeDashboardView({
               </div>
 
               {/* Punch State Banner */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF9FD] border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Today&apos;s Status
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl sm:text-2xl font-black text-slate-900">
+                    <span className="text-xl sm:text-2xl font-black text-white">
                       {isCheckedIn ? `In at ${formatTime(attendance?.clockIn)}` : 'Not punched yet today'}
                     </span>
                     {isCheckedIn && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     {isCheckedIn
                       ? isCheckedOut
                         ? `Checked out at ${formatTime(attendance?.clockOut)}`
@@ -166,7 +166,7 @@ export default function EmployeeDashboardView({
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => onOpenTab('calendar')}
-                    className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-xs transition-all cursor-pointer"
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 shadow-xs transition-all cursor-pointer"
                   >
                     View Calendar
                   </button>
@@ -177,26 +177,26 @@ export default function EmployeeDashboardView({
               <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
                 <span>
                   Registered Biometric ID:{' '}
-                  <strong className="text-slate-700 font-mono">
+                  <strong className="text-orange-400 font-mono">
                     {user?.biometricUserId || user?.employeeId || 'Assigned'}
                   </strong>
                 </span>
-                <span>Auto-syncs via office network</span>
+                <span className="text-slate-500">Auto-syncs via office network</span>
               </div>
             </div>
           )}
 
           {/* 2. Daily Task Submission Section */}
-          <div className="bg-white rounded-[32px] p-6 sm:p-7 border border-[#ECEAF5] shadow-xs">
+          <div className="bg-[#131E36] rounded-[32px] p-6 sm:p-7 border border-slate-800 shadow-xs">
             <DailyTaskSection userId={user?._id} />
           </div>
         </div>
 
         {/* Right Column (4 cols): Profile Dossier Card */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-[32px] p-5 sm:p-6 border border-[#ECEAF5] shadow-xs space-y-5">
+          <div className="bg-[#131E36] rounded-[32px] p-5 sm:p-6 border border-slate-800 shadow-xs space-y-5">
             {/* Portrait Image & Edit Pill */}
-            <div className="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-tr from-emerald-600 via-teal-500 to-indigo-600 flex flex-col justify-end p-4 group">
+            <div className="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-tr from-[#FF6B00] via-orange-500 to-indigo-900 flex flex-col justify-end p-4 group">
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -209,57 +209,57 @@ export default function EmployeeDashboardView({
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-black/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-black/20" />
 
               <button
                 onClick={onOpenCompleteProfile}
-                className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
+                className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition-all cursor-pointer border border-slate-700"
                 title="Change Photo & Details"
               >
-                <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
+                <Edit3 className="w-3.5 h-3.5 text-[#FF6B00]" />
                 <span>Edit Profile</span>
               </button>
 
               <div className="relative z-10 text-white">
                 <h3 className="font-black text-lg leading-tight drop-shadow-xs">{user?.name}</h3>
-                <p className="text-xs text-white/90 font-medium drop-shadow-xs mt-0.5">
+                <p className="text-xs text-slate-300 font-medium drop-shadow-xs mt-0.5">
                   {user?.designation || 'Team Member'}
                 </p>
-                <span className="text-[11px] font-mono text-white/70">{user?.employeeId}</span>
+                <span className="text-[11px] font-mono text-orange-400">{user?.employeeId}</span>
               </div>
             </div>
 
             {/* Profile Detail Fields */}
             <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Department</span>
-                <span className="font-extrabold text-slate-800">{user?.department || 'Operations'}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Department</span>
+                <span className="font-extrabold text-white">{user?.department || 'Operations'}</span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Work Mode</span>
-                <span className="font-extrabold text-slate-800">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Work Mode</span>
+                <span className="font-extrabold text-white">
                   {isFieldWorker ? '📍 Solar Site / Field' : '🏢 Head Office'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Shift Timing</span>
-                <span className="font-bold text-slate-800 font-mono">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Shift Timing</span>
+                <span className="font-bold text-slate-300 font-mono">
                   {user?.shiftTiming || '09:00 AM - 06:00 PM'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Phone</span>
-                <span className="font-bold text-slate-800 font-mono">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Phone</span>
+                <span className="font-bold text-slate-300 font-mono">
                   {user?.phone || 'Not provided'}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Leave Balance</span>
-                <span className="font-extrabold text-emerald-700">
+                <span className="text-slate-500 font-bold uppercase text-[10px]">Leave Balance</span>
+                <span className="font-extrabold text-emerald-400">
                   {(user?.leaveBalance?.sick || 8) +
                     (user?.leaveBalance?.casual || 10) +
                     (user?.leaveBalance?.annual || 14)}{' '}
@@ -270,10 +270,10 @@ export default function EmployeeDashboardView({
 
             <button
               onClick={onOpenCompleteProfile}
-              className="w-full py-2.5 bg-[#FAF9FD] hover:bg-[#F0EEFD] text-slate-800 text-xs font-bold rounded-2xl border border-slate-200 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
               <span>View Full Dossier (Bank, CNIC, Bio)</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-500" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
             </button>
           </div>
         </div>

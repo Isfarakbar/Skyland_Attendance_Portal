@@ -205,21 +205,21 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
   };
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+    <div className="bg-[#0D1527] border border-slate-800 rounded-3xl p-6 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
-          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Palmtree className="w-5 h-5 text-indigo-600" />
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Palmtree className="w-5 h-5 text-[#FF6B00]" />
             Time Off & Leave Requests
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5">
             Office Policy: 1 Free Off and 1 Free Half Leave allowed per month. Additional leaves deduct salary.
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs shadow-indigo-200 flex items-center gap-2 transition-all cursor-pointer"
+          className="px-4 py-2 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow-lg shadow-orange-950/30 flex items-center gap-2 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Apply for Leave
@@ -227,37 +227,37 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
       </div>
 
       {/* Monthly allowance & per-day fine calculation bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 p-4 rounded-2xl bg-[#131E36] border border-slate-800">
         {/* Daily Income Rate */}
         <div className="p-2 text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Per Day Income (Pay ÷ 30)</p>
-          <p className="text-2xl font-black text-indigo-700 mt-0.5">
-            PKR {monthStats.dailyRate.toLocaleString()} <span className="text-xs font-normal text-slate-500">/ day</span>
+          <p className="text-2xl font-black text-amber-400 mt-0.5">
+            PKR {monthStats.dailyRate.toLocaleString()} <span className="text-xs font-normal text-slate-400">/ day</span>
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-400 mt-1">
             Monthly Pay: PKR {monthStats.baseSalary.toLocaleString()}
           </p>
         </div>
 
         {/* Monthly Free Allowances */}
-        <div className="p-2 text-center border-y sm:border-y-0 sm:border-x border-slate-200">
+        <div className="p-2 text-center border-y sm:border-y-0 sm:border-x border-slate-800">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly Free Leaves</p>
           <div className="flex items-center justify-center gap-4 mt-1">
             <div>
-              <span className="text-xs font-bold text-slate-700 block">Offs</span>
-              <span className="text-lg font-black text-slate-900">{monthStats.totalOffs} <span className="text-xs font-normal text-slate-400">/ 1 Free</span></span>
+              <span className="text-xs font-bold text-slate-300 block">Offs</span>
+              <span className="text-lg font-black text-white">{monthStats.totalOffs} <span className="text-xs font-normal text-slate-400">/ 1 Free</span></span>
             </div>
-            <div className="h-6 w-px bg-slate-200" />
+            <div className="h-6 w-px bg-slate-800" />
             <div>
-              <span className="text-xs font-bold text-slate-700 block">Half Leaves</span>
-              <span className="text-lg font-black text-slate-900">{monthStats.totalHalfLeaves} <span className="text-xs font-normal text-slate-400">/ 1 Free</span></span>
+              <span className="text-xs font-bold text-slate-300 block">Half Leaves</span>
+              <span className="text-lg font-black text-white">{monthStats.totalHalfLeaves} <span className="text-xs font-normal text-slate-400">/ 1 Free</span></span>
             </div>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-400 mt-1">
             {monthStats.excessOffs > 0 || monthStats.excessHalfLeaves > 0 ? (
-              <span className="text-rose-600 font-semibold">Exceeded: {monthStats.excessOffs} full off, {monthStats.excessHalfLeaves} half</span>
+              <span className="text-rose-400 font-semibold">Exceeded: {monthStats.excessOffs} full off, {monthStats.excessHalfLeaves} half</span>
             ) : (
-              <span className="text-emerald-600 font-medium">Within free allowance</span>
+              <span className="text-emerald-400 font-medium">Within free allowance</span>
             )}
           </p>
         </div>
@@ -265,10 +265,10 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
         {/* Salary Fine Impact */}
         <div className="p-2 text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Leave Fine (Deducted)</p>
-          <p className={`text-2xl font-black mt-0.5 ${monthStats.deductions > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+          <p className={`text-2xl font-black mt-0.5 ${monthStats.deductions > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
             {monthStats.deductions > 0 ? `-PKR ${monthStats.deductions.toLocaleString()}` : 'PKR 0'}
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-400 mt-1">
             {monthStats.deductions > 0 ? `Fined at PKR ${monthStats.dailyRate.toLocaleString()} per excess day` : 'No fine (within 1 free off / 1 half leave)'}
           </p>
         </div>
@@ -281,8 +281,8 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
         ) : leaves.length === 0 ? (
           <div className="py-8 text-center text-slate-400 text-sm">No leave requests found.</div>
         ) : (
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="text-xs uppercase bg-slate-50/70 text-slate-500 border-b border-slate-100 font-semibold">
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="text-xs uppercase bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold">
               <tr>
                 <th className="py-3 px-4">Leave Type</th>
                 <th className="py-3 px-4">Duration</th>
@@ -292,25 +292,25 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800/80">
               {leaves.map((l) => (
-                <tr key={l._id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-slate-800 whitespace-nowrap">
+                <tr key={l._id} className="hover:bg-slate-900/60 transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-white whitespace-nowrap">
                     {formatLeaveTypeLabel(l.leaveType)}
                   </td>
-                  <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600">
+                  <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-300">
                     {format(new Date(l.startDate + 'T00:00:00'), 'MMM d, yyyy')}
                     {l.startDate !== l.endDate && (
                       <> &rarr; {format(new Date(l.endDate + 'T00:00:00'), 'MMM d, yyyy')}</>
                     )}
                   </td>
-                  <td className="py-3.5 px-4 whitespace-nowrap font-semibold text-slate-900">
+                  <td className="py-3.5 px-4 whitespace-nowrap font-semibold text-white">
                     {l.daysCount} {l.daysCount === 1 ? 'day' : l.daysCount === 0.5 ? 'half day' : 'days'}
                   </td>
-                  <td className="py-3.5 px-4 text-xs text-slate-600 max-w-xs truncate" title={l.reason}>
+                  <td className="py-3.5 px-4 text-xs text-slate-300 max-w-xs truncate" title={l.reason}>
                     {l.reason}
                     {l.reviewNote && (
-                      <span className="block text-[11px] text-indigo-600 font-medium">Note: {l.reviewNote}</span>
+                      <span className="block text-[11px] text-amber-400 font-medium">Note: {l.reviewNote}</span>
                     )}
                   </td>
                   <td className="py-3.5 px-4 whitespace-nowrap">{getStatusBadge(l.status)}</td>
@@ -318,7 +318,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                     {l.status === 'PENDING' && (
                       <button
                         onClick={() => handleCancelLeave(l._id)}
-                        className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer inline-flex items-center gap-1"
+                        className="text-xs text-rose-400 hover:text-rose-300 font-semibold px-2 py-1 rounded-lg hover:bg-rose-950/40 transition-colors cursor-pointer inline-flex items-center gap-1"
                         title="Cancel this leave request"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -335,25 +335,25 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
 
       {/* Apply Leave Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-150">
-            <h3 className="font-bold text-slate-900 text-lg mb-1">Apply for Time Off</h3>
-            <p className="text-xs text-slate-500 mb-4">Submit a leave request for admin review</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-[#0D1527] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-800 animate-in zoom-in-95 duration-150 text-slate-200">
+            <h3 className="font-bold text-white text-lg mb-1">Apply for Time Off</h3>
+            <p className="text-xs text-slate-400 mb-4">Submit a leave request for admin review</p>
 
             {formError && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="mb-4 p-3 rounded-xl bg-red-950/50 border border-red-800/80 text-xs text-red-300 font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmitLeave} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Leave Type</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Leave Type</label>
                 <select
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm font-medium text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 >
                   <option value="FULL_OFF">Full Day Off (1 free per month)</option>
                   <option value="HALF_LEAVE">Half Day Leave (1 free per month)</option>
@@ -364,7 +364,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                     {leaveType === 'HALF_LEAVE' ? 'Date' : 'Start Date'}
                   </label>
                   <input
@@ -376,12 +376,12 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                       if (leaveType === 'HALF_LEAVE') setEndDate(e.target.value);
                       setFormError('');
                     }}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                   />
                 </div>
                 {leaveType !== 'HALF_LEAVE' && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">End Date</label>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">End Date</label>
                     <input
                       type="date"
                       required
@@ -390,16 +390,16 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                         setEndDate(e.target.value);
                         setFormError('');
                       }}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                     />
                   </div>
                 )}
               </div>
 
               {startDate && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
-                  <span className="text-slate-600">
-                    Duration: <strong className="text-slate-900">{getEstimatedDays()} {leaveType === 'HALF_LEAVE' ? 'half day' : 'day(s)'}</strong>
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs flex items-center justify-between">
+                  <span className="text-slate-400">
+                    Duration: <strong className="text-white">{getEstimatedDays()} {leaveType === 'HALF_LEAVE' ? 'half day' : 'day(s)'}</strong>
                   </span>
                   <span className="text-slate-500">
                     Policy: 1 free off & 1 free half leave / mo
@@ -408,7 +408,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Reason for Leave</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Reason for Leave</label>
                 <textarea
                   rows={3}
                   required
@@ -418,7 +418,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                     setReason(e.target.value);
                     setFormError('');
                   }}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
               </div>
 
@@ -426,14 +426,14 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                  className="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white text-sm font-bold rounded-xl shadow-lg shadow-orange-950/30 cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit Request'}
                 </button>

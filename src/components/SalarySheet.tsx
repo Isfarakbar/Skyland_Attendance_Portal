@@ -75,37 +75,37 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
   return (
     <div className="space-y-5">
       {/* Top Header Card */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+      <div className="bg-[#0D1527] border border-slate-800 rounded-3xl p-6 shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
               <DollarSign className="w-3.5 h-3.5" />
               Payroll & Deduction Calculator
             </div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl font-black text-white tracking-tight">
               {isEmployeeOnly ? 'My Salary & Leave Fine Details' : 'Monthly Salary Sheet & Leave Fines'}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Policy: 1 free Off & 1 free Half Leave per month. Fines are calculated from your per-day income (Monthly Pay ÷ 30).
             </p>
           </div>
 
           {/* Month Selector & Download Buttons */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-2xl">
-              <Calendar className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-2 rounded-2xl">
+              <Calendar className="w-4 h-4 text-slate-400" />
               <input
                 type="month"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-hidden cursor-pointer"
+                className="bg-transparent text-xs font-bold text-slate-200 focus:outline-hidden cursor-pointer"
               />
             </div>
 
             {!isEmployeeOnly && (
               <button
                 onClick={handleDownloadCompanySheet}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-xs shadow-emerald-200 transition-all cursor-pointer flex items-center gap-2"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-2xl shadow-sm transition-all cursor-pointer flex items-center gap-2"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 Download Company Sheet (.xlsx)
@@ -115,7 +115,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
             {isEmployeeOnly && payroll.length > 0 && (
               <button
                 onClick={() => handleDownloadSingleEmployeeSheet(payroll[0].userId)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-xs shadow-emerald-200 transition-all cursor-pointer flex items-center gap-2"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-2xl shadow-sm transition-all cursor-pointer flex items-center gap-2"
               >
                 <Download className="w-4 h-4" />
                 Download My Pay Sheet (.xlsx)
@@ -126,48 +126,48 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
 
         {/* Summary Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5">
-          <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl">
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+          <div className="p-4 bg-[#131E36] border border-slate-800 rounded-2xl">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               {isEmployeeOnly ? 'Base Salary' : 'Total Base Salaries'}
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-1">
+            <div className="text-2xl font-black text-white mt-1">
               PKR {summary.totalBaseSalary.toLocaleString()}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Before leave deductions</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Before leave deductions</div>
           </div>
 
-          <div className="p-4 bg-rose-50/70 border border-rose-100 rounded-2xl">
-            <div className="text-[11px] font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1">
+          <div className="p-4 bg-rose-950/20 border border-rose-900/40 rounded-2xl">
+            <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
               <ArrowDownRight className="w-3.5 h-3.5" />
               Excess Leave Deductions
             </div>
-            <div className="text-2xl font-black text-rose-700 mt-1">
+            <div className="text-2xl font-black text-rose-400 mt-1">
               - PKR {summary.totalDeductions.toLocaleString()}
             </div>
-            <div className="text-[11px] text-rose-500 mt-0.5">Exceeding 1 off / 1 half leave limit</div>
+            <div className="text-[11px] text-rose-300/70 mt-0.5">Exceeding 1 off / 1 half leave limit</div>
           </div>
 
-          <div className="p-4 bg-emerald-50/70 border border-emerald-100 rounded-2xl">
-            <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+          <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-2xl">
+            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
               {isEmployeeOnly ? 'Net Payable Salary' : 'Total Net Payroll'}
             </div>
-            <div className="text-2xl font-black text-emerald-700 mt-1">
+            <div className="text-2xl font-black text-emerald-400 mt-1">
               PKR {summary.totalPayroll.toLocaleString()}
             </div>
-            <div className="text-[11px] text-emerald-600 mt-0.5">Final amount after calculation</div>
+            <div className="text-[11px] text-emerald-300/70 mt-0.5">Final amount after calculation</div>
           </div>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-2xl text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="mt-4 p-3 bg-red-950/50 text-red-300 border border-red-800/80 rounded-2xl text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             {error}
           </div>
         )}
       </div>
 
       {/* Salary Details Table */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs">
+      <div className="bg-[#0D1527] border border-slate-800 rounded-3xl p-6 shadow-xl">
         {!isEmployeeOnly && (
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="relative flex-1 max-w-xs">
@@ -177,11 +177,11 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                 placeholder="Search by name, ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
             </div>
             <div className="text-xs text-slate-400">
-              Showing <span className="font-bold text-slate-700">{filtered.length}</span> records for {month}
+              Showing <span className="font-bold text-white">{filtered.length}</span> records for {month}
             </div>
           </div>
         )}
@@ -194,7 +194,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-200/70 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                   <th className="pb-3 pl-2">Employee</th>
                   <th className="pb-3 text-right">Monthly Pay</th>
                   <th className="pb-3 text-right">Per Day Rate (Pay÷30)</th>
@@ -206,44 +206,44 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                   <th className="pb-3 text-center">Export</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/80">
                 {filtered.map((record) => (
-                  <tr key={record.userId} className="hover:bg-slate-50/70 transition-colors">
+                  <tr key={record.userId} className="hover:bg-slate-900/60 transition-colors">
                     {/* Employee */}
                     <td className="py-3.5 pl-2 pr-4">
-                      <div className="font-bold text-slate-900 leading-tight">{record.name}</div>
+                      <div className="font-bold text-white leading-tight">{record.name}</div>
                       <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                        <span className="font-mono">{record.employeeId}</span>
+                        <span className="font-mono text-slate-300">{record.employeeId}</span>
                         <span>•</span>
                         <span>{record.department}</span>
                       </div>
                     </td>
 
                     {/* Base Salary */}
-                    <td className="py-3.5 px-3 text-right font-medium text-slate-700">
+                    <td className="py-3.5 px-3 text-right font-medium text-slate-300">
                       PKR {record.baseSalary.toLocaleString()}
                     </td>
 
                     {/* Per Day Rate */}
-                    <td className="py-3.5 px-3 text-right font-mono font-medium text-indigo-700 bg-indigo-50/30 rounded-lg">
+                    <td className="py-3.5 px-3 text-right font-mono font-medium text-amber-400 bg-amber-950/20 rounded-lg">
                       PKR {record.dailyRate.toLocaleString()}
                       <span className="text-[10px] text-slate-400 block font-sans">/day</span>
                     </td>
 
                     {/* Present Days */}
                     <td className="py-3.5 px-3 text-center">
-                      <span className="inline-block px-2 py-0.5 rounded-md font-bold text-emerald-700 bg-emerald-50 text-[11px]">
+                      <span className="inline-block px-2 py-0.5 rounded-md font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
                         {record.presentDays} days
                       </span>
                     </td>
 
                     {/* Offs */}
                     <td className="py-3.5 px-3 text-center">
-                      <div className="text-slate-800 font-semibold">
+                      <div className="text-white font-semibold">
                         {record.totalOffs} <span className="text-slate-400 font-normal">/ 1 free</span>
                       </div>
                       {record.excessOffs > 0 && (
-                        <div className="text-[10px] text-rose-600 font-bold">
+                        <div className="text-[10px] text-rose-400 font-bold">
                           {record.excessOffs} excess fine: -PKR {record.offDeduction.toLocaleString()}
                         </div>
                       )}
@@ -251,24 +251,24 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
 
                     {/* Half Leaves */}
                     <td className="py-3.5 px-3 text-center">
-                      <div className="text-slate-800 font-semibold">
+                      <div className="text-white font-semibold">
                         {record.totalHalfLeaves} <span className="text-slate-400 font-normal">/ 1 free</span>
                       </div>
                       {record.excessHalfLeaves > 0 && (
-                        <div className="text-[10px] text-amber-600 font-bold">
+                        <div className="text-[10px] text-amber-400 font-bold">
                           {record.excessHalfLeaves} excess fine: -PKR {record.halfLeaveDeduction.toLocaleString()}
                         </div>
                       )}
                     </td>
 
                     {/* Total Leave Fines */}
-                    <td className="py-3.5 px-3 text-right font-bold text-rose-600">
+                    <td className="py-3.5 px-3 text-right font-bold text-rose-400">
                       {record.totalDeduction > 0 ? `-PKR ${record.totalDeduction.toLocaleString()}` : 'PKR 0'}
                     </td>
 
                     {/* Net Salary */}
                     <td className="py-3.5 px-3 text-right">
-                      <span className="font-black text-slate-900 text-sm">
+                      <span className="font-black text-emerald-400 text-sm">
                         PKR {record.netSalary.toLocaleString()}
                       </span>
                     </td>
@@ -278,7 +278,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                       <button
                         onClick={() => handleDownloadSingleEmployeeSheet(record.userId)}
                         title="Download Individual Employee Sheet"
-                        className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-semibold"
+                        className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-semibold"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Slip</span>

@@ -142,12 +142,12 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
     : null;
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+    <div className="bg-[#0D1527] border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-              <MapPin className="w-3.5 h-3.5 text-amber-600" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <MapPin className="w-3.5 h-3.5 text-amber-400" />
               On-Site Solar Field Staff
             </span>
             <span className="text-xs text-slate-400 font-mono">
@@ -155,25 +155,25 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
             </span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
             {isCheckedOut
               ? 'Site Duty Shift Completed'
               : isCheckedIn
               ? 'Currently Active On-Site'
               : 'Field Site GPS Check-In'}
           </h2>
-          <p className="text-xs text-slate-500 mt-1 max-w-xl">
+          <p className="text-xs text-slate-400 mt-1 max-w-xl">
             As on-site field staff, capture your live GPS coordinates and site name so management can track your location and attendance.
           </p>
         </div>
 
         {/* Policy Badge */}
-        <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl max-w-xs text-xs space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-slate-800">
-            <ShieldCheck className="w-4 h-4 text-indigo-600" />
+        <div className="p-3.5 bg-[#131E36] border border-slate-800 rounded-2xl max-w-xs text-xs space-y-1">
+          <div className="flex items-center gap-1.5 font-bold text-white">
+            <ShieldCheck className="w-4 h-4 text-[#FF6B00]" />
             <span>Attendance Policy</span>
           </div>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-[11px] text-slate-400 leading-relaxed">
             1 free Off & 1 free Half Leave / month. Excess leaves deducted at your per-day income rate (Pay ÷ 30).
           </p>
         </div>
@@ -183,22 +183,22 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
       <div className="pt-6">
         {isCheckedIn ? (
           <div className="space-y-4">
-            <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                  <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
                     {attendance?.status === 'LATE' ? 'Present (Late Arrival)' : 'Present on Site'}
                   </div>
-                  <div className="text-base font-extrabold text-slate-900 mt-0.5">
+                  <div className="text-base font-extrabold text-white mt-0.5">
                     {location?.siteName || 'Solar Field Site'}
                   </div>
-                  <div className="text-xs text-slate-500 flex flex-wrap items-center gap-3 mt-1">
-                    <span>Clock In: <strong className="text-slate-800">{clockInFormatted}</strong></span>
+                  <div className="text-xs text-slate-400 flex flex-wrap items-center gap-3 mt-1">
+                    <span>Clock In: <strong className="text-white">{clockInFormatted}</strong></span>
                     {clockOutFormatted && (
-                      <span>Clock Out: <strong className="text-slate-800">{clockOutFormatted}</strong></span>
+                      <span>Clock Out: <strong className="text-white">{clockOutFormatted}</strong></span>
                     )}
                   </div>
                 </div>
@@ -209,7 +209,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 shadow-xs transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[#FF6B00] text-xs font-bold rounded-xl border border-slate-800 shadow-sm transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
                 >
                   <Navigation className="w-3.5 h-3.5" />
                   View Exact GPS on Maps
@@ -219,7 +219,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
             </div>
 
             {location?.latitude && (
-              <div className="px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-500 flex flex-wrap items-center gap-3 font-mono">
+              <div className="px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-[11px] text-slate-400 flex flex-wrap items-center gap-3 font-mono">
                 <span>GPS: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</span>
                 {location.accuracy && <span>• Accuracy: ±{Math.round(location.accuracy)}m</span>}
               </div>
@@ -231,7 +231,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                   type="button"
                   onClick={handleCheckOut}
                   disabled={loading}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   Check Out from Site
@@ -243,7 +243,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
           <div className="space-y-4 max-w-xl">
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                   Solar Project / Site Name &amp; City
                 </label>
                 <input
@@ -251,12 +251,12 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                   placeholder="e.g. Multan 50MW Solar Plant, Site B"
                   value={siteName}
                   onChange={(e) => setSiteName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                   Work Activity / Notes (Optional)
                 </label>
                 <input
@@ -264,7 +264,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                   placeholder="e.g. Inverter installation, Site survey"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
               </div>
             </div>
@@ -273,7 +273,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               type="button"
               onClick={handleCaptureGpsAndCheckIn}
               disabled={loading || gpsLoading}
-              className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-xs rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-3 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-bold text-xs rounded-2xl shadow-lg shadow-orange-950/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {gpsLoading || loading ? (
                 <>
@@ -291,15 +291,15 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
         )}
 
         {gpsError && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-2xl text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="mt-4 p-3 bg-red-950/50 text-red-300 border border-red-800/80 rounded-2xl text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{gpsError}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <div className="mt-4 p-3 bg-emerald-950/50 text-emerald-300 border border-emerald-800/80 rounded-2xl text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{successMsg}</span>
           </div>
         )}

@@ -137,22 +137,22 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
   };
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+    <div className="bg-[#131E36] border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-950 text-orange-400 border border-orange-800 mb-2">
             <CheckSquare className="w-3.5 h-3.5" />
             Daily Work Progress Reports
           </div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">Daily Task Submissions</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-xl font-black text-white tracking-tight">Daily Task Submissions</h2>
+          <p className="text-xs text-slate-400 mt-0.5">
             Submit your daily tasks and achievements so management can review your progress
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-xs shadow-indigo-200 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
+          className="px-4 py-2.5 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           Submit Today&apos;s Work
@@ -162,10 +162,10 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
       {/* Task List */}
       <div className="pt-6">
         {loading ? (
-          <div className="py-12 text-center text-slate-400 text-xs">Loading task reports...</div>
+          <div className="py-12 text-center text-slate-500 text-xs">Loading task reports...</div>
         ) : tasks.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-xs flex flex-col items-center justify-center">
-            <FileText className="w-8 h-8 text-slate-300 mb-2" />
+          <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center">
+            <FileText className="w-8 h-8 text-slate-600 mb-2" />
             <span>No daily task reports submitted yet. Click &quot;Submit Today&apos;s Work&quot; to log your progress!</span>
           </div>
         ) : (
@@ -173,26 +173,26 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
             {tasks.map((task) => (
               <div
                 key={task._id}
-                className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300 transition-all"
+                className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-slate-700 transition-all"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
                   <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-mono font-bold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                    <span className="text-xs font-mono font-bold text-orange-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
                       {task.date}
                     </span>
-                    <h4 className="font-extrabold text-slate-900 text-sm">{task.title}</h4>
+                    <h4 className="font-extrabold text-white text-sm">{task.title}</h4>
                   </div>
 
                   <div className="flex items-center gap-3">
                     {getStatusBadge(task.status)}
                     {task.hoursSpent ? (
-                      <span className="text-xs text-slate-500 font-mono">
+                      <span className="text-xs text-slate-400 font-mono">
                         {task.hoursSpent} hrs
                       </span>
                     ) : null}
                     <button
                       onClick={() => handleDeleteTask(task._id)}
-                      className="text-slate-400 hover:text-rose-600 p-1 rounded-md transition-colors cursor-pointer"
+                      className="text-slate-500 hover:text-rose-400 p-1 rounded-md transition-colors cursor-pointer"
                       title="Delete task report"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -200,13 +200,13 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
                   </div>
                 </div>
 
-                <div className="mt-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                <div className="mt-3 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                   {task.description}
                 </div>
 
                 {task.blockers && (
-                  <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 flex items-start gap-2">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-amber-950/40 border border-amber-800/80 text-[11px] text-amber-300 flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                     <div>
                       <strong className="font-bold">Blocker / Dependency:</strong> {task.blockers}
                     </div>
@@ -220,14 +220,14 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
 
       {/* Submit Task Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-150">
-            <h3 className="font-bold text-slate-900 text-lg mb-1">Submit Daily Work Progress</h3>
-            <p className="text-xs text-slate-500 mb-4">Record what you worked on and achieved today</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-[#0D1527] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-800 animate-in zoom-in-95 duration-150 text-slate-200">
+            <h3 className="font-bold text-white text-lg mb-1">Submit Daily Work Progress</h3>
+            <p className="text-xs text-slate-400 mb-4">Record what you worked on and achieved today</p>
 
             {errorMsg && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="mb-4 p-3 rounded-xl bg-red-950/50 border border-red-800/80 text-xs text-red-300 font-medium flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -235,18 +235,18 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
             <form onSubmit={handleSubmitTask} className="space-y-3.5">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Date</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Date</label>
                   <input
                     type="date"
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Hours Logged</label>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Hours Logged</label>
                   <input
                     type="number"
                     min="1"
@@ -254,33 +254,33 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
                     step="0.5"
                     value={hoursSpent}
                     onChange={(e) => setHoursSpent(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Task / Work Summary</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Task / Work Summary</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Inverter Wiring & System Commissioning at Site 4"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Status</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Status</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setStatus('COMPLETED')}
                     className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                       status === 'COMPLETED'
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                        : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     Completed
@@ -290,8 +290,8 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
                     onClick={() => setStatus('IN_PROGRESS')}
                     className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                       status === 'IN_PROGRESS'
-                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
+                        : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     In Progress
@@ -301,8 +301,8 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
                     onClick={() => setStatus('BLOCKED')}
                     className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                       status === 'BLOCKED'
-                        ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-rose-600 text-white border-rose-500 shadow-sm'
+                        : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     Blocked
@@ -311,25 +311,25 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Detailed Progress / Description</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Detailed Progress / Description</label>
                 <textarea
                   rows={4}
                   required
                   placeholder="Describe the steps completed, site observations, or deliverables..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Blockers / Material Needed (Optional)</label>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Blockers / Material Needed (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. Waiting for 32A DC circuit breaker from warehouse"
                   value={blockers}
                   onChange={(e) => setBlockers(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
               </div>
 
@@ -337,14 +337,14 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2.5 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow-lg shadow-orange-950/30 cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit Work Report'}
                 </button>
