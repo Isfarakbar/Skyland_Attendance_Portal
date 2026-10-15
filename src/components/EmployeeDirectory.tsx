@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2 } from 'lucide-react';
+import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2, Fingerprint } from 'lucide-react';
 import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 
 interface Employee {
@@ -43,6 +43,11 @@ export default function EmployeeDirectory() {
   const [editingSalaryEmpId, setEditingSalaryEmpId] = useState<string | null>(null);
   const [editingSalaryValue, setEditingSalaryValue] = useState<number>(30000);
   const [salaryUpdating, setSalaryUpdating] = useState(false);
+
+  // Quick edit biometric ID state
+  const [editingBioEmpId, setEditingBioEmpId] = useState<string | null>(null);
+  const [editingBioValue, setEditingBioValue] = useState<string>('');
+  const [bioUpdating, setBioUpdating] = useState(false);
 
   // 360 Employee Dossier Modal
   const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
@@ -178,6 +183,28 @@ export default function EmployeeDirectory() {
       alert('Error updating salary');
     } finally {
       setSalaryUpdating(false);
+    }
+  };
+
+  const handleSaveBioId = async (empId: string) => {
+    setBioUpdating(true);
+    try {
+      const res = await fetch(`/api/employees/${empId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ biometricUserId: editingBioValue.trim() || null }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingBioEmpId(null);
+        fetchEmployees();
+      } else {
+        alert(data.error || 'Failed to update biometric ID');
+      }
+    } catch {
+      alert('Error updating biometric ID');
+    } finally {
+      setBioUpdating(false);
     }
   };
 
@@ -386,7 +413,64 @@ export default function EmployeeDirectory() {
                       </div>
                     )}
                   </div>
-                </div>
+
+                  {/* Biometric Device ID Line & Quick Edit */}
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+                        <Fingerprint className="w-3.5 h-3.5 text-orange-400" />
+                        <span>Biometric Device ID:</span>
+                      </div>
+
+                      {editingBioEmpId === emp._id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            placeholder="e.g. 1"
+                            value={editingBioValue}
+                            onChange={(e) => setEditingBioValue(e.target.value)}
+                            className="w-20 px-1.5 py-0.5 text-xs font-bold bg-slate-950 text-white border border-[#FF6B00] rounded-md focus:outline-hidden font-mono"
+                          />
+                          <button
+                            onClick={() => handleSaveBioId(emp._id)}
+                            disabled={bioUpdating}
+                            className="p-1 text-emerald-400 hover:bg-emerald-950/40 rounded-md cursor-pointer"
+                            title="Save Biometric ID"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setEditingBioEmpId(null)}
+                            className="p-1 text-slate-400 hover:bg-slate-800 rounded-md cursor-pointer"
+                            title="Cancel"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
+                              emp.biometricUserId
+                                ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                                : 'bg-slate-800 text-slate-500 border-slate-700 italic'
+                            }`}
+                          >
+                            {emp.biometricUserId ? `ID #${emp.biometricUserId}` : 'Not Linked'}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setEditingBioEmpId(emp._id);
+                              setEditingBioValue(emp.biometricUserId || '');
+                            }}
+                            className="text-slate-400 hover:text-orange-400 p-0.5 rounded-md cursor-pointer transition-colors"
+                            title="Attach / Edit Fingerprint ID"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                 <button
                   type="button"
