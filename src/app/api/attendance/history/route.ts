@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
     const year = searchParams.get('year'); // e.g. "2026"
 
     let queryUserId = session.userId;
-    // Allow Developer, Admin, or Manager to view another user's history
-    if (targetUserId && ['developer', 'admin', 'manager'].includes(session.role)) {
+    // Allow Developer, Admin, CEO, or Manager to view another user's history
+    if (targetUserId && ['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       queryUserId = targetUserId;
     }
 

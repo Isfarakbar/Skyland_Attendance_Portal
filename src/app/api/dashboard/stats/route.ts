@@ -6,7 +6,7 @@ import User from '@/models/User';
 import LeaveRequest from '@/models/LeaveRequest';
 import DailyTask from '@/models/DailyTask';
 import CompanySettings from '@/models/CompanySettings';
-import { getTodayDateString } from '@/lib/attendanceUtils';
+import { getTodayDateString, getClockInMinutesInTimezone } from '@/lib/attendanceUtils';
 
 export async function GET() {
   try {
@@ -27,7 +27,10 @@ export async function GET() {
     const startMinutes = (startH || 9) * 60 + (startM || 0);
 
     const [allEmployees, todayAttendances, pendingLeaves, approvedLeaves] = await Promise.all([
-      User.find({ isActive: true, role: 'employee' })
+      User.find({
+        isActive: true,
+        role: { $nin: ['admin', 'developer', 'ceo'] },
+      })
         .select('_id name email employeeId department designation avatarUrl workMode phone baseSalary biometricUserId')
         .sort({ name: 1 })
         .lean(),
@@ -85,7 +88,7 @@ export async function GET() {
 
         // Calculate late minutes if applicable
         const clockInDate = new Date(att.clockIn);
-        const clockInMinutes = clockInDate.getHours() * 60 + clockInDate.getMinutes();
+        const clockInMinutes = getClockInMinutesInTimezone(clockInDate, timezone);
         const minutesLate = Math.max(0, clockInMinutes - startMinutes);
 
         const record = {

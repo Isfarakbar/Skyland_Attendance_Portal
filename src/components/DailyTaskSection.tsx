@@ -13,6 +13,13 @@ interface TaskItem {
   hoursSpent?: number;
   blockers?: string;
   createdAt: string;
+  user?: {
+    _id?: string;
+    name: string;
+    employeeId: string;
+    department?: string;
+    designation?: string;
+  };
 }
 
 interface DailyTaskSectionProps {
@@ -23,6 +30,7 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form State
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -159,8 +167,21 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
         </button>
       </div>
 
+      {/* Search Bar for Management */}
+      {!userId && tasks.length > 0 && (
+        <div className="pt-4 pb-1">
+          <input
+            type="text"
+            placeholder="Filter tasks by employee name, title, or date (YYYY-MM-DD)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+          />
+        </div>
+      )}
+
       {/* Task List */}
-      <div className="pt-6">
+      <div className="pt-4">
         {loading ? (
           <div className="py-12 text-center text-slate-500 text-xs">Loading task reports...</div>
         ) : tasks.length === 0 ? (
@@ -170,16 +191,32 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {tasks.map((task) => (
+            {tasks
+              .filter((t) => {
+                if (!searchQuery.trim()) return true;
+                const q = searchQuery.toLowerCase();
+                const userName = t.user?.name?.toLowerCase() || '';
+                const empId = t.user?.employeeId?.toLowerCase() || '';
+                const title = t.title.toLowerCase();
+                const desc = t.description.toLowerCase();
+                const date = t.date.toLowerCase();
+                return userName.includes(q) || empId.includes(q) || title.includes(q) || desc.includes(q) || date.includes(q);
+              })
+              .map((task) => (
               <div
                 key={task._id}
                 className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900 hover:border-slate-700 transition-all"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-mono font-bold text-orange-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
                       {task.date}
                     </span>
+                    {task.user?.name && (
+                      <span className="text-xs font-semibold text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700/60">
+                        {task.user.name} <span className="font-mono text-slate-400 text-[11px]">({task.user.employeeId})</span>
+                      </span>
+                    )}
                     <h4 className="font-extrabold text-white text-sm">{task.title}</h4>
                   </div>
 

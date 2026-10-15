@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
 
     // If regular employee, only allow viewing self
     if (!isManagement && session.userId !== id) {

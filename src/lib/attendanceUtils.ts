@@ -109,3 +109,25 @@ export function formatMinutesToHours(minutes: number): string {
   const mins = minutes % 60;
   return `${hours}h ${mins}m`;
 }
+
+export function getClockInMinutesInTimezone(date: Date, timezone: string = DEFAULT_TIMEZONE): number {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || DEFAULT_TIMEZONE,
+      hour: 'numeric',
+      minute: 'numeric',
+      hourCycle: 'h23',
+    });
+    const parts = formatter.formatToParts(new Date(date));
+    let h = 0;
+    let m = 0;
+    for (const part of parts) {
+      if (part.type === 'hour') h = parseInt(part.value, 10);
+      if (part.type === 'minute') m = parseInt(part.value, 10);
+    }
+    return h * 60 + m;
+  } catch {
+    const d = new Date(date);
+    return d.getHours() * 60 + d.getMinutes();
+  }
+}

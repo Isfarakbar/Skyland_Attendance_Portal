@@ -35,7 +35,7 @@ export async function PUT(
 
     await leave.save();
 
-    // Deduct leave balance if newly APPROVED
+    // Deduct leave balance & sync Attendance if newly APPROVED
     if (status === 'APPROVED' && previousStatus !== 'APPROVED') {
       const user = await User.findById(leave.user);
       if (user) {
@@ -45,8 +45,29 @@ export async function PUT(
           await user.save();
         }
       }
+
+      // Automatically sync to Attendance
+      const Attendance = (await import('@/models/Attendance')).default;
+      const attStatus = leave.leaveType === 'HALF_LEAVE' ? 'HALF_LEAVE' : 'ON_LEAVE';
+      const curr = new Date(leave.startDate + 'T00:00:00Z');
+      const end = new Date(leave.endDate + 'T00:00:00Z');
+      while (curr <= end) {
+        const dateStr = curr.toISOString().substring(0, 10);
+        await Attendance.findOneAndUpdate(
+          { user: leave.user, date: dateStr },
+          {
+            $set: {
+              status: attStatus,
+              notes: `Approved Leave: ${leave.leaveType} (${leave.reason || 'Management Approved'})`,
+              source: 'WEB',
+            },
+          },
+          { upsert: true, new: true }
+        );
+        curr.setUTCDate(curr.getUTCDate() + 1);
+      }
     }
-    // Refund leave balance if changing from APPROVED to REJECTED
+    // Refund leave balance and revert Attendance if changing from APPROVED to REJECTED
     else if (previousStatus === 'APPROVED' && status === 'REJECTED') {
       const user = await User.findById(leave.user);
       if (user) {
@@ -55,6 +76,21 @@ export async function PUT(
           user.leaveBalance[type] = user.leaveBalance[type] + leave.daysCount;
           await user.save();
         }
+      }
+
+      // Remove auto-generated leave attendance records without punches
+      const Attendance = (await import('@/models/Attendance')).default;
+      const curr = new Date(leave.startDate + 'T00:00:00Z');
+      const end = new Date(leave.endDate + 'T00:00:00Z');
+      while (curr <= end) {
+        const dateStr = curr.toISOString().substring(0, 10);
+        await Attendance.deleteOne({
+          user: leave.user,
+          date: dateStr,
+          clockIn: null,
+          status: { $in: ['ON_LEAVE', 'HALF_LEAVE'] },
+        });
+        curr.setUTCDate(curr.getUTCDate() + 1);
       }
     }
 
@@ -101,7 +137,7 @@ export async function DELETE(
       );
     }
 
-    // If deleting an approved leave, refund balance
+    // If deleting an approved leave, refund balance & clean up Attendance
     if (leave.status === 'APPROVED') {
       const user = await User.findById(leave.user);
       if (user) {
@@ -110,6 +146,20 @@ export async function DELETE(
           user.leaveBalance[type] = user.leaveBalance[type] + leave.daysCount;
           await user.save();
         }
+      }
+
+      const Attendance = (await import('@/models/Attendance')).default;
+      const curr = new Date(leave.startDate + 'T00:00:00Z');
+      const end = new Date(leave.endDate + 'T00:00:00Z');
+      while (curr <= end) {
+        const dateStr = curr.toISOString().substring(0, 10);
+        await Attendance.deleteOne({
+          user: leave.user,
+          date: dateStr,
+          clockIn: null,
+          status: { $in: ['ON_LEAVE', 'HALF_LEAVE'] },
+        });
+        curr.setUTCDate(curr.getUTCDate() + 1);
       }
     }
 

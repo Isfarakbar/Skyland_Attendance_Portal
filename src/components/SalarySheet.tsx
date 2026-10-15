@@ -240,7 +240,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                     {/* Offs */}
                     <td className="py-3.5 px-3 text-center">
                       <div className="text-white font-semibold">
-                        {record.totalOffs} <span className="text-slate-400 font-normal">/ 1 free</span>
+                        {record.totalOffs} <span className="text-slate-400 font-normal">/ {record.allowedOffs} free</span>
                       </div>
                       {record.excessOffs > 0 && (
                         <div className="text-[10px] text-rose-400 font-bold">
@@ -252,7 +252,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                     {/* Half Leaves */}
                     <td className="py-3.5 px-3 text-center">
                       <div className="text-white font-semibold">
-                        {record.totalHalfLeaves} <span className="text-slate-400 font-normal">/ 1 free</span>
+                        {record.totalHalfLeaves} <span className="text-slate-400 font-normal">/ {record.allowedHalfLeaves} free</span>
                       </div>
                       {record.excessHalfLeaves > 0 && (
                         <div className="text-[10px] text-amber-400 font-bold">

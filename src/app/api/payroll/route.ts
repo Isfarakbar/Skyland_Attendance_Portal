@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     if (targetUserId) {
       userQuery._id = targetUserId;
     } else {
-      userQuery.role = 'employee';
+      userQuery.role = { $nin: ['admin', 'developer', 'ceo'] };
     }
 
     const employees = await User.find(userQuery)
@@ -109,9 +109,9 @@ export async function GET(req: NextRequest) {
       const dailyRate = Math.round(baseSalary / 30);
       const halfDayRate = Math.round(dailyRate / 2);
 
-      // Office policy: 1 free Off, 1 free Half Leave per month
-      const allowedOffs = 1;
-      const allowedHalfLeaves = 1;
+      // Office policy: allowed free leaves/half leaves from settings or default 1
+      const allowedOffs = typeof settings?.allowedFreeLeaves === 'number' ? settings.allowedFreeLeaves : 1;
+      const allowedHalfLeaves = typeof settings?.allowedFreeHalfLeaves === 'number' ? settings.allowedFreeHalfLeaves : 1;
 
       const excessOffs = Math.max(0, totalOffs - allowedOffs);
       const excessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);

@@ -88,11 +88,13 @@ export async function POST(req: NextRequest) {
           accuracy: accuracy ? Number(accuracy) : undefined,
         },
         notes: noteText,
+        source: 'FIELD',
       });
     } else {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
       attendance.isFieldCheckIn = true;
+      attendance.source = 'FIELD';
       attendance.location = {
         latitude: Number(latitude),
         longitude: Number(longitude),

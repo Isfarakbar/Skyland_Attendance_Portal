@@ -15,6 +15,8 @@ export default function CompanySettingsTab() {
   const [halfDayThresholdHours, setHalfDayThresholdHours] = useState(4);
   const [fullDayThresholdHours, setFullDayThresholdHours] = useState(8);
   const [timezone, setTimezone] = useState('Asia/Karachi');
+  const [allowedFreeLeaves, setAllowedFreeLeaves] = useState(1);
+  const [allowedFreeHalfLeaves, setAllowedFreeHalfLeaves] = useState(1);
 
   useEffect(() => {
     fetchSettings();
@@ -28,10 +30,12 @@ export default function CompanySettingsTab() {
         setCompanyName(data.settings.companyName || 'Skyland Corporation');
         setOfficeStartTime(data.settings.officeStartTime || '09:00');
         setOfficeEndTime(data.settings.officeEndTime || '18:00');
-        setGracePeriodMinutes(data.settings.gracePeriodMinutes || 15);
-        setHalfDayThresholdHours(data.settings.halfDayThresholdHours || 4);
-        setFullDayThresholdHours(data.settings.fullDayThresholdHours || 8);
+        setGracePeriodMinutes(data.settings.gracePeriodMinutes ?? 15);
+        setHalfDayThresholdHours(data.settings.halfDayThresholdHours ?? 4);
+        setFullDayThresholdHours(data.settings.fullDayThresholdHours ?? 8);
         setTimezone(data.settings.timezone || 'Asia/Karachi');
+        setAllowedFreeLeaves(data.settings.allowedFreeLeaves ?? 1);
+        setAllowedFreeHalfLeaves(data.settings.allowedFreeHalfLeaves ?? 1);
       }
     } catch (err) {
       console.error(err);
@@ -57,6 +61,8 @@ export default function CompanySettingsTab() {
           halfDayThresholdHours,
           fullDayThresholdHours,
           timezone,
+          allowedFreeLeaves,
+          allowedFreeHalfLeaves,
         }),
       });
 
@@ -79,21 +85,21 @@ export default function CompanySettingsTab() {
   }
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xs">
+    <div className="bg-[#131E36] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
       <div className="max-w-2xl">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-[#FF6B00] flex items-center justify-center">
             <Sliders className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Shift & Attendance Rules</h3>
-            <p className="text-xs text-slate-500">Configure standard working hours, punctuality thresholds, and company identity</p>
+            <h3 className="text-lg font-bold text-white">Shift, Leave &amp; Attendance Rules</h3>
+            <p className="text-xs text-slate-400">Configure standard working hours, punctuality grace periods, and monthly free leave quota</p>
           </div>
         </div>
 
         {success && (
-          <div className="mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="mt-4 p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-xs text-emerald-300 font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{success}</span>
           </div>
         )}
@@ -101,33 +107,33 @@ export default function CompanySettingsTab() {
         <form onSubmit={handleSave} className="space-y-5 mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Company / Organization Name</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Company / Organization Name</label>
               <input
                 type="text"
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Company Office Timezone</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Company Office Timezone</label>
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               >
-                <option value="Asia/Karachi">Asia/Karachi (PKT - UTC+05:00)</option>
-                <option value="Asia/Dubai">Asia/Dubai (GST - UTC+04:00)</option>
-                <option value="Asia/Riyadh">Asia/Riyadh (AST - UTC+03:00)</option>
-                <option value="Asia/Kolkata">Asia/Kolkata (IST - UTC+05:30)</option>
-                <option value="Asia/Dhaka">Asia/Dhaka (BST - UTC+06:00)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT - UTC+08:00)</option>
-                <option value="Europe/London">Europe/London (GMT/BST)</option>
-                <option value="America/New_York">America/New_York (EST - UTC-05:00)</option>
-                <option value="America/Los_Angeles">America/Los_Angeles (PST - UTC-08:00)</option>
-                <option value="UTC">UTC (Coordinated Universal Time)</option>
+                <option value="Asia/Karachi" className="bg-[#0D1527] text-white">Asia/Karachi (PKT - UTC+05:00)</option>
+                <option value="Asia/Dubai" className="bg-[#0D1527] text-white">Asia/Dubai (GST - UTC+04:00)</option>
+                <option value="Asia/Riyadh" className="bg-[#0D1527] text-white">Asia/Riyadh (AST - UTC+03:00)</option>
+                <option value="Asia/Kolkata" className="bg-[#0D1527] text-white">Asia/Kolkata (IST - UTC+05:30)</option>
+                <option value="Asia/Dhaka" className="bg-[#0D1527] text-white">Asia/Dhaka (BST - UTC+06:00)</option>
+                <option value="Asia/Singapore" className="bg-[#0D1527] text-white">Asia/Singapore (SGT - UTC+08:00)</option>
+                <option value="Europe/London" className="bg-[#0D1527] text-white">Europe/London (GMT/BST)</option>
+                <option value="America/New_York" className="bg-[#0D1527] text-white">America/New_York (EST - UTC-05:00)</option>
+                <option value="America/Los_Angeles" className="bg-[#0D1527] text-white">America/Los_Angeles (PST - UTC-08:00)</option>
+                <option value="UTC" className="bg-[#0D1527] text-white">UTC (Coordinated Universal Time)</option>
               </select>
               <p className="text-[11px] text-slate-400 mt-1">Daily dates and punctuality are calculated in this timezone</p>
             </div>
@@ -135,25 +141,25 @@ export default function CompanySettingsTab() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Office Start Time</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Office Start Time</label>
               <input
                 type="time"
                 required
                 value={officeStartTime}
                 onChange={(e) => setOfficeStartTime(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm font-mono text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
               <p className="text-[11px] text-slate-400 mt-1">Clock in threshold for punctuality</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Office End Time</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Office End Time</label>
               <input
                 type="time"
                 required
                 value={officeEndTime}
                 onChange={(e) => setOfficeEndTime(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm font-mono text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
               <p className="text-[11px] text-slate-400 mt-1">Official daily shift conclusion</p>
             </div>
@@ -161,7 +167,7 @@ export default function CompanySettingsTab() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Grace Period (Minutes)</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Grace Period (Minutes)</label>
               <input
                 type="number"
                 min={0}
@@ -169,13 +175,13 @@ export default function CompanySettingsTab() {
                 required
                 value={gracePeriodMinutes}
                 onChange={(e) => setGracePeriodMinutes(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
               <p className="text-[11px] text-slate-400 mt-1">Arrival after this is marked Late</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Half Day Minimum (Hours)</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Half Day Minimum (Hours)</label>
               <input
                 type="number"
                 min={1}
@@ -183,13 +189,13 @@ export default function CompanySettingsTab() {
                 required
                 value={halfDayThresholdHours}
                 onChange={(e) => setHalfDayThresholdHours(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
               <p className="text-[11px] text-slate-400 mt-1">Threshold for Half Day status</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Full Day Standard (Hours)</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Full Day Standard (Hours)</label>
               <input
                 type="number"
                 min={4}
@@ -197,17 +203,48 @@ export default function CompanySettingsTab() {
                 required
                 value={fullDayThresholdHours}
                 onChange={(e) => setFullDayThresholdHours(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
               />
               <p className="text-[11px] text-slate-400 mt-1">Expected work duration</p>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+          {/* Monthly Leave Policy & Quota */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Allowed Free Offs / Month</label>
+              <input
+                type="number"
+                min={0}
+                max={15}
+                required
+                value={allowedFreeLeaves}
+                onChange={(e) => setAllowedFreeLeaves(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Offs exceeding this limit will incur 1 day salary deduction (Pay ÷ 30)</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Allowed Free Half Leaves / Month</label>
+              <input
+                type="number"
+                min={0}
+                max={15}
+                required
+                value={allowedFreeHalfLeaves}
+                onChange={(e) => setAllowedFreeHalfLeaves(Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Half leaves exceeding this limit will incur half-day salary deduction (Pay ÷ 60)</p>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-end">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               {saving ? 'Saving Changes...' : 'Save Company Rules'}
             </button>

@@ -14,14 +14,17 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
+    const requestedUserId = searchParams.get('userId');
 
     await connectToDatabase();
 
     const query: Record<string, unknown> = {};
 
-    // Employees can only see their own leaves
-    if (session.role === 'employee') {
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
+    if (!isManagement) {
       query.user = session.userId;
+    } else if (requestedUserId) {
+      query.user = requestedUserId;
     }
 
     if (status && status !== 'ALL') {

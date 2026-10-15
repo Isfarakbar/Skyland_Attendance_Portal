@@ -60,7 +60,8 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
   const fetchLeaves = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/leaves');
+      const url = userId ? `/api/leaves?userId=${userId}` : '/api/leaves';
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setLeaves(data.leaves);
