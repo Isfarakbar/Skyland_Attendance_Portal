@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date');
     const month = searchParams.get('month'); // e.g. "2026-10"
 
-    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
 
     // If regular employee, only allow self lookup
     if (!isManagement && requestedUserId && requestedUserId !== session.userId) {
@@ -115,7 +115,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const isOwner = String(task.user) === session.userId;
-    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
 
     if (!isOwner && !isManagement) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
@@ -155,7 +155,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const isOwner = String(task.user) === session.userId;
-    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
 
     if (!isOwner && !isManagement) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });

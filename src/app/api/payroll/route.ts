@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     const month = searchParams.get('month') || currentMonthStr;
     const requestedUserId = searchParams.get('userId');
 
-    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
 
     // If regular employee, only allow self lookup
     if (!isManagement && requestedUserId && requestedUserId !== session.userId) {

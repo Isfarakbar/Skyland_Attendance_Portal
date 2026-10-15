@@ -14,8 +14,9 @@ export async function GET() {
 
     // Ghost profiles: Admin, Manager (CEO), and Developer are ghost management accounts.
     // In Staff Directory, show only regular staff employees to non-developers.
+    // In Staff Directory, allow developer, admin, and ceo to view accounts
     const query: Record<string, unknown> = {};
-    if (session.role !== 'developer') {
+    if (session.role === 'employee') {
       query.role = 'employee';
     }
 
@@ -37,7 +38,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 

@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type UserRole = 'developer' | 'admin' | 'manager' | 'employee';
+export type UserRole = 'developer' | 'admin' | 'ceo' | 'manager' | 'employee';
 
 export interface IUserDevice {
   name: string;
@@ -68,7 +68,7 @@ const UserSchema = new Schema<IUser>(
     employeeId: { type: String, required: true, unique: true, uppercase: true, trim: true },
     role: {
       type: String,
-      enum: ['developer', 'admin', 'manager', 'employee'],
+      enum: ['developer', 'admin', 'ceo', 'manager', 'employee'],
       default: 'employee',
       required: true,
     },

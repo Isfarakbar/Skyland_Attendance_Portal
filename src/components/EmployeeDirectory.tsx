@@ -9,7 +9,7 @@ interface Employee {
   name: string;
   email: string;
   employeeId: string;
-  role: 'developer' | 'admin' | 'manager' | 'employee';
+  role: 'developer' | 'admin' | 'ceo' | 'manager' | 'employee';
   department: string;
   designation: string;
   phone?: string;
@@ -30,7 +30,7 @@ export default function EmployeeDirectory() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password123');
-  const [role, setRole] = useState<'developer' | 'admin' | 'manager' | 'employee'>('employee');
+  const [role, setRole] = useState<'developer' | 'admin' | 'ceo' | 'manager' | 'employee'>('employee');
   const [department, setDepartment] = useState('Field Operations');
   const [designation, setDesignation] = useState('Solar Technician');
   const [phone, setPhone] = useState('');
@@ -273,11 +273,13 @@ export default function EmployeeDirectory() {
                   </div>
 
                   <select
-                    value={emp.role === 'admin' ? 'admin' : 'employee'}
+                    value={emp.role}
                     onChange={(e) => handleChangeRole(emp._id, e.target.value)}
                     className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border cursor-pointer focus:outline-hidden transition-all ${
                       emp.role === 'admin'
                         ? 'bg-blue-50 text-blue-900 border-blue-300 font-extrabold'
+                        : emp.role === 'ceo'
+                        ? 'bg-purple-50 text-purple-900 border-purple-300 font-black'
                         : emp.role === 'developer'
                         ? 'bg-slate-900 text-white border-slate-700 font-black'
                         : 'bg-emerald-50 text-emerald-800 border-emerald-300'
@@ -285,6 +287,7 @@ export default function EmployeeDirectory() {
                     title="Change employee role"
                   >
                     <option value="employee">Staff Employee</option>
+                    <option value="ceo">CEO (Executive)</option>
                     <option value="admin">Operations Admin</option>
                   </select>
                 </div>
@@ -464,8 +467,9 @@ export default function EmployeeDirectory() {
                     onChange={(e) => setRole(e.target.value as any)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-semibold"
                   >
-                    <option value="employee">Staff Member / Employee</option>
-                    <option value="admin">Management (CEO / Admin)</option>
+                    <option value="employee">Staff Employee</option>
+                    <option value="ceo">CEO (Executive Dashboard)</option>
+                    <option value="admin">Operations Admin (Master Access)</option>
                   </select>
                 </div>
 

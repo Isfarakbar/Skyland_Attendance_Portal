@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
 import User from '@/models/User';
 import LeaveRequest from '@/models/LeaveRequest';
+import DailyTask from '@/models/DailyTask';
 import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString } from '@/lib/attendanceUtils';
 
@@ -18,41 +19,138 @@ export async function GET() {
     const settings = await CompanySettings.findOne();
     const timezone = settings?.timezone || 'Asia/Karachi';
     const todayStr = getTodayDateString(new Date(), timezone);
+    const officeStartTime = settings?.officeStartTime || '09:00';
+    const gracePeriodMinutes = settings?.gracePeriodMinutes || 15;
 
-    const [totalEmployees, todayAttendances, pendingLeaves, approvedLeavesToday] = await Promise.all([
-      User.countDocuments({ isActive: true, role: 'employee' }),
-      Attendance.find({ date: todayStr }).populate('user', 'name email employeeId department designation').lean(),
+    // Parse office start threshold in minutes from midnight
+    const [startH, startM] = officeStartTime.split(':').map(Number);
+    const startMinutes = (startH || 9) * 60 + (startM || 0);
+
+    const [allEmployees, todayAttendances, pendingLeaves, approvedLeaves] = await Promise.all([
+      User.find({ isActive: true, role: 'employee' })
+        .select('_id name email employeeId department designation avatarUrl workMode phone baseSalary biometricUserId')
+        .sort({ name: 1 })
+        .lean(),
+      Attendance.find({ date: todayStr })
+        .populate('user', '_id name email employeeId department designation avatarUrl workMode phone biometricUserId')
+        .lean(),
       LeaveRequest.countDocuments({ status: 'PENDING' }),
-      LeaveRequest.countDocuments({
+      LeaveRequest.find({
         status: 'APPROVED',
         startDate: { $lte: todayStr },
         endDate: { $gte: todayStr },
-      }),
+      })
+        .populate('user', '_id name email employeeId department designation')
+        .lean(),
     ]);
 
-    const presentCount = todayAttendances.filter((a) => a.clockIn).length;
-    const lateCount = todayAttendances.filter((a) => a.status === 'LATE').length;
-    const currentlyClockedIn = todayAttendances.filter((a) => a.clockIn && !a.clockOut).length;
-    const absentCount = Math.max(0, totalEmployees - presentCount - approvedLeavesToday);
+    const approvedLeaveUserIds = new Set(
+      approvedLeaves.map((l) => (l.user as any)?._id?.toString() || (l.user as any)?.toString())
+    );
 
-    // Recent activity logs (latest punches today)
-    const recentActivity = todayAttendances
-      .filter((a) => a.clockIn)
-      .sort((a, b) => new Date(b.clockIn || 0).getTime() - new Date(a.clockIn || 0).getTime())
-      .slice(0, 8);
+    // Map attendances by userId
+    const attendanceMap = new Map<string, any>();
+    for (const att of todayAttendances) {
+      const uId = (att.user as any)?._id?.toString() || att.user?.toString();
+      if (uId) {
+        attendanceMap.set(uId, att);
+      }
+    }
+
+    const lateEmployees: any[] = [];
+    const presentEmployees: any[] = [];
+    const absentEmployees: any[] = [];
+
+    let officeTotal = 0;
+    let siteTotal = 0;
+    let officePresent = 0;
+    let sitePresent = 0;
+
+    for (const emp of allEmployees) {
+      const empIdStr = emp._id.toString();
+      const isField = emp.workMode === 'FIELD';
+      if (isField) {
+        siteTotal++;
+      } else {
+        officeTotal++;
+      }
+
+      const att = attendanceMap.get(empIdStr);
+      const isOnLeave = approvedLeaveUserIds.has(empIdStr);
+
+      if (att && att.clockIn) {
+        // Employee is present today
+        if (isField) sitePresent++;
+        else officePresent++;
+
+        // Calculate late minutes if applicable
+        const clockInDate = new Date(att.clockIn);
+        const clockInMinutes = clockInDate.getHours() * 60 + clockInDate.getMinutes();
+        const minutesLate = Math.max(0, clockInMinutes - startMinutes);
+
+        const record = {
+          user: emp,
+          attendanceId: att._id,
+          clockIn: att.clockIn,
+          clockOut: att.clockOut,
+          status: att.status,
+          source: att.source || (att.isFieldCheckIn ? 'FIELD' : 'WEB'),
+          location: att.location || null,
+          isFieldCheckIn: !!att.isFieldCheckIn,
+          notes: att.notes || '',
+          minutesLate,
+        };
+
+        presentEmployees.push(record);
+
+        if (att.status === 'LATE' || minutesLate > gracePeriodMinutes) {
+          lateEmployees.push(record);
+        }
+      } else if (!isOnLeave) {
+        absentEmployees.push(emp);
+      }
+    }
+
+    // Sort late employees by who arrived latest or who clocked in
+    lateEmployees.sort((a, b) => (b.minutesLate || 0) - (a.minutesLate || 0));
+
+    // Sort present employees by most recent clock-in
+    presentEmployees.sort(
+      (a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime()
+    );
+
+    // Fetch recent tasks submitted today
+    const recentTasks = await DailyTask.find({ date: todayStr })
+      .populate('user', 'name employeeId department designation workMode avatarUrl')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    const totalEmployees = allEmployees.length;
+    const presentToday = presentEmployees.length;
+    const lateToday = lateEmployees.length;
+    const onLeaveToday = approvedLeaves.length;
+    const absentToday = absentEmployees.length;
 
     return NextResponse.json({
       success: true,
       stats: {
         totalEmployees,
-        presentToday: presentCount,
-        lateToday: lateCount,
-        onLeaveToday: approvedLeavesToday,
-        absentToday: absentCount,
-        currentlyClockedIn,
+        presentToday,
+        lateToday,
+        onLeaveToday,
+        absentToday,
+        officeTotal,
+        siteTotal,
+        officePresent,
+        sitePresent,
         pendingLeaves,
       },
-      recentActivity,
+      lateEmployees,
+      presentEmployees,
+      absentEmployees,
+      approvedLeavesToday: approvedLeaves,
+      recentTasks,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error fetching dashboard stats';

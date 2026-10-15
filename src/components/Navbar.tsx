@@ -57,16 +57,26 @@ export default function Navbar({
     }
   };
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'people', label: 'People' },
-    { id: 'hiring', label: user?.role === 'employee' ? 'Attendance' : 'Hiring' },
-    { id: 'devices', label: 'Devices' },
-    { id: 'apps', label: 'Tasks' },
-    { id: 'salary', label: 'Salary' },
-    { id: 'calendar', label: 'Calendar' },
-    { id: 'reviews', label: 'Reviews' },
-  ];
+  const isElevated = user && ['developer', 'admin', 'ceo', 'manager'].includes(user.role);
+
+  const navItems = isElevated
+    ? [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'people', label: 'Staff Directory' },
+        { id: 'hiring', label: 'Attendance Register' },
+        { id: 'apps', label: 'Task Reports' },
+        { id: 'salary', label: 'Salary Sheet' },
+        { id: 'calendar', label: 'Calendar' },
+        { id: 'reviews', label: 'Leave Approvals' },
+      ]
+    : [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'hiring', label: 'My Attendance' },
+        { id: 'apps', label: 'Daily Work' },
+        { id: 'salary', label: 'My Payslip' },
+        { id: 'calendar', label: 'Calendar' },
+        { id: 'reviews', label: 'Leave Requests' },
+      ];
 
   const handleTabClick = (id: string) => {
     if (onSelectTab) {

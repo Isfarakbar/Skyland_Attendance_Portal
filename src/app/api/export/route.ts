@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 

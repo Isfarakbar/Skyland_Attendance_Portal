@@ -7,7 +7,7 @@ import { calculateWorkMinutes, calculateBreakMinutes } from '@/lib/attendanceUti
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 

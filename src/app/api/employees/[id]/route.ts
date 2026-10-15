@@ -9,7 +9,7 @@ export async function PUT(
 ) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
@@ -49,7 +49,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Super Admin/Developer only' }, { status: 403 });
     }
 

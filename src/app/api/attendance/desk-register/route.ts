@@ -9,7 +9,7 @@ import { getTodayDateString, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Desk Register access required' }, { status: 403 });
     }
 
@@ -111,7 +111,7 @@ interface RegisterEntryPayload {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Desk Register access required' }, { status: 403 });
     }
 

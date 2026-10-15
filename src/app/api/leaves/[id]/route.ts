@@ -10,7 +10,7 @@ export async function PUT(
 ) {
   try {
     const session = await getSession();
-    if (!session || !['developer', 'admin', 'manager'].includes(session.role)) {
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
@@ -88,7 +88,7 @@ export async function DELETE(
     }
 
     const isOwner = leave.user.toString() === session.userId;
-    const isManagement = ['developer', 'admin', 'manager'].includes(session.role);
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
 
     if (!isOwner && !isManagement) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
