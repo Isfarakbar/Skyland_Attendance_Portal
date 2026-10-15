@@ -146,19 +146,19 @@ export default function InstallAppBanner() {
 
       {/* Floating Mobile App Download Notification Banner */}
       {showBanner && !isInstalled && (
-        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40 bg-slate-900/95 backdrop-blur-md text-white p-4 sm:p-5 rounded-3xl shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40 bg-[#0D1527]/95 backdrop-blur-md text-white p-4 sm:p-5 rounded-3xl shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF6B00] to-amber-500 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25">
                 <Smartphone className="w-6 h-6 text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <h4 className="font-bold text-sm text-white leading-tight">Install Skyland on Phone</h4>
+                  <h4 className="font-bold text-sm text-white leading-tight">Install Skyland App</h4>
                 </div>
                 <p className="text-xs text-slate-300 mt-0.5 leading-snug">
-                  Get the app on your home screen for instant shift punch in, live roster & notifications.
+                  Install on your phone home screen for instant shift punch, offline support & live attendance.
                 </p>
               </div>
             </div>
@@ -172,13 +172,13 @@ export default function InstallAppBanner() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2.5 mt-3.5 pt-3 border-t border-slate-800">
+          <div className="flex items-center gap-2.5 mt-3.5 pt-3 border-t border-slate-800/80">
             <button
               onClick={handleInstallClick}
-              className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              className="flex-1 py-2.5 px-4 bg-[#FF6B00] hover:bg-[#FF8533] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               <Download className="w-4 h-4" />
-              <span>{isIOS ? 'Install on iPhone' : 'Download App on Phone'}</span>
+              <span>{isIOS ? 'Install on iPhone' : 'Install on Android Phone'}</span>
             </button>
 
             <button
@@ -193,23 +193,23 @@ export default function InstallAppBanner() {
 
       {/* Visual Step-by-Step Installation Modal */}
       {showGuideModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-slate-900 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-[#0D1527] border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-[#FF6B00] flex items-center justify-center border border-orange-500/20">
                   <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900">
-                    {isIOS ? 'Install on iPhone / iPad' : 'Install on Android / Phone'}
+                  <h3 className="font-bold text-base text-white">
+                    {isIOS ? 'Install on iPhone / iPad' : 'Install on Android'}
                   </h3>
-                  <p className="text-[11px] text-slate-400">Add directly to your home screen</p>
+                  <p className="text-[11px] text-slate-400">Add to your Home Screen as an App</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowGuideModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -217,75 +217,75 @@ export default function InstallAppBanner() {
 
             {/* iOS Instructions */}
             {isIOS ? (
-              <div className="space-y-3.5 my-4 text-xs text-slate-600">
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+              <div className="space-y-3 my-4 text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#0B1120] border border-slate-800/80">
+                  <div className="w-6 h-6 rounded-lg bg-[#FF6B00] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
                     1
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 flex items-center gap-1.5">
-                      Tap the Share button <Share className="w-3.5 h-3.5 text-indigo-600 inline" />
+                    <p className="font-bold text-slate-100 flex items-center gap-1.5">
+                      Tap the Share button <Share className="w-3.5 h-3.5 text-[#FF6B00] inline" />
                     </p>
-                    <p className="text-slate-500 mt-0.5">At the bottom menu bar in Safari.</p>
+                    <p className="text-slate-400 mt-0.5">Found at the bottom menu bar in Safari.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#0B1120] border border-slate-800/80">
+                  <div className="w-6 h-6 rounded-lg bg-[#FF6B00] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
                     2
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 flex items-center gap-1.5">
-                      Tap "Add to Home Screen" <PlusSquare className="w-3.5 h-3.5 text-indigo-600 inline" />
+                    <p className="font-bold text-slate-100 flex items-center gap-1.5">
+                      Tap &quot;Add to Home Screen&quot; <PlusSquare className="w-3.5 h-3.5 text-[#FF6B00] inline" />
                     </p>
-                    <p className="text-slate-500 mt-0.5">Scroll down slightly in the share menu options.</p>
+                    <p className="text-slate-400 mt-0.5">Scroll down slightly in the share sheet.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#0B1120] border border-slate-800/80">
+                  <div className="w-6 h-6 rounded-lg bg-[#FF6B00] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
                     3
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900">Tap "Add" in the top right</p>
-                    <p className="text-slate-500 mt-0.5">Skyland icon will appear on your phone home screen.</p>
+                    <p className="font-bold text-slate-100">Tap &quot;Add&quot; in top right</p>
+                    <p className="text-slate-400 mt-0.5">Skyland Portal will appear on your iPhone screen.</p>
                   </div>
                 </div>
               </div>
             ) : (
               /* Android / Chrome Instructions */
-              <div className="space-y-3.5 my-4 text-xs text-slate-600">
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+              <div className="space-y-3 my-4 text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#0B1120] border border-slate-800/80">
+                  <div className="w-6 h-6 rounded-lg bg-[#FF6B00] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
                     1
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 flex items-center gap-1.5">
-                      Tap browser menu <MoreVertical className="w-3.5 h-3.5 text-indigo-600 inline" />
+                    <p className="font-bold text-slate-100 flex items-center gap-1.5">
+                      Tap Chrome menu <MoreVertical className="w-3.5 h-3.5 text-[#FF6B00] inline" />
                     </p>
-                    <p className="text-slate-500 mt-0.5">The three dots in the top-right corner of Chrome.</p>
+                    <p className="text-slate-400 mt-0.5">The three dots in the top-right corner of Chrome.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#0B1120] border border-slate-800/80">
+                  <div className="w-6 h-6 rounded-lg bg-[#FF6B00] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
                     2
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 flex items-center gap-1.5">
-                      Tap "Install app" or "Add to Home screen"
+                    <p className="font-bold text-slate-100 flex items-center gap-1.5">
+                      Tap &quot;Install app&quot; or &quot;Add to Home screen&quot;
                     </p>
-                    <p className="text-slate-500 mt-0.5">Select the option from the browser dropdown.</p>
+                    <p className="text-slate-400 mt-0.5">Select the option from the browser menu.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#0B1120] border border-slate-800/80">
+                  <div className="w-6 h-6 rounded-lg bg-[#FF6B00] text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
                     3
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900">Confirm "Install"</p>
-                    <p className="text-slate-500 mt-0.5">The native app will download and install instantly.</p>
+                    <p className="font-bold text-slate-100">Tap &quot;Install&quot; to confirm</p>
+                    <p className="text-slate-400 mt-0.5">The native APK app will install on your phone instantly.</p>
                   </div>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function InstallAppBanner() {
 
             <button
               onClick={() => setShowGuideModal(false)}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+              className="w-full py-2.5 bg-[#FF6B00] hover:bg-[#FF8533] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-lg shadow-orange-500/20 active:scale-98"
             >
               Got it, thanks!
             </button>
