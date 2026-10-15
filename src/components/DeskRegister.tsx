@@ -8,7 +8,6 @@ import {
   Save,
   Search,
   AlertCircle,
-  Sparkles,
   Check,
   HelpCircle,
   MapPin,
@@ -84,14 +83,33 @@ export default function DeskRegister() {
     setEmployees((prev) =>
       prev.map((emp) => {
         if (emp.userId !== userId) return emp;
+
+        // Toggle off if clicking the already selected status
+        if (emp.status === newStatus) {
+          return {
+            ...emp,
+            status: null,
+            clockInTime: '',
+            clockOutTime: '',
+            isDirty: true,
+          };
+        }
+
         let updatedIn = emp.clockInTime;
-        if (!updatedIn && (newStatus === 'PRESENT' || newStatus === 'LATE' || newStatus === 'HALF_LEAVE')) {
+        let updatedOut = emp.clockOutTime;
+
+        if (newStatus === 'OFF') {
+          updatedIn = '';
+          updatedOut = '';
+        } else if (!updatedIn) {
           updatedIn = newStatus === 'LATE' ? '09:45' : '09:00';
         }
+
         return {
           ...emp,
           status: newStatus,
           clockInTime: updatedIn,
+          clockOutTime: updatedOut,
           isDirty: true,
         };
       })
@@ -113,17 +131,6 @@ export default function DeskRegister() {
   const handleNotesChange = (userId: string, value: string) => {
     setEmployees((prev) =>
       prev.map((emp) => (emp.userId === userId ? { ...emp, notes: value, isDirty: true } : emp))
-    );
-  };
-
-  const handleMarkAllPresent = () => {
-    setEmployees((prev) =>
-      prev.map((emp) => ({
-        ...emp,
-        status: emp.status || 'PRESENT',
-        clockInTime: emp.clockInTime || '09:00',
-        isDirty: true,
-      }))
     );
   };
 
@@ -153,20 +160,29 @@ export default function DeskRegister() {
   };
 
   const handleSaveSingleEmployee = async (emp: RegisterEmployee) => {
+    if (!emp.status) {
+      setMessage({
+        text: `Please select a status (Present, Late, Half Leave, or Off) for ${emp.name} before saving.`,
+        type: 'error',
+      });
+      return;
+    }
+
     setSavingUserId(emp.userId);
     setMessage(null);
     try {
+      const isOff = emp.status === 'OFF';
       const res = await fetch('/api/attendance/adjust', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: emp.userId,
           date,
-          clockIn: emp.clockInTime || undefined,
-          clockOut: emp.clockOutTime || undefined,
-          status: emp.status || 'PRESENT',
-          notes: emp.notes || '',
-          regularizedReason: `Manual edit for ${date} by Management`,
+          clockIn: isOff ? null : (emp.clockInTime || null),
+          clockOut: isOff ? null : (emp.clockOutTime || null),
+          status: emp.status,
+          notes: emp.notes?.trim() || '',
+          regularizedReason: `Desk register entry for ${date} by Management`,
         }),
       });
 
@@ -187,38 +203,48 @@ export default function DeskRegister() {
   };
 
   const handleDeleteRecord = async (userId: string, empName: string) => {
-    if (!confirm(`Are you sure you want to permanently delete/reset the attendance record of ${empName} for ${date}?`)) return;
+    if (!confirm(`Are you sure you want to delete and reset the attendance record of ${empName} for ${date}?`)) return;
     try {
       const res = await fetch(`/api/attendance/adjust?userId=${userId}&date=${date}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         setMessage({ text: `Attendance record deleted for ${empName} on ${date}`, type: 'success' });
-        fetchRegister(date);
       } else {
-        setEmployees((prev) =>
-          prev.map((emp) =>
-            emp.userId === userId
-              ? { ...emp, status: null, clockInTime: '', clockOutTime: '', notes: '', isSaved: false, isDirty: false }
-              : emp
-          )
-        );
-        setMessage({ text: `Unsaved entry cleared for ${empName}`, type: 'success' });
+        setMessage({ text: `Cleared entry for ${empName}`, type: 'success' });
       }
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.userId === userId
+            ? { ...emp, status: null, clockInTime: '', clockOutTime: '', notes: '', isSaved: false, isDirty: false }
+            : emp
+        )
+      );
     } catch {
-      setMessage({ text: 'Error deleting record', type: 'error' });
+      setMessage({ text: 'Error resetting record', type: 'error' });
     }
   };
 
   const handleSaveRegister = async () => {
+    // Only save employees who have an explicit status selected (never auto-mark unmarked as present)
+    const markedEmployees = employees.filter((e) => e.status !== null);
+
+    if (markedEmployees.length === 0) {
+      setMessage({
+        text: 'No attendance marked yet. Please select a status (Present, Late, Half Leave, or Off) for at least one employee.',
+        type: 'error',
+      });
+      return;
+    }
+
     setSaving(true);
     setMessage(null);
     try {
-      const payloadEntries = employees.map((emp) => ({
+      const payloadEntries = markedEmployees.map((emp) => ({
         userId: emp.userId,
-        status: emp.status || 'PRESENT',
-        clockInTime: emp.clockInTime || undefined,
-        clockOutTime: emp.clockOutTime || undefined,
-        notes: emp.notes || '',
+        status: emp.status!,
+        clockInTime: emp.status === 'OFF' ? '' : (emp.clockInTime || ''),
+        clockOutTime: emp.status === 'OFF' ? '' : (emp.clockOutTime || ''),
+        notes: emp.notes?.trim() || '',
       }));
 
       const res = await fetch('/api/attendance/desk-register', {
@@ -229,7 +255,10 @@ export default function DeskRegister() {
 
       const data = await res.json();
       if (data.success) {
-        setMessage({ text: `Full register successfully saved for ${date}!`, type: 'success' });
+        setMessage({
+          text: `Successfully saved ${markedEmployees.length} staff attendance record(s) for ${date}!`,
+          type: 'success',
+        });
         fetchRegister(date);
       } else {
         setMessage({ text: data.error || 'Failed to save register', type: 'error' });
@@ -281,11 +310,11 @@ export default function DeskRegister() {
             </div>
             <h2 className="text-xl font-black text-white tracking-tight">Daily &amp; Historical Attendance Register</h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Select any past, present, or future date to review, modify punch times, and update attendance records.
+              Select any past or current date to record or update staff attendance, check-in, and check-out times.
             </p>
           </div>
 
-          {/* Quick Date Shift & Action Buttons */}
+          {/* Quick Date Shift & Batch Save */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleJumpToYesterday}
@@ -331,15 +360,6 @@ export default function DeskRegister() {
             </div>
 
             <button
-              onClick={handleMarkAllPresent}
-              type="button"
-              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold rounded-2xl transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-              <span>Fill All Present</span>
-            </button>
-
-            <button
               onClick={handleSaveRegister}
               disabled={saving || loading}
               className="px-4 py-2 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] disabled:opacity-50 text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-1.5"
@@ -349,7 +369,7 @@ export default function DeskRegister() {
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
-              <span>Save Full Day</span>
+              <span>Save Marked Staff</span>
             </button>
           </div>
         </div>
@@ -441,12 +461,12 @@ export default function DeskRegister() {
                   <th className="pb-3 text-center">Time In</th>
                   <th className="pb-3 text-center">Time Out</th>
                   <th className="pb-3">Register Notes / Reason</th>
-                  <th className="pb-3 text-right pr-2">Save / Actions</th>
+                  <th className="pb-3 text-right pr-2">Save / Reset</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
                 {filtered.map((emp) => {
-                  const currentStatus = emp.status || 'UNMARKED';
+                  const currentStatus = emp.status;
                   const isCurrentSaving = savingUserId === emp.userId;
 
                   return (
@@ -493,7 +513,7 @@ export default function DeskRegister() {
                         )}
                       </td>
 
-                      {/* Status Selector Pills */}
+                      {/* Status Selector Pills (Click active to toggle to Unmarked) */}
                       <td className="py-3 px-3 text-center">
                         <div className="inline-flex items-center gap-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
                           <button
@@ -504,6 +524,7 @@ export default function DeskRegister() {
                                 ? 'bg-emerald-600 text-white shadow-xs'
                                 : 'text-slate-400 hover:text-emerald-400'
                             }`}
+                            title="Present (Click again to unselect)"
                           >
                             Present
                           </button>
@@ -515,6 +536,7 @@ export default function DeskRegister() {
                                 ? 'bg-amber-600 text-white shadow-xs'
                                 : 'text-slate-400 hover:text-amber-400'
                             }`}
+                            title="Late Arrival (Click again to unselect)"
                           >
                             Late
                           </button>
@@ -526,6 +548,7 @@ export default function DeskRegister() {
                                 ? 'bg-[#FF6B00] text-white shadow-xs'
                                 : 'text-slate-400 hover:text-orange-400'
                             }`}
+                            title="Half Leave (Click again to unselect)"
                           >
                             Half Leave
                           </button>
@@ -537,6 +560,7 @@ export default function DeskRegister() {
                                 ? 'bg-rose-600 text-white shadow-xs'
                                 : 'text-slate-400 hover:text-rose-400'
                             }`}
+                            title="Off Day (Click again to unselect)"
                           >
                             Off
                           </button>
@@ -549,8 +573,8 @@ export default function DeskRegister() {
                           type="time"
                           value={emp.clockInTime}
                           onChange={(e) => handleTimeInChange(emp.userId, e.target.value)}
-                          disabled={currentStatus === 'OFF' || currentStatus === 'ABSENT'}
-                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-orange-500 font-mono"
+                          disabled={currentStatus === 'OFF' || !currentStatus}
+                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-30 focus:outline-hidden focus:ring-1 focus:ring-orange-500 font-mono"
                         />
                       </td>
 
@@ -560,8 +584,8 @@ export default function DeskRegister() {
                           type="time"
                           value={emp.clockOutTime}
                           onChange={(e) => handleTimeOutChange(emp.userId, e.target.value)}
-                          disabled={currentStatus === 'OFF' || currentStatus === 'ABSENT'}
-                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-orange-500 font-mono"
+                          disabled={currentStatus === 'OFF' || !currentStatus}
+                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-30 focus:outline-hidden focus:ring-1 focus:ring-orange-500 font-mono"
                         />
                       </td>
 
@@ -583,11 +607,11 @@ export default function DeskRegister() {
                           <button
                             type="button"
                             onClick={() => handleSaveSingleEmployee(emp)}
-                            disabled={isCurrentSaving}
+                            disabled={isCurrentSaving || !emp.status}
                             className={`px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
-                              emp.isDirty
+                              emp.isDirty && emp.status
                                 ? 'bg-[#FF6B00] hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
-                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 disabled:opacity-40'
                             }`}
                             title="Save this employee's attendance record immediately"
                           >
@@ -629,7 +653,7 @@ export default function DeskRegister() {
         <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-            <span>Changes can be saved individually per row or in batch via &quot;Save Full Day&quot;.</span>
+            <span>Click any selected status pill to unmark it. Save individual rows or batch via &quot;Save Marked Staff&quot;.</span>
           </div>
 
           <button
@@ -642,7 +666,7 @@ export default function DeskRegister() {
             ) : (
               <Check className="w-3.5 h-3.5" />
             )}
-            <span>Save All Staff Records for {date}</span>
+            <span>Save Marked Staff Records for {date}</span>
           </button>
         </div>
       </div>

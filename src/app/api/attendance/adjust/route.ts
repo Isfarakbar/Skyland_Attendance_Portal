@@ -21,8 +21,9 @@ export async function POST(req: NextRequest) {
 
     let attendance = await Attendance.findOne({ user: userId, date });
 
-    const clockInDate = parseTimeToDate(date, clockIn);
-    const clockOutDate = parseTimeToDate(date, clockOut);
+    const isOff = status === 'OFF' || status === 'ABSENT';
+    const clockInDate = isOff ? null : parseTimeToDate(date, clockIn);
+    const clockOutDate = isOff ? null : parseTimeToDate(date, clockOut);
 
     if (!attendance) {
       const workMins = calculateWorkMinutes(clockInDate, clockOutDate, 0);
@@ -40,8 +41,8 @@ export async function POST(req: NextRequest) {
         regularizedBy: session.userId,
       });
     } else {
-      if (clockIn !== undefined) attendance.clockIn = clockInDate;
-      if (clockOut !== undefined) attendance.clockOut = clockOutDate;
+      if (clockIn !== undefined || isOff) attendance.clockIn = clockInDate;
+      if (clockOut !== undefined || isOff) attendance.clockOut = clockOutDate;
       if (status) attendance.status = status;
       if (notes !== undefined) attendance.notes = notes;
       attendance.isRegularized = true;

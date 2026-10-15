@@ -21,7 +21,10 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date') || getTodayDateString(new Date(), timezone);
 
     // Fetch all active staff employees (Admin, Manager/CEO, and Developer are ghost management)
-    const employees = await User.find({ isActive: true, role: 'employee' })
+    const employees = await User.find({
+      isActive: true,
+      role: { $nin: ['admin', 'developer', 'ceo'] },
+    })
       .select('_id name email employeeId department designation baseSalary role workMode')
       .sort({ name: 1 })
       .lean();
@@ -123,9 +126,12 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    const bulkOps = entries.map((entry) => {
-      const clockInDate = parseTimeToDate(date, entry.clockInTime);
-      const clockOutDate = parseTimeToDate(date, entry.clockOutTime);
+    const validEntries = entries.filter((entry) => !!entry.status);
+
+    const bulkOps = validEntries.map((entry) => {
+      const isOff = entry.status === 'OFF' || entry.status === 'ABSENT';
+      const clockInDate = isOff ? null : parseTimeToDate(date, entry.clockInTime);
+      const clockOutDate = isOff ? null : parseTimeToDate(date, entry.clockOutTime);
       let totalWorkMinutes = 0;
 
       if (clockInDate && clockOutDate && clockOutDate > clockInDate) {
@@ -137,11 +143,14 @@ export async function POST(req: NextRequest) {
           filter: { user: entry.userId, date },
           update: {
             $set: {
-              status: entry.status || 'PRESENT',
+              status: entry.status,
               clockIn: clockInDate,
               clockOut: clockOutDate,
               totalWorkMinutes,
               notes: entry.notes?.trim() || '',
+              isRegularized: true,
+              regularizedReason: `Desk register entry for ${date} by Management`,
+              regularizedBy: session.userId,
             },
           },
           upsert: true,
