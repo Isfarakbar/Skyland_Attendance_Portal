@@ -91,6 +91,13 @@ export async function PUT(req: NextRequest) {
       iban,
       devices,
       pensionFund,
+      department,
+      designation,
+      shiftTiming,
+      reportingManager,
+      employmentType,
+      workMode,
+      baseSalary,
     } = body;
 
     if (name !== undefined && !name.trim()) {
@@ -115,6 +122,13 @@ export async function PUT(req: NextRequest) {
     if (iban !== undefined) updateFields.iban = iban.trim();
     if (devices !== undefined) updateFields.devices = devices;
     if (pensionFund !== undefined) updateFields.pensionFund = pensionFund;
+    if (department !== undefined) updateFields.department = department.trim();
+    if (designation !== undefined) updateFields.designation = designation.trim();
+    if (shiftTiming !== undefined) updateFields.shiftTiming = shiftTiming.trim();
+    if (reportingManager !== undefined) updateFields.reportingManager = reportingManager.trim();
+    if (employmentType !== undefined) updateFields.employmentType = employmentType.trim();
+    if (workMode !== undefined) updateFields.workMode = workMode;
+    if (baseSalary !== undefined && !isNaN(Number(baseSalary))) updateFields.baseSalary = Number(baseSalary);
 
     const updatedUser = await User.findByIdAndUpdate(
       session.userId,

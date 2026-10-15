@@ -24,6 +24,8 @@ import {
   ChevronRight,
   ShieldCheck,
   CheckCircle2,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 
 interface CompleteProfileModalProps {
@@ -46,16 +48,27 @@ export default function CompleteProfileModal({
     user.avatarUrl ||
       'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80'
   );
-  const [bio, setBio] = useState(user.bio || 'Passionate HR leader driving employee engagement, growth, and organizational excellence.');
+  const [bio, setBio] = useState(user.bio || 'Passionate professional driving excellence and growth at Skyland Energy.');
   const [emergencyContact, setEmergencyContact] = useState(user.emergencyContact || '+92 321 9876543');
-  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || 'Spouse');
-  const [address, setAddress] = useState(user.address || 'Suite 402, Highrise Tower, Business District');
-  const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth || '1994-08-22');
-  const [gender, setGender] = useState(user.gender || 'Female');
-  const [cnic, setCnic] = useState(user.cnic || '42101-7894561-2');
+  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || 'Family');
+  const [address, setAddress] = useState(user.address || 'Business District, Pakistan');
+  const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth || '1995-01-01');
+  const [gender, setGender] = useState(user.gender || 'Unspecified');
+  const [cnic, setCnic] = useState(user.cnic || '42101-1234567-1');
   const [bankName, setBankName] = useState(user.bankName || 'Standard Chartered Bank');
   const [accountNumber, setAccountNumber] = useState(user.accountNumber || '01-2948291-01');
   const [iban, setIban] = useState(user.iban || 'PK36SCBL0000001294829101');
+  
+  // Job & Compensation states
+  const [department, setDepartment] = useState(user.department || 'Skyland Energy');
+  const [designation, setDesignation] = useState(user.designation || 'Staff Member');
+  const [shiftTiming, setShiftTiming] = useState(user.shiftTiming || '09:00 AM - 06:00 PM');
+  const [reportingManager, setReportingManager] = useState(user.reportingManager || 'Management');
+  const [employmentType, setEmploymentType] = useState(user.employmentType || 'Full-time Permanent');
+  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>(user.workMode || 'OFFICE');
+  const [baseSalary, setBaseSalary] = useState<number>(user.baseSalary || 70000);
+
+  // Devices state
   const [devices, setDevices] = useState(
     user.devices && user.devices.length > 0
       ? user.devices
@@ -63,23 +76,47 @@ export default function CompleteProfileModal({
           {
             name: 'MacBook Air',
             model: 'Version M1 (16GB RAM / 512GB SSD)',
-            serialNumber: 'C02G8921MD6T',
+            serialNumber: 'SKY-MBP-8921',
             assignedDate: '2024-01-15',
             status: 'Active',
           },
         ]
   );
+
   const [pensionFund, setPensionFund] = useState(
     user.pensionFund || {
       enrolled: true,
       contributionPercent: 8,
-      monthlyAmount: Math.round((user.baseSalary || 95000) * 0.08),
+      monthlyAmount: Math.round((user.baseSalary || 70000) * 0.08),
     }
   );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const handleAddDevice = () => {
+    setDevices([
+      ...devices,
+      {
+        name: 'Work Laptop / Device',
+        model: 'Standard Issue Hardware',
+        serialNumber: `SKY-EQP-${Math.floor(1000 + Math.random() * 9000)}`,
+        assignedDate: new Date().toISOString().substring(0, 10),
+        status: 'Active',
+      },
+    ]);
+  };
+
+  const handleUpdateDevice = (index: number, field: string, value: string) => {
+    const updated = [...devices];
+    updated[index] = { ...updated[index], [field]: value };
+    setDevices(updated);
+  };
+
+  const handleRemoveDevice = (index: number) => {
+    setDevices(devices.filter((_: any, i: number) => i !== index));
+  };
 
   const presetAvatars = [
     'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
@@ -133,7 +170,17 @@ export default function CompleteProfileModal({
           accountNumber: accountNumber.trim(),
           iban: iban.trim(),
           devices,
-          pensionFund,
+          pensionFund: {
+            ...pensionFund,
+            monthlyAmount: Math.round(Number(baseSalary || 0) * (Number(pensionFund.contributionPercent || 8) / 100)),
+          },
+          department: department.trim(),
+          designation: designation.trim(),
+          shiftTiming: shiftTiming.trim(),
+          reportingManager: reportingManager.trim(),
+          employmentType: employmentType.trim(),
+          workMode,
+          baseSalary: Number(baseSalary),
         }),
       });
 
@@ -197,7 +244,7 @@ export default function CompleteProfileModal({
                 </span>
               </div>
               <p className="text-sm font-medium text-slate-300">
-                {user.designation || 'Staff Member'} • {user.department || 'Skyland Energy'}
+                {designation || 'Staff Member'} • {department || 'Skyland Energy'}
               </p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-slate-400 mt-3 font-medium">
                 <span className="flex items-center gap-1.5">
@@ -210,7 +257,7 @@ export default function CompleteProfileModal({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                  Salary: PKR {(user.baseSalary || 95000).toLocaleString()} / mo
+                  Salary: PKR {Number(baseSalary || 0).toLocaleString()} / mo
                 </span>
               </div>
             </div>
@@ -262,10 +309,19 @@ export default function CompleteProfileModal({
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Bio Summary */}
+              {/* Bio Summary with inline edit */}
               <div className="bg-[#131E36] p-5 rounded-2xl border border-slate-800 shadow-sm space-y-2">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Professional Bio</span>
-                <p className="text-sm text-slate-200 leading-relaxed">{bio}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Professional Bio</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Directly Editable</span>
+                </div>
+                <textarea
+                  rows={2}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell your team about your experience and background..."
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                />
               </div>
 
               {/* Quick Spec Highlights */}
@@ -273,25 +329,25 @@ export default function CompleteProfileModal({
                 <div className="p-4 bg-[#131E36] rounded-2xl border border-slate-800 shadow-sm">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Work Mode</span>
                   <div className="text-sm font-black text-white mt-1">
-                    {user.workMode === 'FIELD' ? '📍 Field Staff (GPS)' : '🏢 On-Site Desk'}
+                    {workMode === 'FIELD' ? '📍 Field Staff (GPS)' : '🏢 On-Site Desk'}
                   </div>
                 </div>
                 <div className="p-4 bg-[#131E36] rounded-2xl border border-slate-800 shadow-sm">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Shift Timing</span>
                   <div className="text-sm font-black text-white mt-1">
-                    {user.shiftTiming || '09:00 AM - 06:00 PM'}
+                    {shiftTiming || '09:00 AM - 06:00 PM'}
                   </div>
                 </div>
                 <div className="p-4 bg-[#131E36] rounded-2xl border border-slate-800 shadow-sm">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Leave Balance</span>
-                  <div className="text-sm font-black text-[#FF6B00] mt-1">
-                    {(user.leaveBalance?.sick || 8) + (user.leaveBalance?.casual || 10) + (user.leaveBalance?.annual || 14)} Days Left
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Base Salary</span>
+                  <div className="text-sm font-black text-emerald-400 mt-1">
+                    PKR {Number(baseSalary || 0).toLocaleString()}
                   </div>
                 </div>
                 <div className="p-4 bg-[#131E36] rounded-2xl border border-slate-800 shadow-sm">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Device</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Devices</span>
                   <div className="text-sm font-black text-white mt-1 truncate">
-                    {devices[0]?.name || 'MacBook Air M1'}
+                    {devices.length} {devices.length === 1 ? 'Hardware Asset' : 'Hardware Assets'}
                   </div>
                 </div>
               </div>
@@ -408,68 +464,125 @@ export default function CompleteProfileModal({
             </div>
           )}
 
-          {/* TAB 3: JOB & HIERARCHY */}
+          {/* TAB 3: JOB & HIERARCHY - FULLY EDITABLE */}
           {activeTab === 'job' && (
             <div className="bg-[#131E36] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4">
-              <h4 className="text-sm font-black text-white uppercase tracking-wider mb-2">
-                Corporate Job &amp; Employment Details
-              </h4>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-black text-white uppercase tracking-wider">
+                  Corporate Job &amp; Employment Details
+                </h4>
+                <span className="text-xs text-slate-400">Editable Organization Fields</span>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Employee ID</span>
-                  <span className="text-sm font-mono font-black text-white">{user.employeeId || 'SKY-001'}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Employee ID</span>
+                  <span className="text-sm font-mono font-black text-orange-400">{user.employeeId || 'SKY-001'}</span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">System Identifier</span>
                 </div>
 
-                <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Department</span>
-                  <span className="text-sm font-black text-white">{user.department || 'Skyland Energy'}</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Department</label>
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="e.g. IT & Software Development"
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  />
                 </div>
 
-                <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Official Designation</span>
-                  <span className="text-sm font-black text-white">{user.designation || 'Staff Member'}</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Official Designation / Title</label>
+                  <input
+                    type="text"
+                    value={designation}
+                    onChange={(e) => setDesignation(e.target.value)}
+                    placeholder="e.g. Digital & Software Developer"
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  />
                 </div>
 
-                <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Employment Type</span>
-                  <span className="text-sm font-black text-white">{user.employmentType || 'Full-time Permanent'}</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Employment Type</label>
+                  <select
+                    value={employmentType}
+                    onChange={(e) => setEmploymentType(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  >
+                    <option value="Full-time Permanent">Full-time Permanent</option>
+                    <option value="Contractual / Project">Contractual / Project</option>
+                    <option value="Probationary">Probationary Period</option>
+                    <option value="Internship / Trainee">Internship / Trainee</option>
+                    <option value="Remote Consultant">Remote Consultant</option>
+                  </select>
                 </div>
 
-                <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Reporting Manager</span>
-                  <span className="text-sm font-black text-white">{user.reportingManager || 'Management'}</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Reporting Manager / Supervisor</label>
+                  <input
+                    type="text"
+                    value={reportingManager}
+                    onChange={(e) => setReportingManager(e.target.value)}
+                    placeholder="e.g. CEO / Engineering Director"
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  />
                 </div>
 
-                <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Work Mode</span>
-                  <span className="text-sm font-black text-white">
-                    {user.workMode === 'FIELD' ? 'Field Staff (GPS Check-in)' : 'Office Desk Staff'}
-                  </span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Work Mode &amp; Attendance Type</label>
+                  <select
+                    value={workMode}
+                    onChange={(e) => setWorkMode(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  >
+                    <option value="OFFICE">Office Desk Staff (Biometric Fingerprint)</option>
+                    <option value="FIELD">Field Staff (Live GPS Site Check-in)</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Shift Timing</label>
+                  <input
+                    type="text"
+                    value={shiftTiming}
+                    onChange={(e) => setShiftTiming(e.target.value)}
+                    placeholder="09:00 AM - 06:00 PM"
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: FINANCIAL & SALARY */}
+          {/* TAB 4: FINANCIAL & SALARY - FULLY EDITABLE */}
           {activeTab === 'financial' && (
             <div className="bg-[#131E36] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-5">
               <h4 className="text-sm font-black text-white uppercase tracking-wider mb-2">
                 Compensation, Banking &amp; Pension
               </h4>
 
-              <div className="p-4 bg-orange-950/20 rounded-2xl border border-orange-500/20 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-slate-400 uppercase">Monthly Base Salary</span>
-                  <div className="text-2xl font-black text-white mt-0.5">
-                    PKR {(user.baseSalary || 95000).toLocaleString()}
-                  </div>
+              <div className="p-4 bg-orange-950/20 rounded-2xl border border-orange-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-bold text-orange-400 uppercase mb-1">
+                    Monthly Base Salary (PKR)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value={baseSalary}
+                    onChange={(e) => setBaseSalary(Number(e.target.value))}
+                    placeholder="70000"
+                    className="w-full max-w-xs px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-lg font-black text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  />
                 </div>
-                <div className="text-right">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase block">Daily Rate</span>
-                  <span className="text-sm font-mono font-bold text-[#FF6B00]">
-                    PKR {Math.round((user.baseSalary || 95000) / 30).toLocaleString()} / day
+                <div className="text-left sm:text-right">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase block">Calculated Daily Rate</span>
+                  <span className="text-base font-mono font-bold text-[#FF6B00]">
+                    PKR {Math.round(Number(baseSalary || 0) / 30).toLocaleString()} / day
                   </span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">Used for leave fine deductions</span>
                 </div>
               </div>
 
@@ -480,7 +593,7 @@ export default function CompleteProfileModal({
                     type="text"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    placeholder="Bank Name"
+                    placeholder="Bank Name (e.g. Meezan Bank, HBL)"
                     className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                   />
                 </div>
@@ -509,59 +622,215 @@ export default function CompleteProfileModal({
               </div>
 
               {/* Pension Plan */}
-              <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-2">
+              <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Pension &amp; Provident Fund Contribution</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Enrolled ({pensionFund.contributionPercent}%)
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="pensionEnrolled"
+                      checked={pensionFund.enrolled}
+                      onChange={(e) => setPensionFund({ ...pensionFund, enrolled: e.target.checked })}
+                      className="w-4 h-4 rounded-sm accent-[#FF6B00] cursor-pointer"
+                    />
+                    <label htmlFor="pensionEnrolled" className="text-xs font-bold text-white cursor-pointer">
+                      Pension &amp; Provident Fund Contribution
+                    </label>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    pensionFund.enrolled
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {pensionFund.enrolled ? `Enrolled (${pensionFund.contributionPercent}%)` : 'Not Enrolled'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Monthly employee deduction + matching company contribution: <strong className="text-white">PKR {pensionFund.monthlyAmount.toLocaleString()}</strong> / month.
-                </p>
+
+                {pensionFund.enrolled && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-400 mb-1">Contribution Percent (%)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="25"
+                        value={pensionFund.contributionPercent}
+                        onChange={(e) =>
+                          setPensionFund({
+                            ...pensionFund,
+                            contributionPercent: Number(e.target.value),
+                            monthlyAmount: Math.round(Number(baseSalary || 0) * (Number(e.target.value) / 100)),
+                          })
+                        }
+                        className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-400 mb-1">Calculated Monthly Amount</label>
+                      <div className="px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-emerald-400 font-mono font-bold">
+                        PKR {Math.round(Number(baseSalary || 0) * (Number(pensionFund.contributionPercent || 8) / 100)).toLocaleString()} / mo
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* TAB 5: ASSIGNED DEVICES */}
+          {/* TAB 5: ASSIGNED DEVICES - FULLY EDITABLE */}
           {activeTab === 'devices' && (
             <div className="bg-[#131E36] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">
-                  Corporate Hardware &amp; IT Equipment
-                </h4>
-                <span className="text-xs font-bold text-[#FF6B00]">{devices.length} Assets Registered</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 pb-3 border-b border-slate-800">
+                <div>
+                  <h4 className="text-sm font-black text-white uppercase tracking-wider">
+                    Corporate Hardware &amp; IT Equipment
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Register, edit, or remove hardware, laptops, and field equipment assigned to this profile
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <span className="text-xs font-bold text-[#FF6B00] px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full">
+                    {devices.length} {devices.length === 1 ? 'Asset' : 'Assets'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAddDevice}
+                    className="px-3 py-1.5 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Device</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {devices.map((device: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-between gap-4"
+              {devices.length === 0 ? (
+                <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/40">
+                  <Laptop className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                  <p className="text-xs text-slate-400 mb-3">No corporate devices currently assigned.</p>
+                  <button
+                    type="button"
+                    onClick={handleAddDevice}
+                    className="px-4 py-2 bg-linear-to-r from-[#FF6B00] to-amber-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[#FF6B00] shadow-sm">
-                        <Laptop className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h5 className="font-extrabold text-white text-sm">{device.name}</h5>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add First Assigned Device</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {devices.map((device: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-4 sm:p-5 bg-slate-900 rounded-2xl border border-slate-800 space-y-3 transition-all hover:border-slate-700"
+                    >
+                      {/* Device Header */}
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-[#FF6B00] border border-orange-500/20 flex items-center justify-center font-black text-xs">
+                            #{idx + 1}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-white text-sm">
+                              {device.name || 'Hardware Asset'}
+                            </span>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              device.status === 'Active'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : device.status === 'In Repair'
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}
+                          >
                             {device.status || 'Active'}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">{device.model}</p>
-                        <p className="text-[10px] font-mono text-slate-500 mt-0.5">S/N: {device.serialNumber}</p>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDevice(idx)}
+                          className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 px-2.5 py-1 rounded-xl transition-colors cursor-pointer flex items-center gap-1"
+                          title="Remove Device"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+
+                      {/* Device Fields Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Device / Equipment Name
+                          </label>
+                          <input
+                            type="text"
+                            value={device.name}
+                            onChange={(e) => handleUpdateDevice(idx, 'name', e.target.value)}
+                            placeholder="e.g. MacBook Air, ThinkPad T14"
+                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Model &amp; Specifications
+                          </label>
+                          <input
+                            type="text"
+                            value={device.model}
+                            onChange={(e) => handleUpdateDevice(idx, 'model', e.target.value)}
+                            placeholder="e.g. Apple M1 / 16GB / 512GB"
+                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Serial Number (S/N)
+                          </label>
+                          <input
+                            type="text"
+                            value={device.serialNumber}
+                            onChange={(e) => handleUpdateDevice(idx, 'serialNumber', e.target.value)}
+                            placeholder="e.g. SKY-MBP-8921"
+                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Assigned Date
+                          </label>
+                          <input
+                            type="date"
+                            value={device.assignedDate || ''}
+                            onChange={(e) => handleUpdateDevice(idx, 'assignedDate', e.target.value)}
+                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                            Equipment Lifecycle Status
+                          </label>
+                          <select
+                            value={device.status || 'Active'}
+                            onChange={(e) => handleUpdateDevice(idx, 'status', e.target.value)}
+                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                          >
+                            <option value="Active">Active (In Daily Use)</option>
+                            <option value="In Repair">In Repair / Hardware Maintenance</option>
+                            <option value="Replacement Pending">Replacement Pending</option>
+                            <option value="Returned">Returned to Inventory</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="text-right hidden sm:block">
-                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Assigned Date</span>
-                      <span className="text-xs font-mono font-semibold text-slate-300">{device.assignedDate || '2024-01-15'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
