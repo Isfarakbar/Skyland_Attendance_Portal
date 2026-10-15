@@ -140,10 +140,11 @@ export default function Sidebar({
         </div>
 
         {/* Right side mobile controls: notifications + profile avatar */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <button
             onClick={() => setNotifOpen(!notifOpen)}
             className="relative w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-center cursor-pointer"
+            aria-label="Toggle notifications"
           >
             <Bell className="w-4 h-4" />
             {pendingApprovalsCount > 0 && (
@@ -152,6 +153,37 @@ export default function Sidebar({
               </span>
             )}
           </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 top-11 w-72 bg-[#0D1527] rounded-2xl shadow-2xl border border-slate-800 p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-300">
+                  Portal Alerts
+                </span>
+                <span className="text-[10px] font-bold text-orange-400">
+                  {pendingApprovalsCount} Pending
+                </span>
+              </div>
+              <div className="space-y-2 pt-2.5 text-xs">
+                {pendingApprovalsCount > 0 && (
+                  <div
+                    onClick={() => {
+                      setNotifOpen(false);
+                      handleNavClick('reviews');
+                    }}
+                    className="p-2.5 rounded-xl bg-orange-950/40 border border-orange-500/30 text-orange-200 cursor-pointer hover:bg-orange-950/60 transition-colors"
+                  >
+                    <p className="font-bold text-white text-xs">Pending Leave Requests</p>
+                    <p className="text-[11px] text-orange-300 mt-0.5">{pendingApprovalsCount} staff applications awaiting review</p>
+                  </div>
+                )}
+                <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
+                  <p className="font-bold text-white text-xs">Biometric System</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Dahua Terminal sync service active</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button
             onClick={onOpenEditProfile}

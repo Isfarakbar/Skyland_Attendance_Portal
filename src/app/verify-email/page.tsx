@@ -89,48 +89,55 @@ function VerifyEmailContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-100 mb-3">
-          <ShieldCheck className="w-6 h-6" />
+    <div className="min-h-screen bg-[#0B1120] text-slate-200 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+        <div className="mx-auto w-48 mb-3 p-3 rounded-2xl bg-white shadow-xl flex items-center justify-center">
+          <img
+            src="/skyland-logo.png"
+            alt="Skyland Energy"
+            className="w-full h-auto max-h-16 object-contain"
+          />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Verify Your Email</h2>
-        <p className="mt-1 text-sm text-slate-500">Security verification code sent via Brevo</p>
+        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Verify Your Email</h2>
+        <p className="mt-1 text-xs text-slate-400">Security verification code sent to your email inbox</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/80">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10">
+        <div className="bg-[#0D1527] py-8 px-6 sm:px-10 rounded-3xl shadow-2xl border border-slate-800">
           {error && (
-            <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+            <div className="mb-4 p-3.5 rounded-xl bg-red-950/50 border border-red-800/80 text-xs text-red-300 font-medium">
               {error}
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="mb-4 p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-xs text-emerald-300 font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{successMsg}</span>
             </div>
           )}
 
           <form onSubmit={handleVerify} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Account Email</label>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Account Email</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
-                  placeholder="name@skyland.com"
+                  placeholder="name@skylandenergy.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
                 6-Digit Security Code
               </label>
               <input
@@ -140,7 +147,7 @@ function VerifyEmailContent() {
                 placeholder="123456"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full text-center tracking-[8px] font-mono text-2xl font-bold py-3 bg-slate-50 border border-slate-200 rounded-xl text-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full text-center tracking-[8px] font-mono text-2xl font-bold py-3 bg-slate-900 border border-slate-800 rounded-xl text-[#FF6B00] focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] transition-all"
               />
               <p className="text-[11px] text-slate-400 text-center mt-1">Check your inbox or spam folder</p>
             </div>
@@ -148,7 +155,7 @@ function VerifyEmailContent() {
             <button
               type="submit"
               disabled={loading || code.length < 6}
-              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-100 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+              className="w-full py-3 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-950/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
             >
               <span>{loading ? 'Verifying...' : 'Verify & Enter Portal'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -156,13 +163,13 @@ function VerifyEmailContent() {
           </form>
 
           {/* Resend button */}
-          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-500">Didn&apos;t receive the code?</span>
+          <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+            <span className="text-slate-400">Didn&apos;t receive the code?</span>
             <button
               type="button"
               onClick={handleResend}
               disabled={resending || resendCooldown > 0}
-              className="font-bold text-indigo-600 hover:text-indigo-700 disabled:text-slate-400 flex items-center gap-1 cursor-pointer"
+              className="font-bold text-[#FF6B00] hover:text-amber-400 disabled:text-slate-500 flex items-center gap-1 cursor-pointer"
             >
               <RotateCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
               <span>
@@ -171,9 +178,9 @@ function VerifyEmailContent() {
             </button>
           </div>
 
-          <div className="mt-6 text-center text-xs text-slate-500">
+          <div className="mt-6 text-center text-xs text-slate-400">
             Back to{' '}
-            <Link href="/login" className="font-bold text-indigo-600 hover:text-indigo-700">
+            <Link href="/login" className="font-bold text-[#FF6B00] hover:text-amber-400">
               Sign In
             </Link>
           </div>
@@ -187,8 +194,8 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-[#0B1120] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >
