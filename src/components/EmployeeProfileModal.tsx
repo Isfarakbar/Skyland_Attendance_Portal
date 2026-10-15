@@ -97,20 +97,20 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
     switch (st) {
       case 'COMPLETED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3" /> Completed
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
           </span>
         );
       case 'IN_PROGRESS':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock className="w-3 h-3" /> In Progress
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
+            <Clock className="w-3 h-3 text-amber-400" /> In Progress
           </span>
         );
       case 'BLOCKED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <AlertTriangle className="w-3 h-3" /> Blocked
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800">
+            <AlertTriangle className="w-3 h-3 text-rose-400" /> Blocked
           </span>
         );
       default:
@@ -121,17 +121,17 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
   const getAttendanceBadge = (status: string) => {
     switch (status) {
       case 'PRESENT':
-        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-100 text-emerald-800">Present</span>;
+        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800">Present</span>;
       case 'LATE':
-        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-amber-100 text-amber-800">Late</span>;
+        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-amber-950 text-amber-300 border border-amber-800">Late</span>;
       case 'HALF_LEAVE':
       case 'HALF_DAY':
-        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-orange-100 text-orange-800">Half Leave</span>;
+        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-orange-950 text-orange-300 border border-orange-800">Half Leave</span>;
       case 'OFF':
       case 'ABSENT':
-        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-rose-100 text-rose-800">Off Day</span>;
+        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-rose-950 text-rose-300 border border-rose-800">Off Day</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-slate-100 text-slate-700">{status}</span>;
+        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-slate-900 text-slate-300 border border-slate-800">{status}</span>;
     }
   };
 

@@ -142,13 +142,13 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
     : null;
 
   return (
-    <div className="bg-[#0D1527] border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+    <div className="bg-[#131E36] border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
               <MapPin className="w-3.5 h-3.5 text-amber-400" />
-              On-Site Solar Field Staff
+              Site Solar Attendance
             </span>
             <span className="text-xs text-slate-400 font-mono">
               {todayData?.todayDate || 'Today'}
@@ -163,19 +163,31 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               : 'Field Site GPS Check-In'}
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            As on-site field staff, capture your live GPS coordinates and site name so management can track your location and attendance.
+            Capture your live GPS coordinates and project location to log your site attendance.
           </p>
         </div>
 
-        {/* Policy Badge */}
-        <div className="p-3.5 bg-[#131E36] border border-slate-800 rounded-2xl max-w-xs text-xs space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-white">
-            <ShieldCheck className="w-4 h-4 text-[#FF6B00]" />
-            <span>Attendance Policy</span>
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            1 free Off & 1 free Half Leave / month. Excess leaves deducted at your per-day income rate (Pay ÷ 30).
-          </p>
+        {/* Status Pill */}
+        <div className="shrink-0">
+          <span
+            className={`px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${
+              isCheckedOut
+                ? 'bg-blue-950 text-blue-300 border-blue-800'
+                : isCheckedIn
+                ? attendance?.status === 'LATE'
+                  ? 'bg-amber-950 text-amber-300 border-amber-800'
+                  : 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                : 'bg-slate-900 text-slate-400 border-slate-800'
+            }`}
+          >
+            {isCheckedOut
+              ? 'Shift Complete'
+              : isCheckedIn
+              ? attendance?.status === 'LATE'
+                ? 'Late Arrival'
+                : 'Active On Site'
+              : 'Pending Check-In'}
+          </span>
         </div>
       </div>
 

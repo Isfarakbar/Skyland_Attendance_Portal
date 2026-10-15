@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Clock,
   CheckCircle2,
@@ -8,14 +8,17 @@ import {
   Fingerprint,
   MapPin,
   Calendar,
+  DollarSign,
+  Palmtree,
   CheckSquare,
-  Sparkles,
   Edit3,
-  User,
-  Plus,
+  Building,
+  Briefcase,
+  Laptop,
   ArrowUpRight,
   ShieldCheck,
-  Building,
+  User,
+  Plus,
 } from 'lucide-react';
 import FieldCheckInWidget from '@/components/FieldCheckInWidget';
 import DailyTaskSection from '@/components/DailyTaskSection';
@@ -44,13 +47,28 @@ export default function EmployeeDashboardView({
 
   const formatTime = (isoString?: string | null) => {
     if (!isoString) return '--:--';
-    const d = new Date(isoString);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '--:--';
+    }
   };
+
+  const leaveBalance = user?.leaveBalance || { sick: 8, casual: 10, annual: 14 };
+  const totalLeavesLeft =
+    (leaveBalance.sick || 0) + (leaveBalance.casual || 0) + (leaveBalance.annual || 0);
+
+  const baseSalary = user?.baseSalary || 30000;
+  const netSalary = employeeStats?.netSalary ?? baseSalary;
+  const presentDays = employeeStats?.presentDays ?? (isCheckedIn ? 1 : 0);
+  const lateDays = employeeStats?.lateDays ?? (attendance?.status === 'LATE' ? 1 : 0);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
-      {/* Employee Greeting & Work Mode Banner */}
+      {/* ========================================================================= */}
+      {/* 1. WELCOME HEADER & QUICK PROFILE BUTTON */}
+      {/* ========================================================================= */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
@@ -73,208 +91,329 @@ export default function EmployeeDashboardView({
                 </>
               )}
             </span>
+
+            <span className="text-xs font-mono text-slate-400">
+              Shift: {user?.shiftTiming || '09:00 AM - 06:00 PM'}
+            </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
             Welcome back,{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-orange-400">
               {user?.name ? user.name.split(' ')[0] : 'Team Member'}
-            </span>
+            </span>{' '}
+            👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             {isFieldWorker
-              ? 'Mark your live GPS site attendance and submit your daily work milestones.'
-              : 'Scan your fingerprint on the office Dahua machine and log your daily work achievements.'}
+              ? 'Mark your GPS site attendance and submit your daily project milestones.'
+              : 'Scan your registered fingerprint upon arrival and keep your daily work logs updated.'}
           </p>
         </div>
 
         <button
           onClick={onOpenCompleteProfile}
-          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 shadow-xs flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
         >
           <Edit3 className="w-3.5 h-3.5 text-[#FF6B00]" />
           <span>Edit My Profile</span>
         </button>
       </div>
 
-      {/* Main 2-Column Grid: Attendance Widget + Profile Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column (8 cols): Attendance & Work Submission */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* 1. Attendance Card */}
-          {isFieldWorker ? (
-            /* Site Employee: GPS Field Check-In */
-            <FieldCheckInWidget todayData={todayData} onRefresh={onRefresh} />
-          ) : (
-            /* Office Employee: Dahua Biometric Punch Status */
-            <div className="bg-[#131E36] rounded-[32px] p-6 sm:p-7 border border-slate-800 shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-orange-950/80 text-orange-400 flex items-center justify-center shrink-0 border border-orange-800/80">
-                    <Fingerprint className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-white tracking-tight">
-                      Office Fingerprint Attendance
-                    </h2>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Dahua ASA1222G Biometric Terminal (Reception)
-                    </p>
-                  </div>
-                </div>
-
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
-                    isCheckedIn
-                      ? attendance?.status === 'LATE'
-                        ? 'bg-amber-950 text-amber-300 border-amber-800'
-                        : 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                      : 'bg-slate-900 text-slate-400 border-slate-800'
-                  }`}
-                >
-                  {isCheckedIn
-                    ? attendance?.status === 'LATE'
-                      ? 'Late Arrival'
-                      : 'Checked In'
-                    : 'Pending Punch'}
-                </span>
-              </div>
-
-              {/* Punch State Banner */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Today&apos;s Status
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl sm:text-2xl font-black text-white">
-                      {isCheckedIn ? `In at ${formatTime(attendance?.clockIn)}` : 'Not punched yet today'}
-                    </span>
-                    {isCheckedIn && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400">
-                    {isCheckedIn
-                      ? isCheckedOut
-                        ? `Checked out at ${formatTime(attendance?.clockOut)}`
-                        : 'Currently active at Skyland Energy Head Office'
-                      : 'Please scan your registered fingerprint at the reception terminal upon arrival.'}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => onOpenTab('calendar')}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 shadow-xs transition-all cursor-pointer"
-                  >
-                    View Calendar
-                  </button>
-                </div>
-              </div>
-
-              {/* Biometric machine ID info */}
-              <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-                <span>
-                  Registered Biometric ID:{' '}
-                  <strong className="text-orange-400 font-mono">
-                    {user?.biometricUserId || user?.employeeId || 'Assigned'}
-                  </strong>
-                </span>
-                <span className="text-slate-500">Auto-syncs via office network</span>
-              </div>
+      {/* ========================================================================= */}
+      {/* 2. TOP METRIC CARDS (4 CLEAN CARDS) */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: Today's Status */}
+        <div
+          className={`p-4 sm:p-5 rounded-3xl border shadow-xs transition-all ${
+            isCheckedIn
+              ? attendance?.status === 'LATE'
+                ? 'bg-amber-950/30 border-amber-800/80'
+                : 'bg-emerald-950/30 border-emerald-800/80'
+              : 'bg-[#131E36] border-slate-800'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Today&apos;s Status
+            </span>
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                isCheckedIn
+                  ? attendance?.status === 'LATE'
+                    ? 'bg-amber-900/60 text-amber-300'
+                    : 'bg-emerald-900/60 text-emerald-400'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
             </div>
-          )}
-
-          {/* 2. Daily Task Submission Section */}
-          <div className="bg-[#131E36] rounded-[32px] p-6 sm:p-7 border border-slate-800 shadow-xs">
-            <DailyTaskSection userId={user?._id} />
           </div>
+          <p
+            className={`text-xl sm:text-2xl font-black mt-2 truncate ${
+              isCheckedIn
+                ? attendance?.status === 'LATE'
+                  ? 'text-amber-300'
+                  : 'text-emerald-400'
+                : 'text-slate-300'
+            }`}
+          >
+            {isCheckedIn
+              ? attendance?.status === 'LATE'
+                ? 'Late Arrival'
+                : 'Checked In'
+              : 'Pending Punch'}
+          </p>
+          <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
+            {isCheckedIn
+              ? `Punched in at ${formatTime(attendance?.clockIn)}`
+              : 'No punch recorded yet today'}
+          </p>
         </div>
 
-        {/* Right Column (4 cols): Profile Dossier Card */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-[#131E36] rounded-[32px] p-5 sm:p-6 border border-slate-800 shadow-xs space-y-5">
-            {/* Portrait Image & Edit Pill */}
-            <div className="relative rounded-2xl overflow-hidden aspect-square bg-gradient-to-tr from-[#FF6B00] via-orange-500 to-indigo-900 flex flex-col justify-end p-4 group">
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="absolute inset-0 w-full h-full object-cover object-top"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-white text-5xl font-black">
-                  {user?.name?.charAt(0) || 'U'}
-                </div>
-              )}
+        {/* Card 2: Monthly Attendance */}
+        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              This Month
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-slate-800 text-orange-400 flex items-center justify-center">
+              <Calendar className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xl sm:text-2xl font-black text-white mt-2">
+            {presentDays} Days
+          </p>
+          <p className="text-[11px] text-slate-400 font-medium mt-1">
+            {lateDays > 0 ? `${lateDays} late arrival${lateDays > 1 ? 's' : ''}` : 'Punctual record'}
+          </p>
+        </div>
 
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-black/20" />
+        {/* Card 3: Leave Balance */}
+        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Leave Balance
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center">
+              <Palmtree className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xl sm:text-2xl font-black text-emerald-400 mt-2">
+            {totalLeavesLeft} Days Left
+          </p>
+          <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
+            {leaveBalance.sick || 8}S • {leaveBalance.casual || 10}C • {leaveBalance.annual || 14}A
+          </p>
+        </div>
 
-              <button
-                onClick={onOpenCompleteProfile}
-                className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition-all cursor-pointer border border-slate-700"
-                title="Change Photo & Details"
-              >
-                <Edit3 className="w-3.5 h-3.5 text-[#FF6B00]" />
-                <span>Edit Profile</span>
-              </button>
+        {/* Card 4: Estimated Salary */}
+        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Estimated Wage
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xl sm:text-2xl font-black text-white mt-2">
+            PKR {netSalary.toLocaleString()}
+          </p>
+          <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
+            Base: PKR {baseSalary.toLocaleString()}
+          </p>
+        </div>
+      </div>
 
-              <div className="relative z-10 text-white">
-                <h3 className="font-black text-lg leading-tight drop-shadow-xs">{user?.name}</h3>
-                <p className="text-xs text-slate-300 font-medium drop-shadow-xs mt-0.5">
-                  {user?.designation || 'Team Member'}
+      {/* ========================================================================= */}
+      {/* 3. QUICK ACTION BAR (FINGER-FRIENDLY SHORTCUTS) */}
+      {/* ========================================================================= */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => onOpenTab('apps')}
+          className="px-4 py-2 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white text-xs font-bold rounded-2xl shadow-md shadow-orange-500/20 flex items-center gap-2 transition-all cursor-pointer"
+        >
+          <CheckSquare className="w-3.5 h-3.5" />
+          <span>Submit Work Log</span>
+        </button>
+
+        <button
+          onClick={() => onOpenTab('calendar')}
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+          <span>My Calendar</span>
+        </button>
+
+        <button
+          onClick={() => onOpenTab('salary')}
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+          <span>My Payslip</span>
+        </button>
+
+        <button
+          onClick={() => onOpenTab('reviews')}
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5"
+        >
+          <Palmtree className="w-3.5 h-3.5 text-slate-400" />
+          <span>Apply for Leave</span>
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. TODAY'S ATTENDANCE SECTION */}
+      {/* ========================================================================= */}
+      {isFieldWorker ? (
+        /* Site Solar Employee: Live GPS Check-In Widget */
+        <FieldCheckInWidget todayData={todayData} onRefresh={onRefresh} />
+      ) : (
+        /* Office Employee: Streamlined Biometric Card */
+        <div className="bg-[#131E36] rounded-3xl p-6 sm:p-7 border border-slate-800 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-orange-950/80 text-orange-400 flex items-center justify-center shrink-0 border border-orange-800/80">
+                <Fingerprint className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-white tracking-tight">
+                  Office Fingerprint Attendance
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Biometric Terminal • Auto-syncs via office network
                 </p>
-                <span className="text-[11px] font-mono text-orange-400">{user?.employeeId}</span>
               </div>
             </div>
 
-            {/* Profile Detail Fields */}
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span className="text-slate-500 font-bold uppercase text-[10px]">Department</span>
-                <span className="font-extrabold text-white">{user?.department || 'Operations'}</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
+                  isCheckedIn
+                    ? attendance?.status === 'LATE'
+                      ? 'bg-amber-950 text-amber-300 border-amber-800'
+                      : 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                    : 'bg-slate-900 text-slate-400 border-slate-800'
+                }`}
+              >
+                {isCheckedIn
+                  ? attendance?.status === 'LATE'
+                    ? 'Late Arrival'
+                    : 'Checked In'
+                  : 'Pending Punch'}
+              </span>
+            </div>
+          </div>
 
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span className="text-slate-500 font-bold uppercase text-[10px]">Work Mode</span>
-                <span className="font-extrabold text-white">
-                  {isFieldWorker ? '📍 Solar Site / Field' : '🏢 Head Office'}
+          {/* Punch In & Out Timeline Badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                Clock In
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black text-white">
+                  {isCheckedIn ? formatTime(attendance?.clockIn) : '--:--'}
                 </span>
+                {isCheckedIn && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
               </div>
-
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span className="text-slate-500 font-bold uppercase text-[10px]">Shift Timing</span>
-                <span className="font-bold text-slate-300 font-mono">
-                  {user?.shiftTiming || '09:00 AM - 06:00 PM'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span className="text-slate-500 font-bold uppercase text-[10px]">Phone</span>
-                <span className="font-bold text-slate-300 font-mono">
-                  {user?.phone || 'Not provided'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold uppercase text-[10px]">Leave Balance</span>
-                <span className="font-extrabold text-emerald-400">
-                  {(user?.leaveBalance?.sick || 8) +
-                    (user?.leaveBalance?.casual || 10) +
-                    (user?.leaveBalance?.annual || 14)}{' '}
-                  Days Left
-                </span>
-              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {isCheckedIn ? 'Recorded successfully' : 'Scan fingerprint on arrival'}
+              </p>
             </div>
 
-            <button
-              onClick={onOpenCompleteProfile}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <span>View Full Dossier (Bank, CNIC, Bio)</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
-            </button>
+            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                Clock Out
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black text-white">
+                  {isCheckedOut ? formatTime(attendance?.clockOut) : '--:--'}
+                </span>
+                {isCheckedOut && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {isCheckedOut ? 'Shift completed' : 'Scan fingerprint when leaving'}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                Assigned Shift
+              </span>
+              <span className="text-base font-extrabold text-white font-mono block">
+                {user?.shiftTiming || '09:00 AM - 06:00 PM'}
+              </span>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Biometric ID:{' '}
+                <strong className="text-orange-400 font-mono">
+                  {user?.biometricUserId || user?.employeeId || 'Assigned'}
+                </strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 5. DAILY TASK SUBMISSIONS (DIRECT COMPONENT - NO DOUBLE NESTING) */}
+      {/* ========================================================================= */}
+      <DailyTaskSection userId={user?._id} />
+
+      {/* ========================================================================= */}
+      {/* 6. COMPACT PROFILE & JOB OVERVIEW */}
+      {/* ========================================================================= */}
+      <div className="bg-[#131E36] rounded-3xl p-5 sm:p-6 border border-slate-800 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-sm overflow-hidden shrink-0 border border-slate-700">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span>{user?.name?.charAt(0) || 'U'}</span>
+              )}
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-white">{user?.name}</h3>
+              <p className="text-xs text-slate-400">
+                {user?.designation || 'Staff Member'} • {user?.department || 'Operations'} •{' '}
+                <span className="font-mono text-orange-400">{user?.employeeId}</span>
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenCompleteProfile}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            <span>View Full Profile &amp; Devices</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-xs">
+          <div>
+            <span className="text-slate-400 uppercase font-bold text-[10px] block">Employment</span>
+            <span className="text-white font-bold">{user?.employmentType || 'Permanent'}</span>
+          </div>
+
+          <div>
+            <span className="text-slate-400 uppercase font-bold text-[10px] block">Reporting To</span>
+            <span className="text-white font-bold">{user?.reportingManager || 'Management'}</span>
+          </div>
+
+          <div>
+            <span className="text-slate-400 uppercase font-bold text-[10px] block">Registered Devices</span>
+            <span className="text-orange-400 font-bold font-mono">
+              {user?.assignedDevices?.length ? `${user.assignedDevices.length} Assigned` : 'None'}
+            </span>
+          </div>
+
+          <div>
+            <span className="text-slate-400 uppercase font-bold text-[10px] block">Phone Contact</span>
+            <span className="text-slate-300 font-mono">{user?.phone || 'Not provided'}</span>
           </div>
         </div>
       </div>

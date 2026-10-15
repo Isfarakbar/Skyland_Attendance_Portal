@@ -115,20 +115,20 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
     switch (st) {
       case 'COMPLETED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3" /> Completed
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Completed
           </span>
         );
       case 'IN_PROGRESS':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock className="w-3 h-3" /> In Progress
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
+            <Clock className="w-3 h-3 text-amber-400" /> In Progress
           </span>
         );
       case 'BLOCKED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <AlertTriangle className="w-3 h-3" /> Blocked
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800">
+            <AlertTriangle className="w-3 h-3 text-rose-400" /> Blocked
           </span>
         );
       default:
