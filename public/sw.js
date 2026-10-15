@@ -1,22 +1,19 @@
 // Skyland Attendance Portal - Progressive Web App Service Worker
-const CACHE_NAME = 'skyland-pwa-v1';
-const ASSETS_TO_CACHE = [
-  '/',
+const CACHE_NAME = 'skyland-pwa-v2';
+const STATIC_ASSETS = [
   '/manifest.json',
-  '/app-icon.svg',
   '/icon-192.png',
   '/icon-512.png',
+  '/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(() => {
-        // Continue even if some static resources are dynamic
-      });
+      return cache.addAll(STATIC_ASSETS).catch(() => {});
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

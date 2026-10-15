@@ -17,6 +17,8 @@ import {
   X,
   Bell,
   Fingerprint,
+  Smartphone,
+  Download,
 } from 'lucide-react';
 
 interface AuthUser {
@@ -139,8 +141,17 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Right side mobile controls: notifications + profile avatar */}
+        {/* Right side mobile controls: install + notifications + profile avatar */}
         <div className="flex items-center gap-2 relative">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-install'))}
+            className="h-8 px-2.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-[#FF6B00] hover:bg-orange-500/20 flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer active:scale-95"
+            title="Install App"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-black">Install</span>
+          </button>
+
           <button
             onClick={() => setNotifOpen(!notifOpen)}
             className="relative w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-center cursor-pointer"
@@ -258,6 +269,17 @@ export default function Sidebar({
                   >
                     <Edit3 className="w-3.5 h-3.5 text-[#FF6B00]" />
                     <span>Edit Profile Details</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      window.dispatchEvent(new CustomEvent('open-pwa-install'));
+                    }}
+                    className="w-full py-2 bg-gradient-to-r from-[#FF6B00] to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-orange-500/20 cursor-pointer active:scale-95"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Install App on Phone</span>
                   </button>
                 </div>
               )}

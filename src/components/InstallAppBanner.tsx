@@ -18,24 +18,16 @@ export default function InstallAppBanner() {
   const [justInstalled, setJustInstalled] = useState(false);
 
   useEffect(() => {
-    // 1. Robust Service Worker Registration
+    // 1. Instant Service Worker Registration (No waiting for window.onload)
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      const registerSW = () => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then((reg) => {
-            console.log('PWA Service Worker registered at scope:', reg.scope);
-          })
-          .catch((err) => {
-            console.log('PWA Service Worker registration notice:', err);
-          });
-      };
-
-      if (document.readyState === 'complete') {
-        registerSW();
-      } else {
-        window.addEventListener('load', registerSW);
-      }
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => {
+          console.log('PWA Service Worker registered at scope:', reg.scope);
+        })
+        .catch((err) => {
+          console.log('PWA Service Worker registration notice:', err);
+        });
     }
 
     // 2. Check if already installed / standalone
@@ -76,15 +68,15 @@ export default function InstallAppBanner() {
       setTimeout(() => setJustInstalled(false), 5000);
     });
 
-    // 6. On mobile phones, always surface notification banner after brief delay
+    // 6. On mobile phones, surface notification banner immediately
     const dismissedTime = localStorage.getItem('skyland_pwa_dismissed');
     const isRecentlyDismissed =
-      dismissedTime && Date.now() - parseInt(dismissedTime, 10) < 4 * 60 * 60 * 1000; // 4 hours
+      dismissedTime && Date.now() - parseInt(dismissedTime, 10) < 60 * 60 * 1000; // 1 hour
 
     if (isMobile && !isRecentlyDismissed && !isStandalone) {
       const timer = setTimeout(() => {
         setShowBanner(true);
-      }, 1200);
+      }, 150);
       return () => clearTimeout(timer);
     }
 
