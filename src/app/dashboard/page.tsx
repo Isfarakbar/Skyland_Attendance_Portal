@@ -89,18 +89,29 @@ export default function DashboardPage() {
 
   const fetchEmployeeHistory = async (currentUser: any) => {
     try {
+      // Management accounts (admin, developer, ceo) do not have personal payroll or attendance stats
+      if (['developer', 'admin', 'ceo'].includes(currentUser?.role)) {
+        return;
+      }
+
       const today = new Date();
       const monthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-      const res = await fetch(`/api/attendance/history?month=${monthStr}`);
-      const data = await res.json();
-      if (data.success) {
-        const records = data.records || [];
-        let presentCount = 0;
-        let lateCount = 0;
-        let totalOffs = 0;
-        let totalHalfLeaves = 0;
 
-        for (const r of records) {
+      const [historyRes, payrollRes] = await Promise.all([
+        fetch(`/api/attendance/history?month=${monthStr}`),
+        fetch(`/api/payroll?month=${monthStr}`),
+      ]);
+
+      const historyData = await historyRes.json();
+      const payrollData = await payrollRes.json();
+
+      let presentCount = 0;
+      let lateCount = 0;
+      let totalOffs = 0;
+      let totalHalfLeaves = 0;
+
+      if (historyData.success && historyData.records) {
+        for (const r of historyData.records) {
           if (r.status === 'PRESENT') {
             presentCount++;
           } else if (r.status === 'LATE') {
@@ -112,25 +123,32 @@ export default function DashboardPage() {
             totalOffs++;
           }
         }
-
-        const baseSalary = currentUser?.baseSalary || 30000;
-        const dailyRate = Math.round(baseSalary / 30);
-        const halfDayRate = Math.round(dailyRate / 2);
-        const excessOffs = Math.max(0, totalOffs - 1);
-        const excessHalfLeaves = Math.max(0, totalHalfLeaves - 1);
-        const deductions = excessOffs * dailyRate + excessHalfLeaves * halfDayRate;
-        const netSalary = Math.max(0, baseSalary - deductions);
-
-        setEmployeeStats({
-          presentDays: presentCount,
-          lateDays: lateCount,
-          totalOffs,
-          totalHalfLeaves,
-          baseSalary,
-          netSalary,
-          leaveBalance: currentUser?.leaveBalance || { sick: 8, casual: 10, annual: 14 },
-        });
       }
+
+      let baseSalary = typeof currentUser?.baseSalary === 'number' ? currentUser.baseSalary : 0;
+      let netSalary = baseSalary;
+
+      if (payrollData.success && Array.isArray(payrollData.payroll) && payrollData.payroll.length > 0) {
+        const p = payrollData.payroll.find((rec: any) => rec.userId === (currentUser?.id || currentUser?._id)) || payrollData.payroll[0];
+        if (p) {
+          baseSalary = p.baseSalary;
+          netSalary = p.netSalary;
+          presentCount = p.presentDays;
+          lateCount = p.lateDays;
+          totalOffs = p.totalOffs;
+          totalHalfLeaves = p.totalHalfLeaves;
+        }
+      }
+
+      setEmployeeStats({
+        presentDays: presentCount,
+        lateDays: lateCount,
+        totalOffs,
+        totalHalfLeaves,
+        baseSalary,
+        netSalary,
+        leaveBalance: currentUser?.leaveBalance || { sick: 8, casual: 10, annual: 14 },
+      });
     } catch (err) {
       console.error(err);
     }

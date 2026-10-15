@@ -59,7 +59,9 @@ export default function EmployeeDashboardView({
   const totalLeavesLeft =
     (leaveBalance.sick || 0) + (leaveBalance.casual || 0) + (leaveBalance.annual || 0);
 
-  const baseSalary = user?.baseSalary || 30000;
+  const baseSalary = typeof user?.baseSalary === 'number' && user.baseSalary > 0
+    ? user.baseSalary
+    : (typeof employeeStats?.baseSalary === 'number' && employeeStats.baseSalary > 0 ? employeeStats.baseSalary : 0);
   const netSalary = employeeStats?.netSalary ?? baseSalary;
   const presentDays = employeeStats?.presentDays ?? (isCheckedIn ? 1 : 0);
   const lateDays = employeeStats?.lateDays ?? (attendance?.status === 'LATE' ? 1 : 0);
@@ -222,7 +224,7 @@ export default function EmployeeDashboardView({
             PKR {netSalary.toLocaleString()}
           </p>
           <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
-            Base: PKR {baseSalary.toLocaleString()}
+            {baseSalary > 0 ? `Base: PKR ${baseSalary.toLocaleString()}` : 'Base: Not configured'}
           </p>
         </div>
       </div>

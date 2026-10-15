@@ -59,13 +59,17 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
       fetch('/api/employees')
         .then((res) => res.json())
         .then((data) => {
-          if (data.success && data.employees) {
+          if (data.success && data.employees && data.employees.length > 0) {
             setEmployeesList(data.employees);
+            // Default selection to first staff employee so management doesn't view blank admin records
+            if (['developer', 'admin', 'ceo', 'manager'].includes(userRole)) {
+              setSelectedUserId(data.employees[0]._id);
+            }
           }
         })
         .catch(() => {});
     }
-  }, [isManagement]);
+  }, [isManagement, userRole]);
 
   // Fetch attendance records for selected user and month
   useEffect(() => {
@@ -209,16 +213,6 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
     }
   }
 
-  const selectedEmployee = employeesList.find((e) => e._id === selectedUserId);
-  const baseSalary = selectedEmployee?.baseSalary || 30000;
-  const dailyRate = Math.round(baseSalary / 30);
-  const halfDayRate = Math.round(dailyRate / 2);
-
-  const excessOffs = Math.max(0, totalOffs - 1);
-  const excessHalfLeaves = Math.max(0, totalHalfLeaves - 1);
-  const deductions = (excessOffs * dailyRate) + (excessHalfLeaves * halfDayRate);
-  const netEstimatedSalary = Math.max(0, baseSalary - deductions);
-
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -296,25 +290,25 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
           <div className="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-2xl">
             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Days Present</span>
             <div className="text-xl font-black text-emerald-300 mt-0.5">{presentDays}</div>
-            <span className="text-[10px] text-emerald-500/80">({lateDays} late arrivals)</span>
+            <span className="text-[10px] text-emerald-500/80">Monthly attendances</span>
+          </div>
+
+          <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-2xl">
+            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Late Arrivals</span>
+            <div className="text-xl font-black text-amber-300 mt-0.5">{lateDays}</div>
+            <span className="text-[10px] text-amber-500/80">Punctuality log</span>
           </div>
 
           <div className="p-3 bg-orange-950/40 border border-orange-800/80 rounded-2xl">
             <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Half Leaves</span>
             <div className="text-xl font-black text-orange-300 mt-0.5">{totalHalfLeaves}</div>
-            <span className="text-[10px] text-orange-500/80">{excessHalfLeaves > 0 ? `${excessHalfLeaves} deducted` : '1 free leaf applied'}</span>
+            <span className="text-[10px] text-orange-500/80">Half day records</span>
           </div>
 
           <div className="p-3 bg-rose-950/40 border border-rose-800/80 rounded-2xl">
-            <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">Offs / Absents</span>
+            <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">Offs &amp; Absents</span>
             <div className="text-xl font-black text-rose-300 mt-0.5">{totalOffs}</div>
-            <span className="text-[10px] text-rose-500/80">{excessOffs > 0 ? `${excessOffs} deducted` : '1 free off applied'}</span>
-          </div>
-
-          <div className="p-3 bg-[#0B1120] border border-slate-800 rounded-2xl">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Est. Net Salary</span>
-            <div className="text-xl font-black text-white mt-0.5">PKR {netEstimatedSalary.toLocaleString()}</div>
-            <span className="text-[10px] text-emerald-400">Base: PKR {baseSalary.toLocaleString()}</span>
+            <span className="text-[10px] text-rose-500/80">Total off days</span>
           </div>
         </div>
       </div>
