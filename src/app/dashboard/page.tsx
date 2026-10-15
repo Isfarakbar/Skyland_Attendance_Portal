@@ -163,9 +163,9 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#FAF9FD] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#5038ED] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs font-black uppercase tracking-wider text-[#5038ED]">
-            Loading Peoplexio Portal...
+          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs font-black uppercase tracking-wider text-emerald-600">
+            Loading Skyland Energy Portal...
           </p>
         </div>
       </div>
@@ -177,8 +177,8 @@ export default function DashboardPage() {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-[#FAF9FD] text-[#1E1B38] pb-16 selection:bg-[#5038ED]/10 selection:text-[#5038ED]">
-      {/* Top Peoplexio Navigation Bar */}
+    <div className="min-h-screen bg-[#FAF9FD] text-[#1E1B38] pb-16 selection:bg-emerald-600/10 selection:text-emerald-700">
+      {/* Top Navigation Bar */}
       <Navbar
         user={user}
         activeTab={activeTab}
@@ -188,16 +188,16 @@ export default function DashboardPage() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6">
-        {/* If Active Tab is 'dashboard', display the Peoplexio UI */}
+        {/* If Active Tab is 'dashboard', display the UI */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
             {/* Hero Welcome Banner */}
             <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 pb-2">
               <div>
                 <h1 className="text-3xl sm:text-4xl font-black text-[#1E1B38] tracking-tight">
-                  Welcome in,{' '}
-                  <span className="text-[#5038ED]">
-                    {user?.name ? user.name.split(' ')[0] : 'Peoplexio'}
+                  Welcome to{' '}
+                  <span className="text-emerald-600">
+                    {user?.name ? user.name.split(' ')[0] : 'Skyland Energy'}
                   </span>
                 </h1>
 

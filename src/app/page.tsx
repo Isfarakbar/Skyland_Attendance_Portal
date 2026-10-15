@@ -28,22 +28,22 @@ export default function HomePage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-200">
               <Building2 className="w-5 h-5" />
             </div>
-            <span className="font-extrabold text-xl text-slate-900 tracking-tight">SKYLAND</span>
+            <span className="font-extrabold text-xl text-slate-900 tracking-tight">SKYLAND ENERGY</span>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-emerald-600 transition-colors"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs shadow-indigo-200 transition-all"
+              className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs shadow-emerald-200 transition-all"
             >
               Get Started
             </Link>
@@ -53,13 +53,13 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center my-auto">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-6">
-          <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-          Attendance & Workforce Management
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-6">
+          <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+          Clean Energy Workforce & Attendance Hub
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
-          Modern Attendance Tracking for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Skyland Teams</span>
+          Modern Attendance Tracking for <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">Skyland Energy</span>
         </h1>
 
         <p className="mt-6 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
@@ -118,7 +118,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
-        &copy; 2026 Skyland Attendance Portal. All rights reserved.
+        &copy; 2026 Skyland Energy. All rights reserved.
       </footer>
     </div>
   );

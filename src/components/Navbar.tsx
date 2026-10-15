@@ -78,24 +78,24 @@ export default function Navbar({
     <header className="sticky top-0 z-40 bg-[#FAF9FD]/90 backdrop-blur-xl border-b border-[#ECEAF5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-4">
-          {/* Left Brand: Peoplexio Purple Mark */}
+          {/* Left Brand: Skyland Energy Mark */}
           <div
             onClick={() => handleTabClick('dashboard')}
             className="flex items-center gap-3 cursor-pointer shrink-0 select-none"
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#5038ED] via-[#6A4FF5] to-[#8F79FC] flex items-center justify-center text-white shadow-lg shadow-[#5038ED]/25">
-              {/* Stylized 'P' icon */}
-              <span className="font-black text-2xl font-sans tracking-tighter">P</span>
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-600/25">
+              {/* Stylized 'S' solar energy mark */}
+              <span className="font-black text-2xl font-sans tracking-tighter">S</span>
             </div>
 
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-xl text-[#1E1B38] tracking-tight">
-                  Peoplexio
+                  Skyland Energy
                 </span>
               </div>
-              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                Empower. Engage. Elevate.
+              <p className="text-[10px] font-bold tracking-wider text-emerald-600 uppercase">
+                Workforce & Attendance Hub
               </p>
             </div>
           </div>
