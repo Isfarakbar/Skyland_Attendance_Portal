@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Trash2,
   Plus,
+  Lock,
 } from 'lucide-react';
 
 interface CompleteProfileModalProps {
@@ -68,19 +69,11 @@ export default function CompleteProfileModal({
   const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>(user.workMode || 'OFFICE');
   const [baseSalary, setBaseSalary] = useState<number>(user.baseSalary || 70000);
 
+  const isElevated = ['developer', 'admin', 'ceo'].includes(user?.role);
+
   // Devices state
   const [devices, setDevices] = useState(
-    user.devices && user.devices.length > 0
-      ? user.devices
-      : [
-          {
-            name: 'MacBook Air',
-            model: 'Version M1 (16GB RAM / 512GB SSD)',
-            serialNumber: 'SKY-MBP-8921',
-            assignedDate: '2024-01-15',
-            status: 'Active',
-          },
-        ]
+    Array.isArray(user.devices) ? user.devices : []
   );
 
   const [pensionFund, setPensionFund] = useState(
@@ -152,36 +145,54 @@ export default function CompleteProfileModal({
     setSuccess(null);
 
     try {
+      const payload = isElevated
+        ? {
+            name: name.trim(),
+            phone: phone.trim(),
+            avatarUrl: avatarUrl.trim(),
+            bio: bio.trim(),
+            emergencyContact: emergencyContact.trim(),
+            emergencyRelation: emergencyRelation.trim(),
+            address: address.trim(),
+            dateOfBirth: dateOfBirth.trim(),
+            gender: gender.trim(),
+            cnic: cnic.trim(),
+            bankName: bankName.trim(),
+            accountNumber: accountNumber.trim(),
+            iban: iban.trim(),
+            devices,
+            pensionFund: {
+              ...pensionFund,
+              monthlyAmount: Math.round(Number(baseSalary || 0) * (Number(pensionFund.contributionPercent || 8) / 100)),
+            },
+            department: department.trim(),
+            designation: designation.trim(),
+            shiftTiming: shiftTiming.trim(),
+            reportingManager: reportingManager.trim(),
+            employmentType: employmentType.trim(),
+            workMode,
+            baseSalary: Number(baseSalary),
+          }
+        : {
+            name: name.trim(),
+            phone: phone.trim(),
+            avatarUrl: avatarUrl.trim(),
+            bio: bio.trim(),
+            emergencyContact: emergencyContact.trim(),
+            emergencyRelation: emergencyRelation.trim(),
+            address: address.trim(),
+            dateOfBirth: dateOfBirth.trim(),
+            gender: gender.trim(),
+            cnic: cnic.trim(),
+            bankName: bankName.trim(),
+            accountNumber: accountNumber.trim(),
+            iban: iban.trim(),
+          };
+
       const res = await fetch('/api/auth/me', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim(),
-          avatarUrl: avatarUrl.trim(),
-          bio: bio.trim(),
-          emergencyContact: emergencyContact.trim(),
-          emergencyRelation: emergencyRelation.trim(),
-          address: address.trim(),
-          dateOfBirth: dateOfBirth.trim(),
-          gender: gender.trim(),
-          cnic: cnic.trim(),
-          bankName: bankName.trim(),
-          accountNumber: accountNumber.trim(),
-          iban: iban.trim(),
-          devices,
-          pensionFund: {
-            ...pensionFund,
-            monthlyAmount: Math.round(Number(baseSalary || 0) * (Number(pensionFund.contributionPercent || 8) / 100)),
-          },
-          department: department.trim(),
-          designation: designation.trim(),
-          shiftTiming: shiftTiming.trim(),
-          reportingManager: reportingManager.trim(),
-          employmentType: employmentType.trim(),
-          workMode,
-          baseSalary: Number(baseSalary),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -464,15 +475,27 @@ export default function CompleteProfileModal({
             </div>
           )}
 
-          {/* TAB 3: JOB & HIERARCHY - FULLY EDITABLE */}
+          {/* TAB 3: JOB & HIERARCHY */}
           {activeTab === 'job' && (
             <div className="bg-[#131E36] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">
-                  Corporate Job &amp; Employment Details
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-800">
+                <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-[#FF6B00]" />
+                  <span>Corporate Job &amp; Employment Details</span>
                 </h4>
-                <span className="text-xs text-slate-400">Editable Organization Fields</span>
+                <span className="text-xs text-slate-400">
+                  {isElevated ? 'Admin Editable' : 'Company Managed (Read-Only)'}
+                </span>
               </div>
+
+              {!isElevated && (
+                <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2 text-xs text-slate-400">
+                  <Lock className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                  <span>
+                    Official job title, department, shift timings, and work mode are assigned by Operations Administration.
+                  </span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800">
@@ -483,141 +506,201 @@ export default function CompleteProfileModal({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">Department</label>
-                  <input
-                    type="text"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    placeholder="e.g. IT & Software Development"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
+                  {isElevated ? (
+                    <input
+                      type="text"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder="e.g. Operations, IT, Engineering"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  ) : (
+                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm text-white font-semibold">
+                      {department || 'General Operations'}
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Official Designation / Title</label>
-                  <input
-                    type="text"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    placeholder="e.g. Digital & Software Developer"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Official Designation</label>
+                  {isElevated ? (
+                    <input
+                      type="text"
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value)}
+                      placeholder="e.g. Senior Solar Engineer"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  ) : (
+                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm text-white font-semibold">
+                      {designation || 'Staff Member'}
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">Employment Type</label>
-                  <select
-                    value={employmentType}
-                    onChange={(e) => setEmploymentType(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  >
-                    <option value="Full-time Permanent">Full-time Permanent</option>
-                    <option value="Contractual / Project">Contractual / Project</option>
-                    <option value="Probationary">Probationary Period</option>
-                    <option value="Internship / Trainee">Internship / Trainee</option>
-                    <option value="Remote Consultant">Remote Consultant</option>
-                  </select>
+                  {isElevated ? (
+                    <select
+                      value={employmentType}
+                      onChange={(e) => setEmploymentType(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    >
+                      <option value="Full-time Permanent">Full-time Permanent</option>
+                      <option value="Contractual / Project">Contractual / Project</option>
+                      <option value="Probationary">Probationary Period</option>
+                      <option value="Internship / Trainee">Internship / Trainee</option>
+                    </select>
+                  ) : (
+                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm text-white font-semibold">
+                      {employmentType || 'Full-time Permanent'}
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Reporting Manager / Supervisor</label>
-                  <input
-                    type="text"
-                    value={reportingManager}
-                    onChange={(e) => setReportingManager(e.target.value)}
-                    placeholder="e.g. CEO / Engineering Director"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Reporting Manager</label>
+                  {isElevated ? (
+                    <input
+                      type="text"
+                      value={reportingManager}
+                      onChange={(e) => setReportingManager(e.target.value)}
+                      placeholder="e.g. CEO / Director Operations"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  ) : (
+                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm text-white font-semibold">
+                      {reportingManager || 'Management'}
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 mb-1">Work Mode &amp; Attendance Type</label>
-                  <select
-                    value={workMode}
-                    onChange={(e) => setWorkMode(e.target.value as any)}
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  >
-                    <option value="OFFICE">Office Desk Staff (Biometric Fingerprint)</option>
-                    <option value="FIELD">Field Staff (Live GPS Site Check-in)</option>
-                  </select>
+                  {isElevated ? (
+                    <select
+                      value={workMode}
+                      onChange={(e) => setWorkMode(e.target.value as any)}
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    >
+                      <option value="OFFICE">Office Desk Staff (Biometric Fingerprint)</option>
+                      <option value="FIELD">Field Staff (Live GPS Site Check-in)</option>
+                    </select>
+                  ) : (
+                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2">
+                      <span className={workMode === 'FIELD' ? 'text-amber-400' : 'text-blue-400'}>
+                        {workMode === 'FIELD' ? '📍 Field Staff (Live GPS Check-in)' : '🏢 Office Desk Staff (Biometric)'}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Shift Timing</label>
-                  <input
-                    type="text"
-                    value={shiftTiming}
-                    onChange={(e) => setShiftTiming(e.target.value)}
-                    placeholder="09:00 AM - 06:00 PM"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Official Shift Timing</label>
+                  {isElevated ? (
+                    <input
+                      type="text"
+                      value={shiftTiming}
+                      onChange={(e) => setShiftTiming(e.target.value)}
+                      placeholder="09:00 AM - 06:00 PM"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  ) : (
+                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm text-white font-semibold">
+                      {shiftTiming || '09:00 AM - 06:00 PM'}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: FINANCIAL & SALARY - FULLY EDITABLE */}
+          {/* TAB 4: FINANCIAL & SALARY */}
           {activeTab === 'financial' && (
             <div className="bg-[#131E36] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-5">
-              <h4 className="text-sm font-black text-white uppercase tracking-wider mb-2">
-                Compensation, Banking &amp; Pension
-              </h4>
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-800">
+                <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                  <span>Compensation, Banking &amp; Pension</span>
+                </h4>
+                <span className="text-xs text-slate-400">
+                  {isElevated ? 'Admin Editable' : 'Bank Details Editable'}
+                </span>
+              </div>
 
+              {/* Base Salary Block */}
               <div className="p-4 bg-orange-950/20 rounded-2xl border border-orange-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1">
-                  <label className="block text-xs font-bold text-orange-400 uppercase mb-1">
-                    Monthly Base Salary (PKR)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={baseSalary}
-                    onChange={(e) => setBaseSalary(Number(e.target.value))}
-                    placeholder="70000"
-                    className="w-full max-w-xs px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-lg font-black text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
+                  <span className="block text-xs font-bold text-orange-400 uppercase mb-1 flex items-center gap-1.5">
+                    {!isElevated && <Lock className="w-3.5 h-3.5" />}
+                    <span>Monthly Base Salary</span>
+                  </span>
+                  {isElevated ? (
+                    <input
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={baseSalary}
+                      onChange={(e) => setBaseSalary(Number(e.target.value))}
+                      placeholder="70000"
+                      className="w-full max-w-xs px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-lg font-black text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  ) : (
+                    <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
+                      PKR {Number(baseSalary || 0).toLocaleString()}
+                    </div>
+                  )}
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    {isElevated ? 'Used to compute hourly/daily leave rates' : 'Managed exclusively by Operations Administration'}
+                  </span>
                 </div>
                 <div className="text-left sm:text-right">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase block">Calculated Daily Rate</span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase block">Daily Calculation Rate</span>
                   <span className="text-base font-mono font-bold text-[#FF6B00]">
                     PKR {Math.round(Number(baseSalary || 0) / 30).toLocaleString()} / day
                   </span>
-                  <span className="text-[10px] text-slate-500 block mt-0.5">Used for leave fine deductions</span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">Applied to unexcused absences</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Disbursement Bank Name</label>
-                  <input
-                    type="text"
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    placeholder="Bank Name (e.g. Meezan Bank, HBL)"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
-                </div>
+              {/* Bank Details (Editable by both employee and admin) */}
+              <div className="space-y-3">
+                <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                  Disbursement Bank Account (Editable)
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">Disbursement Bank Name</label>
+                    <input
+                      type="text"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="Bank Name (e.g. Meezan Bank, HBL)"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Account Number</label>
-                  <input
-                    type="text"
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="01-2948291-01"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">Account Number</label>
+                    <input
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="01-2948291-01"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-300 mb-1">IBAN Number</label>
-                  <input
-                    type="text"
-                    value={iban}
-                    onChange={(e) => setIban(e.target.value)}
-                    placeholder="PK36SCBL0000001294829101"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                  />
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">IBAN Number</label>
+                    <input
+                      type="text"
+                      value={iban}
+                      onChange={(e) => setIban(e.target.value)}
+                      placeholder="PK36SCBL0000001294829101"
+                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -629,12 +712,14 @@ export default function CompleteProfileModal({
                       type="checkbox"
                       id="pensionEnrolled"
                       checked={pensionFund.enrolled}
+                      disabled={!isElevated}
                       onChange={(e) => setPensionFund({ ...pensionFund, enrolled: e.target.checked })}
-                      className="w-4 h-4 rounded-sm accent-[#FF6B00] cursor-pointer"
+                      className="w-4 h-4 rounded-sm accent-[#FF6B00] cursor-pointer disabled:cursor-not-allowed"
                     />
                     <label htmlFor="pensionEnrolled" className="text-xs font-bold text-white cursor-pointer">
                       Pension &amp; Provident Fund Contribution
                     </label>
+                    {!isElevated && <Lock className="w-3 h-3 text-slate-500" />}
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     pensionFund.enrolled
@@ -649,20 +734,26 @@ export default function CompleteProfileModal({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-400 mb-1">Contribution Percent (%)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="25"
-                        value={pensionFund.contributionPercent}
-                        onChange={(e) =>
-                          setPensionFund({
-                            ...pensionFund,
-                            contributionPercent: Number(e.target.value),
-                            monthlyAmount: Math.round(Number(baseSalary || 0) * (Number(e.target.value) / 100)),
-                          })
-                        }
-                        className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                      />
+                      {isElevated ? (
+                        <input
+                          type="number"
+                          min="1"
+                          max="25"
+                          value={pensionFund.contributionPercent}
+                          onChange={(e) =>
+                            setPensionFund({
+                              ...pensionFund,
+                              contributionPercent: Number(e.target.value),
+                              monthlyAmount: Math.round(Number(baseSalary || 0) * (Number(e.target.value) / 100)),
+                            })
+                          }
+                          className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                        />
+                      ) : (
+                        <div className="px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white font-mono font-bold">
+                          {pensionFund.contributionPercent}%
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-[11px] font-bold text-slate-400 mb-1">Calculated Monthly Amount</label>
@@ -676,45 +767,57 @@ export default function CompleteProfileModal({
             </div>
           )}
 
-          {/* TAB 5: ASSIGNED DEVICES - FULLY EDITABLE */}
+          {/* TAB 5: ASSIGNED DEVICES */}
           {activeTab === 'devices' && (
             <div className="bg-[#131E36] p-6 rounded-2xl border border-slate-800 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 pb-3 border-b border-slate-800">
                 <div>
-                  <h4 className="text-sm font-black text-white uppercase tracking-wider">
-                    Corporate Hardware &amp; IT Equipment
+                  <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <Laptop className="w-4 h-4 text-[#FF6B00]" />
+                    <span>Company-Owned Devices &amp; Hardware Assets</span>
                   </h4>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Register, edit, or remove hardware, laptops, and field equipment assigned to this profile
+                    {isElevated
+                      ? 'Register, edit, or remove hardware, laptops, and field equipment assigned to this profile'
+                      : 'Equipment and hardware officially issued to you by Skyland Energy operations'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 self-start sm:self-auto">
                   <span className="text-xs font-bold text-[#FF6B00] px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full">
                     {devices.length} {devices.length === 1 ? 'Asset' : 'Assets'}
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleAddDevice}
-                    className="px-3 py-1.5 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Device</span>
-                  </button>
+                  {isElevated && (
+                    <button
+                      type="button"
+                      onClick={handleAddDevice}
+                      className="px-3 py-1.5 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Device</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
               {devices.length === 0 ? (
                 <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/40">
                   <Laptop className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                  <p className="text-xs text-slate-400 mb-3">No corporate devices currently assigned.</p>
-                  <button
-                    type="button"
-                    onClick={handleAddDevice}
-                    className="px-4 py-2 bg-linear-to-r from-[#FF6B00] to-amber-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer inline-flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add First Assigned Device</span>
-                  </button>
+                  <p className="text-xs text-slate-400 mb-1">No corporate devices currently assigned.</p>
+                  <p className="text-[11px] text-slate-500">
+                    {isElevated
+                      ? 'Click "Add Device" to register laptops, mobile devices, or field gear for this user.'
+                      : 'Company hardware is provisioned and assigned by Operations Administration.'}
+                  </p>
+                  {isElevated && (
+                    <button
+                      type="button"
+                      onClick={handleAddDevice}
+                      className="mt-3 px-4 py-2 bg-linear-to-r from-[#FF6B00] to-amber-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add First Assigned Device</span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -733,6 +836,9 @@ export default function CompleteProfileModal({
                             <span className="font-extrabold text-white text-sm">
                               {device.name || 'Hardware Asset'}
                             </span>
+                            <span className="text-[11px] text-slate-400 font-mono block">
+                              Assigned: {device.assignedDate || 'N/A'}
+                            </span>
                           </div>
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -747,86 +853,82 @@ export default function CompleteProfileModal({
                           </span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveDevice(idx)}
-                          className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 px-2.5 py-1 rounded-xl transition-colors cursor-pointer flex items-center gap-1"
-                          title="Remove Device"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Delete</span>
-                        </button>
-                      </div>
-
-                      {/* Device Fields Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Device / Equipment Name
-                          </label>
-                          <input
-                            type="text"
-                            value={device.name}
-                            onChange={(e) => handleUpdateDevice(idx, 'name', e.target.value)}
-                            placeholder="e.g. MacBook Air, ThinkPad T14"
-                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Model &amp; Specifications
-                          </label>
-                          <input
-                            type="text"
-                            value={device.model}
-                            onChange={(e) => handleUpdateDevice(idx, 'model', e.target.value)}
-                            placeholder="e.g. Apple M1 / 16GB / 512GB"
-                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Serial Number (S/N)
-                          </label>
-                          <input
-                            type="text"
-                            value={device.serialNumber}
-                            onChange={(e) => handleUpdateDevice(idx, 'serialNumber', e.target.value)}
-                            placeholder="e.g. SKY-MBP-8921"
-                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Assigned Date
-                          </label>
-                          <input
-                            type="date"
-                            value={device.assignedDate || ''}
-                            onChange={(e) => handleUpdateDevice(idx, 'assignedDate', e.target.value)}
-                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                          />
-                        </div>
-
-                        <div className="sm:col-span-2">
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                            Equipment Lifecycle Status
-                          </label>
-                          <select
-                            value={device.status || 'Active'}
-                            onChange={(e) => handleUpdateDevice(idx, 'status', e.target.value)}
-                            className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                        {isElevated && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDevice(idx)}
+                            className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 px-2.5 py-1 rounded-xl transition-colors cursor-pointer flex items-center gap-1"
+                            title="Remove Device"
                           >
-                            <option value="Active">Active (In Daily Use)</option>
-                            <option value="In Repair">In Repair / Hardware Maintenance</option>
-                            <option value="Replacement Pending">Replacement Pending</option>
-                            <option value="Returned">Returned to Inventory</option>
-                          </select>
-                        </div>
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
+                        )}
                       </div>
+
+                      {/* Device Fields */}
+                      {isElevated ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                              Device / Equipment Name
+                            </label>
+                            <input
+                              type="text"
+                              value={device.name}
+                              onChange={(e) => handleUpdateDevice(idx, 'name', e.target.value)}
+                              placeholder="e.g. MacBook Air, ThinkPad T14"
+                              className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                              Model &amp; Specifications
+                            </label>
+                            <input
+                              type="text"
+                              value={device.model}
+                              onChange={(e) => handleUpdateDevice(idx, 'model', e.target.value)}
+                              placeholder="e.g. Apple M1 / 16GB / 512GB"
+                              className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                              Serial Number (S/N)
+                            </label>
+                            <input
+                              type="text"
+                              value={device.serialNumber}
+                              onChange={(e) => handleUpdateDevice(idx, 'serialNumber', e.target.value)}
+                              placeholder="e.g. SKY-MBP-8921"
+                              className="w-full px-3 py-2 bg-[#0D1527] border border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                          <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
+                              Model &amp; Specifications
+                            </span>
+                            <span className="font-semibold text-slate-200">
+                              {device.model || 'Standard Issue Hardware'}
+                            </span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
+                              Serial Number / Asset Tag
+                            </span>
+                            <span className="font-mono font-bold text-orange-400">
+                              {device.serialNumber || 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

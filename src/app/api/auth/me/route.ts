@@ -41,15 +41,7 @@ export async function GET() {
         bankName: user.bankName || 'Standard Chartered',
         accountNumber: user.accountNumber || '',
         iban: user.iban || '',
-        devices: user.devices && user.devices.length > 0 ? user.devices : [
-          {
-            name: 'MacBook Air',
-            model: 'Version M1',
-            serialNumber: 'SKY-MBP-8921',
-            assignedDate: '2024-01-15',
-            status: 'Active',
-          },
-        ],
+        devices: Array.isArray(user.devices) ? user.devices : [],
         pensionFund: user.pensionFund || {
           enrolled: true,
           contributionPercent: 8,
@@ -106,7 +98,10 @@ export async function PUT(req: NextRequest) {
 
     await connectToDatabase();
 
+    const isElevated = ['developer', 'admin', 'ceo'].includes(session.role);
     const updateFields: Record<string, unknown> = {};
+
+    // Fields ANY employee can update (Personal contact, profile & bank deposit)
     if (name !== undefined) updateFields.name = name.trim();
     if (phone !== undefined) updateFields.phone = phone.trim();
     if (avatarUrl !== undefined) updateFields.avatarUrl = avatarUrl.trim();
@@ -120,15 +115,20 @@ export async function PUT(req: NextRequest) {
     if (bankName !== undefined) updateFields.bankName = bankName.trim();
     if (accountNumber !== undefined) updateFields.accountNumber = accountNumber.trim();
     if (iban !== undefined) updateFields.iban = iban.trim();
-    if (devices !== undefined) updateFields.devices = devices;
-    if (pensionFund !== undefined) updateFields.pensionFund = pensionFund;
-    if (department !== undefined) updateFields.department = department.trim();
-    if (designation !== undefined) updateFields.designation = designation.trim();
-    if (shiftTiming !== undefined) updateFields.shiftTiming = shiftTiming.trim();
-    if (reportingManager !== undefined) updateFields.reportingManager = reportingManager.trim();
-    if (employmentType !== undefined) updateFields.employmentType = employmentType.trim();
-    if (workMode !== undefined) updateFields.workMode = workMode;
-    if (baseSalary !== undefined && !isNaN(Number(baseSalary))) updateFields.baseSalary = Number(baseSalary);
+
+    // STRICT PERMISSION CHECK: Company equipment, compensation, and HR settings
+    // CANNOT be edited by regular staff. Only Operations Admin / CEO / Developer can modify them.
+    if (isElevated) {
+      if (devices !== undefined) updateFields.devices = devices;
+      if (pensionFund !== undefined) updateFields.pensionFund = pensionFund;
+      if (department !== undefined) updateFields.department = department.trim();
+      if (designation !== undefined) updateFields.designation = designation.trim();
+      if (shiftTiming !== undefined) updateFields.shiftTiming = shiftTiming.trim();
+      if (reportingManager !== undefined) updateFields.reportingManager = reportingManager.trim();
+      if (employmentType !== undefined) updateFields.employmentType = employmentType.trim();
+      if (workMode !== undefined) updateFields.workMode = workMode;
+      if (baseSalary !== undefined && !isNaN(Number(baseSalary))) updateFields.baseSalary = Number(baseSalary);
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       session.userId,

@@ -3,6 +3,34 @@ import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession();
+    if (!session || !['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    await connectToDatabase();
+
+    const employee = await User.findById(id).select('-password').lean();
+    if (!employee) {
+      return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      employee,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Error fetching employee profile';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,7 +46,36 @@ export async function PUT(
 
     await connectToDatabase();
 
-    const allowedFields = ['name', 'role', 'department', 'designation', 'phone', 'isActive', 'leaveBalance', 'baseSalary', 'workMode', 'biometricUserId'];
+    const allowedFields = [
+      'name',
+      'email',
+      'employeeId',
+      'role',
+      'department',
+      'designation',
+      'phone',
+      'isActive',
+      'leaveBalance',
+      'baseSalary',
+      'workMode',
+      'biometricUserId',
+      'avatarUrl',
+      'bio',
+      'emergencyContact',
+      'emergencyRelation',
+      'address',
+      'dateOfBirth',
+      'gender',
+      'cnic',
+      'shiftTiming',
+      'reportingManager',
+      'employmentType',
+      'bankName',
+      'accountNumber',
+      'iban',
+      'devices',
+      'pensionFund',
+    ];
     const updateData: Record<string, unknown> = {};
 
     for (const field of allowedFields) {

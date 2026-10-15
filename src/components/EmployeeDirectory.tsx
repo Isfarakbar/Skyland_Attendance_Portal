@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2, Fingerprint } from 'lucide-react';
+import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2, Fingerprint, Laptop, ShieldCheck } from 'lucide-react';
 import EmployeeProfileModal from '@/components/EmployeeProfileModal';
+import AdminEditEmployeeModal from '@/components/AdminEditEmployeeModal';
 
 interface Employee {
   _id: string;
@@ -13,11 +14,32 @@ interface Employee {
   department: string;
   designation: string;
   phone?: string;
+  avatarUrl?: string;
+  bio?: string;
+  emergencyContact?: string;
+  emergencyRelation?: string;
+  address?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  cnic?: string;
+  shiftTiming?: string;
+  reportingManager?: string;
+  employmentType?: string;
   baseSalary?: number;
   workMode?: 'OFFICE' | 'FIELD';
   biometricUserId?: string;
   isActive: boolean;
   leaveBalance?: { sick: number; casual: number; annual: number };
+  bankName?: string;
+  accountNumber?: string;
+  iban?: string;
+  devices?: Array<{
+    name: string;
+    model: string;
+    serialNumber: string;
+    assignedDate?: string;
+    status?: string;
+  }>;
 }
 
 export default function EmployeeDirectory() {
@@ -51,6 +73,9 @@ export default function EmployeeDirectory() {
 
   // 360 Employee Dossier Modal
   const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
+
+  // Full Admin Edit Employee Modal
+  const [editingFullEmployee, setEditingFullEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -470,16 +495,45 @@ export default function EmployeeDirectory() {
                         </div>
                       )}
                     </div>
+
+                    {/* Assigned Hardware / Devices Line */}
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+                        <Laptop className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Company Assets:</span>
+                      </div>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-md border ${
+                          emp.devices && emp.devices.length > 0
+                            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold'
+                            : 'bg-slate-800 text-slate-500 border-slate-700 italic'
+                        }`}
+                      >
+                        {emp.devices && emp.devices.length > 0 ? `${emp.devices.length} Assigned` : 'None'}
+                      </span>
+                    </div>
                   </div>
 
-                <button
-                  type="button"
-                  onClick={() => setInspectingEmpId(emp._id)}
-                  className="w-full mt-3.5 py-2 bg-slate-800 hover:bg-[#FF6B00]/20 text-slate-200 hover:text-orange-300 border border-slate-700/80 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>View Progress &amp; Attendance</span>
-                </button>
+                <div className="mt-3.5 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setInspectingEmpId(emp._id)}
+                    className="py-2 px-2 bg-slate-800 hover:bg-[#FF6B00]/20 text-slate-200 hover:text-orange-300 border border-slate-700/80 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    title="View attendance records and monthly stats"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span className="truncate">Attendance</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingFullEmployee(emp)}
+                    className="py-2 px-2 bg-[#FF6B00]/15 hover:bg-[#FF6B00]/25 text-[#FF6B00] hover:text-orange-300 border border-[#FF6B00]/30 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                    title="Edit complete profile, salary, permissions & company equipment"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span className="truncate">Edit Profile</span>
+                  </button>
+                </div>
 
                 <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
                   <span className="text-[11px] text-slate-400">
@@ -662,6 +716,18 @@ export default function EmployeeDirectory() {
         <EmployeeProfileModal
           employeeId={inspectingEmpId}
           onClose={() => setInspectingEmpId(null)}
+        />
+      )}
+
+      {/* Admin Full Employee Edit Modal */}
+      {editingFullEmployee && (
+        <AdminEditEmployeeModal
+          employee={editingFullEmployee as any}
+          onClose={() => setEditingFullEmployee(null)}
+          onUpdated={() => {
+            fetchEmployees();
+            setEditingFullEmployee(null);
+          }}
         />
       )}
     </div>

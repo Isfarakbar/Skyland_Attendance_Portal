@@ -92,22 +92,14 @@ const UserSchema = new Schema<IUser>(
     devices: {
       type: [
         {
-          name: { type: String, default: 'MacBook Air' },
-          model: { type: String, default: 'Apple M1 / 16GB / 512GB' },
-          serialNumber: { type: String, default: 'SKY-MBP-8921' },
-          assignedDate: { type: String, default: '2024-01-15' },
+          name: { type: String, required: true },
+          model: { type: String, default: '' },
+          serialNumber: { type: String, default: '' },
+          assignedDate: { type: String, default: () => new Date().toISOString().slice(0, 10) },
           status: { type: String, default: 'Active' },
         },
       ],
-      default: [
-        {
-          name: 'MacBook Air',
-          model: 'Version M1',
-          serialNumber: 'SKY-MBP-8921',
-          assignedDate: '2024-01-15',
-          status: 'Active',
-        },
-      ],
+      default: [],
     },
     pensionFund: {
       type: {
