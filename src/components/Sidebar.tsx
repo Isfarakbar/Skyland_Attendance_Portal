@@ -16,12 +16,6 @@ import {
   Menu,
   X,
   Bell,
-  ShieldCheck,
-  Sparkles,
-  ExternalLink,
-  Fingerprint,
-  MapPin,
-  Building,
 } from 'lucide-react';
 
 interface AuthUser {

@@ -6,9 +6,6 @@ import {
   Bell,
   LogOut,
   Edit3,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
 } from 'lucide-react';
 
 interface TopHeaderProps {
