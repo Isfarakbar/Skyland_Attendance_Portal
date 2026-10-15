@@ -1,7 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Clock, Save, Search, AlertCircle, Sparkles, Check, HelpCircle, MapPin, ExternalLink, Trash2, Eye } from 'lucide-react';
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Save,
+  Search,
+  AlertCircle,
+  Sparkles,
+  Check,
+  HelpCircle,
+  MapPin,
+  ExternalLink,
+  Trash2,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+} from 'lucide-react';
 import { AttendanceStatus } from '@/models/Attendance';
 import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 
@@ -20,6 +37,7 @@ interface RegisterEmployee {
   clockOutTime: string;
   notes: string;
   isSaved: boolean;
+  isDirty?: boolean;
 }
 
 export default function DeskRegister() {
@@ -31,6 +49,7 @@ export default function DeskRegister() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
 
@@ -45,7 +64,12 @@ export default function DeskRegister() {
       const res = await fetch(`/api/attendance/desk-register?date=${targetDate}`);
       const data = await res.json();
       if (data.success) {
-        setEmployees(data.employees);
+        setEmployees(
+          data.employees.map((e: RegisterEmployee) => ({
+            ...e,
+            isDirty: false,
+          }))
+        );
       } else {
         setMessage({ text: data.error || 'Failed to load register', type: 'error' });
       }
@@ -60,7 +84,6 @@ export default function DeskRegister() {
     setEmployees((prev) =>
       prev.map((emp) => {
         if (emp.userId !== userId) return emp;
-        // Auto-fill sensible default time if marked present/late and currently empty
         let updatedIn = emp.clockInTime;
         if (!updatedIn && (newStatus === 'PRESENT' || newStatus === 'LATE' || newStatus === 'HALF_LEAVE')) {
           updatedIn = newStatus === 'LATE' ? '09:45' : '09:00';
@@ -69,6 +92,7 @@ export default function DeskRegister() {
           ...emp,
           status: newStatus,
           clockInTime: updatedIn,
+          isDirty: true,
         };
       })
     );
@@ -76,19 +100,19 @@ export default function DeskRegister() {
 
   const handleTimeInChange = (userId: string, value: string) => {
     setEmployees((prev) =>
-      prev.map((emp) => (emp.userId === userId ? { ...emp, clockInTime: value } : emp))
+      prev.map((emp) => (emp.userId === userId ? { ...emp, clockInTime: value, isDirty: true } : emp))
     );
   };
 
   const handleTimeOutChange = (userId: string, value: string) => {
     setEmployees((prev) =>
-      prev.map((emp) => (emp.userId === userId ? { ...emp, clockOutTime: value } : emp))
+      prev.map((emp) => (emp.userId === userId ? { ...emp, clockOutTime: value, isDirty: true } : emp))
     );
   };
 
   const handleNotesChange = (userId: string, value: string) => {
     setEmployees((prev) =>
-      prev.map((emp) => (emp.userId === userId ? { ...emp, notes: value } : emp))
+      prev.map((emp) => (emp.userId === userId ? { ...emp, notes: value, isDirty: true } : emp))
     );
   };
 
@@ -98,8 +122,68 @@ export default function DeskRegister() {
         ...emp,
         status: emp.status || 'PRESENT',
         clockInTime: emp.clockInTime || '09:00',
+        isDirty: true,
       }))
     );
+  };
+
+  const handleShiftDate = (days: number) => {
+    try {
+      const parts = date.split('-').map(Number);
+      const current = new Date(parts[0], parts[1] - 1, parts[2]);
+      current.setDate(current.getDate() + days);
+      const y = current.getFullYear();
+      const m = String(current.getMonth() + 1).padStart(2, '0');
+      const d = String(current.getDate()).padStart(2, '0');
+      setDate(`${y}-${m}-${d}`);
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleJumpToToday = () => {
+    const today = new Date();
+    setDate(today.toISOString().split('T')[0]);
+  };
+
+  const handleJumpToYesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    setDate(d.toISOString().split('T')[0]);
+  };
+
+  const handleSaveSingleEmployee = async (emp: RegisterEmployee) => {
+    setSavingUserId(emp.userId);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/attendance/adjust', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: emp.userId,
+          date,
+          clockIn: emp.clockInTime || undefined,
+          clockOut: emp.clockOutTime || undefined,
+          status: emp.status || 'PRESENT',
+          notes: emp.notes || '',
+          regularizedReason: `Manual edit for ${date} by Management`,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ text: `Attendance saved for ${emp.name} on ${date}!`, type: 'success' });
+        setEmployees((prev) =>
+          prev.map((e) => (e.userId === emp.userId ? { ...e, isSaved: true, isDirty: false } : e))
+        );
+      } else {
+        setMessage({ text: data.error || 'Failed to save attendance', type: 'error' });
+      }
+    } catch {
+      setMessage({ text: 'Error connecting to server', type: 'error' });
+    } finally {
+      setSavingUserId(null);
+    }
   };
 
   const handleDeleteRecord = async (userId: string, empName: string) => {
@@ -114,7 +198,7 @@ export default function DeskRegister() {
         setEmployees((prev) =>
           prev.map((emp) =>
             emp.userId === userId
-              ? { ...emp, status: null, clockInTime: '', clockOutTime: '', notes: '', isSaved: false }
+              ? { ...emp, status: null, clockInTime: '', clockOutTime: '', notes: '', isSaved: false, isDirty: false }
               : emp
           )
         );
@@ -145,7 +229,7 @@ export default function DeskRegister() {
 
       const data = await res.json();
       if (data.success) {
-        setMessage({ text: `Register successfully saved for ${date}!`, type: 'success' });
+        setMessage({ text: `Full register successfully saved for ${date}!`, type: 'success' });
         fetchRegister(date);
       } else {
         setMessage({ text: data.error || 'Failed to save register', type: 'error' });
@@ -170,6 +254,21 @@ export default function DeskRegister() {
   const offCount = employees.filter((e) => e.status === 'OFF' || e.status === 'ABSENT').length;
   const unmarkedCount = employees.filter((e) => !e.status).length;
 
+  const formatDateDisplay = (dateStr: string) => {
+    try {
+      const parts = dateStr.split('-').map(Number);
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return d.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Top Header Card */}
@@ -178,48 +277,98 @@ export default function DeskRegister() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-950 text-orange-400 border border-orange-800 mb-2">
               <Clock className="w-3.5 h-3.5" />
-              Main Desk Reception Register
+              Master Attendance Register
             </div>
-            <h2 className="text-xl font-black text-white tracking-tight">Daily Attendance Register</h2>
+            <h2 className="text-xl font-black text-white tracking-tight">Daily &amp; Historical Attendance Register</h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Admin marks daily staff attendance directly. Company policy: 1 free Off and 1 free Half Leave per month.
+              Select any past, present, or future date to review, modify punch times, and update attendance records.
             </p>
           </div>
 
-          {/* Date Selector & Primary Action */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-2 rounded-2xl">
-              <Calendar className="w-4 h-4 text-slate-400" />
+          {/* Quick Date Shift & Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleJumpToYesterday}
+              type="button"
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-800 transition-all cursor-pointer"
+            >
+              Yesterday
+            </button>
+
+            <button
+              onClick={handleJumpToToday}
+              type="button"
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-orange-400 text-xs font-bold rounded-xl border border-slate-800 transition-all cursor-pointer"
+            >
+              Today
+            </button>
+
+            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-2xl p-1 gap-1">
+              <button
+                onClick={() => handleShiftDate(-1)}
+                type="button"
+                className="w-7 h-7 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Previous Day"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-transparent text-xs font-bold text-white focus:outline-hidden cursor-pointer"
+                className="bg-transparent text-xs font-bold text-white px-2 focus:outline-hidden cursor-pointer"
               />
+
+              <button
+                onClick={() => handleShiftDate(1)}
+                type="button"
+                className="w-7 h-7 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Next Day"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
             <button
               onClick={handleMarkAllPresent}
               type="button"
-              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold rounded-2xl transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-bold rounded-2xl transition-all cursor-pointer flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-              Fill All Present
+              <span>Fill All Present</span>
             </button>
 
             <button
               onClick={handleSaveRegister}
               disabled={saving || loading}
-              className="px-5 py-2 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] disabled:opacity-50 text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-2"
+              className="px-4 py-2 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] disabled:opacity-50 text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-1.5"
             >
-              {saving ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Register
+              {saving ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              <span>Save Full Day</span>
             </button>
           </div>
         </div>
 
+        {/* Selected Date Indicator Banner */}
+        <div className="pt-3 pb-1 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-orange-400" />
+            <span className="font-extrabold text-white text-sm">
+              {formatDateDisplay(date)}
+            </span>
+          </div>
+          <span className="text-slate-400 text-[11px]">
+            Company policy: 1 free Off &amp; 1 free Half Leave / month
+          </span>
+        </div>
+
         {/* Stats Summary Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4">
           <div className="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-2xl">
             <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Present</div>
             <div className="text-xl font-black text-emerald-300 mt-0.5">{presentCount}</div>
@@ -250,8 +399,12 @@ export default function DeskRegister() {
                 : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800'
             }`}
           >
-            {message.type === 'error' ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
-            {message.text}
+            {message.type === 'error' ? (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            )}
+            <span>{message.text}</span>
           </div>
         )}
       </div>
@@ -288,12 +441,14 @@ export default function DeskRegister() {
                   <th className="pb-3 text-center">Time In</th>
                   <th className="pb-3 text-center">Time Out</th>
                   <th className="pb-3">Register Notes / Reason</th>
-                  <th className="pb-3 text-right pr-2">Actions</th>
+                  <th className="pb-3 text-right pr-2">Save / Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
                 {filtered.map((emp) => {
                   const currentStatus = emp.status || 'UNMARKED';
+                  const isCurrentSaving = savingUserId === emp.userId;
+
                   return (
                     <tr key={emp.userId} className="hover:bg-slate-900/50 transition-colors">
                       {/* Employee Info */}
@@ -311,6 +466,9 @@ export default function DeskRegister() {
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-800">
                               <MapPin className="w-2.5 h-2.5 text-amber-400" /> Field
                             </span>
+                          )}
+                          {emp.isDirty && (
+                            <span className="w-2 h-2 rounded-full bg-amber-400" title="Unsaved changes on this row" />
                           )}
                         </div>
                         <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
@@ -392,7 +550,7 @@ export default function DeskRegister() {
                           value={emp.clockInTime}
                           onChange={(e) => handleTimeInChange(emp.userId, e.target.value)}
                           disabled={currentStatus === 'OFF' || currentStatus === 'ABSENT'}
-                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-orange-500 font-mono"
                         />
                       </td>
 
@@ -403,7 +561,7 @@ export default function DeskRegister() {
                           value={emp.clockOutTime}
                           onChange={(e) => handleTimeOutChange(emp.userId, e.target.value)}
                           disabled={currentStatus === 'OFF' || currentStatus === 'ABSENT'}
-                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white disabled:opacity-40 focus:outline-hidden focus:ring-1 focus:ring-orange-500 font-mono"
                         />
                       </td>
 
@@ -421,6 +579,26 @@ export default function DeskRegister() {
                       {/* Master / Admin Actions */}
                       <td className="py-3 pr-2 text-right">
                         <div className="inline-flex items-center gap-1.5">
+                          {/* Row-Level Save Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSingleEmployee(emp)}
+                            disabled={isCurrentSaving}
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                              emp.isDirty
+                                ? 'bg-[#FF6B00] hover:bg-orange-600 text-white shadow-md shadow-orange-500/20'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                            }`}
+                            title="Save this employee's attendance record immediately"
+                          >
+                            {isCurrentSaving ? (
+                              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                              <Save className="w-3 h-3" />
+                            )}
+                            <span>Save</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => setInspectingEmpId(emp.userId)}
@@ -429,6 +607,7 @@ export default function DeskRegister() {
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
+
                           <button
                             type="button"
                             onClick={() => handleDeleteRecord(emp.userId, emp.name)}
@@ -447,21 +626,27 @@ export default function DeskRegister() {
           </div>
         )}
 
-        <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-            <span>Changes are stored when you click &quot;Save Register&quot;.</span>
+            <span>Changes can be saved individually per row or in batch via &quot;Save Full Day&quot;.</span>
           </div>
+
           <button
             onClick={handleSaveRegister}
             disabled={saving || loading}
-            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-5 py-2 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] disabled:opacity-50 text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-2 self-end sm:self-auto"
           >
-            <Check className="w-3.5 h-3.5" />
-            Save Changes
+            {saving ? (
+              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Check className="w-3.5 h-3.5" />
+            )}
+            <span>Save All Staff Records for {date}</span>
           </button>
         </div>
       </div>
+
       {/* 360 Employee Dossier Modal */}
       {inspectingEmpId && (
         <EmployeeProfileModal

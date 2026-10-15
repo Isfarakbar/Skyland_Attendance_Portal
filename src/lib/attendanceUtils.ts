@@ -1,7 +1,33 @@
-import { parseISO, format, differenceInMinutes } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { AttendanceStatus, IBreak } from '@/models/Attendance';
 
 export const DEFAULT_TIMEZONE = 'Asia/Karachi';
+
+export function parseTimeToDate(
+  dateStr: string,
+  timeStrOrIso?: string | null,
+  timezoneOffset: string = '+05:00'
+): Date | null {
+  if (!timeStrOrIso || !timeStrOrIso.trim()) return null;
+  const str = timeStrOrIso.trim();
+  // Case 1: "HH:mm" or "HH:mm:ss"
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(str)) {
+    const parts = str.split(':');
+    const h = parts[0].padStart(2, '0');
+    const m = parts[1].padStart(2, '0');
+    const s = (parts[2] || '00').padStart(2, '0');
+    return new Date(`${dateStr}T${h}:${m}:${s}${timezoneOffset}`);
+  }
+  // Case 2: Full ISO string with timezone indicator (Z or + or -)
+  if (str.includes('Z') || /[+-]\d{2}:\d{2}$/.test(str)) {
+    return new Date(str);
+  }
+  // Case 3: "YYYY-MM-DDTHH:mm:ss" without offset
+  if (str.includes('T')) {
+    return new Date(`${str}${timezoneOffset}`);
+  }
+  return new Date(str);
+}
 
 export function getTodayDateString(date: Date = new Date(), timezone: string = DEFAULT_TIMEZONE): string {
   try {

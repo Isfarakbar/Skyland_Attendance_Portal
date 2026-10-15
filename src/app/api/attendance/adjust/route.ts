@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
-import { calculateWorkMinutes, calculateBreakMinutes } from '@/lib/attendanceUtils';
+import { calculateWorkMinutes, calculateBreakMinutes, parseTimeToDate, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
-    const { userId, date, clockIn, clockOut, status, regularizedReason } = await req.json();
+    const { userId, date, clockIn, clockOut, status, notes, regularizedReason } = await req.json();
 
     if (!userId || !date) {
       return NextResponse.json({ success: false, error: 'User ID and date are required' }, { status: 400 });
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
 
     let attendance = await Attendance.findOne({ user: userId, date });
 
-    const clockInDate = clockIn ? new Date(clockIn) : null;
-    const clockOutDate = clockOut ? new Date(clockOut) : null;
+    const clockInDate = parseTimeToDate(date, clockIn);
+    const clockOutDate = parseTimeToDate(date, clockOut);
 
     if (!attendance) {
       const workMins = calculateWorkMinutes(clockInDate, clockOutDate, 0);
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         status: status || 'PRESENT',
         totalWorkMinutes: workMins,
         totalBreakMinutes: 0,
+        notes: notes || '',
         isRegularized: true,
         regularizedReason: regularizedReason || 'Manual adjustment by Management',
         regularizedBy: session.userId,
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       if (clockIn !== undefined) attendance.clockIn = clockInDate;
       if (clockOut !== undefined) attendance.clockOut = clockOutDate;
       if (status) attendance.status = status;
+      if (notes !== undefined) attendance.notes = notes;
       attendance.isRegularized = true;
       attendance.regularizedReason = regularizedReason || 'Manual adjustment by Management';
       attendance.regularizedBy = session.userId as unknown as import('mongoose').Types.ObjectId;
@@ -104,4 +106,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
-

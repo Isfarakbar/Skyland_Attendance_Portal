@@ -4,7 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import Attendance, { AttendanceStatus } from '@/models/Attendance';
 import CompanySettings from '@/models/CompanySettings';
-import { getTodayDateString, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
+import { getTodayDateString, DEFAULT_TIMEZONE, parseTimeToDate } from '@/lib/attendanceUtils';
 
 export async function GET(req: NextRequest) {
   try {
@@ -124,24 +124,9 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const bulkOps = entries.map((entry) => {
-      let clockInDate: Date | null = null;
-      let clockOutDate: Date | null = null;
+      const clockInDate = parseTimeToDate(date, entry.clockInTime);
+      const clockOutDate = parseTimeToDate(date, entry.clockOutTime);
       let totalWorkMinutes = 0;
-
-      if (entry.clockInTime && entry.clockInTime.trim()) {
-        const [h, m] = entry.clockInTime.split(':').map(Number);
-        if (!isNaN(h) && !isNaN(m)) {
-          // Construct ISO date string in UTC or standard
-          clockInDate = new Date(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
-        }
-      }
-
-      if (entry.clockOutTime && entry.clockOutTime.trim()) {
-        const [h, m] = entry.clockOutTime.split(':').map(Number);
-        if (!isNaN(h) && !isNaN(m)) {
-          clockOutDate = new Date(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
-        }
-      }
 
       if (clockInDate && clockOutDate && clockOutDate > clockInDate) {
         totalWorkMinutes = Math.round((clockOutDate.getTime() - clockInDate.getTime()) / (1000 * 60));
