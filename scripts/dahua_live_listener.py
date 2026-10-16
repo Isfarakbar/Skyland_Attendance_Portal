@@ -27,18 +27,22 @@ DEVICE_PASS = b"skyland1122"
 active_portal = None
 
 # Known employee map for quick verification and logging
+# Tuple: (employeeId, employeeName, [matching_keywords])
 KNOWN_EMPLOYEES = {
-    "1": ("SKY-002", "Isfar Akbar"),
-    "2": ("SKY-004", "Nadeem Akram"),
-    "3": ("SKY-005", "Muhammad Hassan"),
-    "4": ("SKY-006", "Muhammad Hamza"),
-    "5": ("SKY-007", "Amir Ali"),
-    "6": ("SKY-008", "Amna Arshad"),
-    "7": ("SKY-009", "Iqra Shamim"),
-    "8": ("SKY-010", "Aneeqa Nayyar"),
-    "9": ("SKY-011", "Amir Munir"),
-    "10": ("SKY-012", "Saif Ullah"),
-    "11": ("SKY-013", "Mariam Maqsood"),
+    "1": ("SKY-002", "Isfar Akbar", ["isfar", "akbar"]),
+    "2": ("SKY-004", "Nadeem Akram", ["nadeem", "akram"]),
+    "3": ("SKY-005", "Muhammad Hassan", ["hassan"]),
+    "4": ("SKY-006", "Muhammad Hamza", ["hamza"]),
+    "5": ("SKY-007", "Amir Ali", ["amir ali"]),
+    "6": ("SKY-008", "Amna Arshad", ["amna", "arshad"]),
+    "7": ("SKY-009", "Iqra Shamim", ["iqra", "shamim"]),
+    "8": ("SKY-010", "Aneeqa Nayyar", ["aneeqa", "nayyar"]),
+    "9": ("SKY-011", "Amir Munir", ["amir munir", "munir"]),
+    "10": ("SKY-012", "Saif Ullah", ["saif", "saifullah"]),
+    "11": ("SKY-013", "Mariam Maqsood", ["mariam", "maqsood"]),
+    "14": ("SKY-014", "Emaan Nadeem", ["emaan"]),
+    "15": ("SKY-015", "Taha Tajumal", ["taha", "tajumal"]),
+    "16": ("SKY-016", "Salman Shahid", ["salman", "shahid"]),
 }
 
 print("==================================================================")
@@ -140,31 +144,6 @@ fMessCallBack = ctypes.CFUNCTYPE(
     ctypes.c_longlong   # dwUser
 )
 
-# Structs for access control event
-class NET_TIME(ctypes.Structure):
-    _fields_ = [
-        ("dwYear", ctypes.c_uint32),
-        ("dwMonth", ctypes.c_uint32),
-        ("dwDay", ctypes.c_uint32),
-        ("dwHour", ctypes.c_uint32),
-        ("dwMinute", ctypes.c_uint32),
-        ("dwSecond", ctypes.c_uint32),
-    ]
-
-class ALARM_ACCESS_CTL_EVENT_INFO(ctypes.Structure):
-    _fields_ = [
-        ("dwSize", ctypes.c_uint32),
-        ("nChannelID", ctypes.c_int32),
-        ("szDevID", ctypes.c_char * 32),
-        ("stuTime", NET_TIME),
-        ("szCardNo", ctypes.c_char * 32),
-        ("szCardName", ctypes.c_char * 32),
-        ("szUserID", ctypes.c_char * 32),
-        ("bStatus", ctypes.c_int32),
-        ("emMethod", ctypes.c_int32),
-        ("emAction", ctypes.c_int32),
-    ]
-
 @fMessCallBack
 def message_callback(lCommand, lLoginID, pBuf, dwBufLen, pchDVRIP, nDVRPort, dwUser):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -189,79 +168,52 @@ def message_callback(lCommand, lLoginID, pBuf, dwBufLen, pchDVRIP, nDVRPort, dwU
 
     print(f"\n[SWIPE EVENT 0x{lCommand:X}] at {now_str} (Len: {dwBufLen} bytes)")
 
-    # 1. Try struct-based parsing first
     user_id = None
-    card_no = None
-    try:
-        if raw_len >= ctypes.sizeof(ALARM_ACCESS_CTL_EVENT_INFO):
-            info = ALARM_ACCESS_CTL_EVENT_INFO.from_buffer_copy(raw_data)
-            u_id = info.szUserID.decode('utf-8', errors='ignore').strip()
-            c_no = info.szCardNo.decode('utf-8', errors='ignore').strip()
-            if u_id and any(c.isdigit() for c in u_id):
-                user_id = u_id
-                print(f"    [STRUCT PARSER] szUserID: '{user_id}', szCardNo: '{c_no}'")
-            if c_no:
-                card_no = c_no
-    except Exception as e:
-        print(f"    [STRUCT ERROR] {e}")
+    matched_name = None
 
-    # 2. Extract clean strings from raw_data:
-    # A genuine string in C is flanked by NUL bytes and starts at offset >= 4 (to skip dwSize)
-    found_tokens = []
-    # Match strings of 1-32 alphanumeric/dash/underscore characters flanked by NUL
-    for m in re.finditer(rb'\x00([A-Za-z0-9_-]{1,32})\x00', raw_data):
-        offset = m.start(1)
-        if offset < 4:
-            continue # Skip dwSize
-        s = m.group(1).decode('ascii', errors='ignore').strip()
-        if s and s not in ["192", "168", "100", "110", "admin", "skyland1122"]:
-            found_tokens.append((offset, s))
+    # PRIORITY 1: Search for employee name keywords in the binary buffer
+    # The terminal embeds the employee's registered name directly (e.g. "Isfar")
+    for bio_id, (emp_id, emp_name, keywords) in KNOWN_EMPLOYEES.items():
+        for kw in keywords:
+            pattern = re.compile(re.escape(kw.encode('ascii')), re.IGNORECASE)
+            m = pattern.search(raw_data)
+            if m:
+                user_id = bio_id
+                matched_name = emp_name
+                print(f"    [NAME MATCH]: '{kw}' at offset {m.start()} -> {emp_name} ({emp_id}, Bio ID #{bio_id})")
+                break
+        if user_id:
+            break
 
-    # Also match start of string if offset >= 8
-    for m in re.finditer(rb'([A-Za-z0-9_-]{1,32})\x00', raw_data[8:]):
-        offset = 8 + m.start(1)
-        s = m.group(1).decode('ascii', errors='ignore').strip()
-        if s and s not in ["192", "168", "100", "110", "admin", "skyland1122"]:
-            if not any(t[1] == s and abs(t[0] - offset) < 2 for t in found_tokens):
-                found_tokens.append((offset, s))
-
-    print(f"    [RAW TOKENS DETECTED]: {found_tokens[:15]}")
-
-    # 3. Match against known employee biometric IDs
+    # PRIORITY 2: Search for employee codes like 'SKY-002'
     if not user_id:
-        # Check if any token matches known biometric ID
-        for offset, token in found_tokens:
+        for bio_id, (emp_id, emp_name, keywords) in KNOWN_EMPLOYEES.items():
+            pattern = re.compile(re.escape(emp_id.encode('ascii')), re.IGNORECASE)
+            m = pattern.search(raw_data)
+            if m:
+                user_id = bio_id
+                matched_name = emp_name
+                print(f"    [EMPLOYEE ID MATCH]: '{emp_id}' at offset {m.start()} -> {emp_name}")
+                break
+
+    # PRIORITY 3: Search for integer user ID right before the name token (offset 3084)
+    if not user_id:
+        # Check clean ASCII tokens flanked by NUL bytes (length >= 2, skipping header)
+        for m in re.finditer(rb'\x00([A-Za-z0-9_-]{2,32})\x00', raw_data[8:]):
+            offset = 8 + m.start(1)
+            token = m.group(1).decode('ascii', errors='ignore').strip()
             if token in KNOWN_EMPLOYEES:
                 user_id = token
-                emp_id, emp_name = KNOWN_EMPLOYEES[token]
-                print(f"    [MATCHED BIOMETRIC ID #{token}]: {emp_name} ({emp_id}) at offset {offset}")
-                break
-
-    if not user_id:
-        # Check if any token matches employee ID (e.g. SKY-002)
-        for offset, token in found_tokens:
-            for bio_id, (emp_id, emp_name) in KNOWN_EMPLOYEES.items():
-                if token.upper() == emp_id.upper() or token.lower() in emp_name.lower():
-                    user_id = bio_id
-                    print(f"    [MATCHED EMPLOYEE {emp_id}]: {emp_name} -> ID {bio_id}")
-                    break
-            if user_id:
-                break
-
-    if not user_id and found_tokens:
-        # Check first token that is purely numeric and <= 4 digits
-        for offset, token in found_tokens:
-            if token.isdigit() and 1 <= int(token) <= 50:
-                user_id = token
-                print(f"    [NUMERIC CANDIDATE]: User #{token} at offset {offset}")
+                matched_name = KNOWN_EMPLOYEES[token][1]
+                print(f"    [EXACT TOKEN MATCH]: Bio ID #{token} ({matched_name}) at offset {offset}")
                 break
 
     if user_id:
-        emp_info = KNOWN_EMPLOYEES.get(str(user_id), ("Unknown", "Staff"))
+        emp_info = KNOWN_EMPLOYEES.get(str(user_id), ("Unknown", matched_name or "Staff"))
         print(f"[SWIPE] >> RECOGNIZED SWIPE: User #{user_id} ({emp_info[1]} - {emp_info[0]})")
         push_punch_to_portal(user_id, datetime.now().isoformat(), "Fingerprint")
     else:
-        print("[!] No recognized user identifier could be resolved from buffer.")
+        print("[!] No recognized employee name or ID could be resolved from buffer.")
 
     return True
 
