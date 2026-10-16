@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sliders, Clock, Building, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Sliders, Clock, Building, ShieldCheck, CheckCircle2, Calculator, Info, ChevronDown, ChevronUp, Table, DollarSign } from 'lucide-react';
+import { FBR_TAX_SLABS_2026_27, calculateFBRTax } from '@/lib/taxCalculator';
 
 export default function CompanySettingsTab() {
   const [loading, setLoading] = useState(true);
@@ -18,9 +19,15 @@ export default function CompanySettingsTab() {
   const [allowedFreeLeaves, setAllowedFreeLeaves] = useState(1);
   const [allowedFreeHalfLeaves, setAllowedFreeHalfLeaves] = useState(2);
   const [salaryCalculationDays, setSalaryCalculationDays] = useState(30);
-  const [taxDeductionEnabled, setTaxDeductionEnabled] = useState(false);
+  const [taxDeductionEnabled, setTaxDeductionEnabled] = useState(true);
+  const [taxCalculationMode, setTaxCalculationMode] = useState<'FBR_SLABS' | 'FLAT_RATE'>('FBR_SLABS');
+  const [taxYear, setTaxYear] = useState('2026-27');
   const [taxExemptionThreshold, setTaxExemptionThreshold] = useState(50000);
   const [taxRate, setTaxRate] = useState(2.5);
+
+  // UI state for slabs table & interactive simulator
+  const [showSlabsTable, setShowSlabsTable] = useState(false);
+  const [simSalary, setSimSalary] = useState(162000);
 
   useEffect(() => {
     fetchSettings();
@@ -41,7 +48,9 @@ export default function CompanySettingsTab() {
         setAllowedFreeLeaves(data.settings.allowedFreeLeaves ?? 1);
         setAllowedFreeHalfLeaves(data.settings.allowedFreeHalfLeaves ?? 2);
         setSalaryCalculationDays(data.settings.salaryCalculationDays ?? 30);
-        setTaxDeductionEnabled(data.settings.taxDeductionEnabled ?? false);
+        setTaxDeductionEnabled(data.settings.taxDeductionEnabled ?? true);
+        setTaxCalculationMode(data.settings.taxCalculationMode || 'FBR_SLABS');
+        setTaxYear(data.settings.taxYear || '2026-27');
         setTaxExemptionThreshold(data.settings.taxExemptionThreshold ?? 50000);
         setTaxRate(data.settings.taxRate ?? 2.5);
       }
@@ -73,6 +82,8 @@ export default function CompanySettingsTab() {
           allowedFreeHalfLeaves,
           salaryCalculationDays,
           taxDeductionEnabled,
+          taxCalculationMode,
+          taxYear,
           taxExemptionThreshold,
           taxRate,
         }),
@@ -279,16 +290,23 @@ export default function CompanySettingsTab() {
           </div>
 
           {/* Income Tax Withholding Rules */}
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div>
-                <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                  Income Tax Withholding (FBR / Corporate Slabs)
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">Automate monthly salary tax deductions</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-white uppercase tracking-wider block">
+                    Income Tax Withholding (FBR / Corporate Slabs)
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-orange-500/10 text-[#FF6B00] border border-orange-500/20">
+                    Finance Act 2026
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Automate monthly salary tax deductions per Federal Board of Revenue (FBR) salaried progressive tax slabs
+                </p>
               </div>
 
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={taxDeductionEnabled}
@@ -296,50 +314,282 @@ export default function CompanySettingsTab() {
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF6B00]"></div>
-                <span className="ml-2 text-xs font-bold text-slate-300">
-                  {taxDeductionEnabled ? 'Enabled' : 'Disabled'}
+                <span className="ml-2.5 text-xs font-bold text-slate-300">
+                  {taxDeductionEnabled ? 'Tax Enabled' : 'Tax Disabled'}
                 </span>
               </label>
             </div>
 
             {taxDeductionEnabled ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 animate-in fade-in duration-150">
+              <div className="space-y-4 pt-1 animate-in fade-in duration-150">
+                {/* Mode Selector Tabs */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                    Monthly Tax Exemption Threshold (PKR)
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Tax Calculation System
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">PKR</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step="5000"
-                      value={taxExemptionThreshold}
-                      onChange={(e) => setTaxExemptionThreshold(Number(e.target.value))}
-                      className="w-full pl-12 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTaxCalculationMode('FBR_SLABS')}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        taxCalculationMode === 'FBR_SLABS'
+                          ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-white shadow-sm'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-white">🏛️ FBR Progressive Slabs (FY 2026-27)</span>
+                        {taxCalculationMode === 'FBR_SLABS' && (
+                          <span className="text-[10px] font-black text-[#FF6B00] uppercase">Active</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Official Pakistan salaried individual progressive slabs (1% to 35%) with Rs 600,000 threshold.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTaxCalculationMode('FLAT_RATE')}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        taxCalculationMode === 'FLAT_RATE'
+                          ? 'bg-[#FF6B00]/10 border-[#FF6B00] text-white shadow-sm'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-white">⚙️ Custom Flat Rate (%)</span>
+                        {taxCalculationMode === 'FLAT_RATE' && (
+                          <span className="text-[10px] font-black text-[#FF6B00] uppercase">Active</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Simplified single percentage deducted on monthly income above custom threshold.
+                      </p>
+                    </button>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1">Monthly income below this threshold incurs 0% tax (default: 50,000)</p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                    Tax Slab Rate (%) above Threshold
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={0}
-                      max={50}
-                      step="0.5"
-                      value={taxRate}
-                      onChange={(e) => setTaxRate(Number(e.target.value))}
-                      className="w-full pr-8 pl-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                    />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">%</span>
+                {taxCalculationMode === 'FLAT_RATE' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                        Monthly Tax Exemption Threshold (PKR)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">PKR</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step="5000"
+                          value={taxExemptionThreshold}
+                          onChange={(e) => setTaxExemptionThreshold(Number(e.target.value))}
+                          className="w-full pl-12 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">Monthly income below this threshold incurs 0% tax (default: 50,000)</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                        Tax Slab Rate (%) above Threshold
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          step="0.5"
+                          value={taxRate}
+                          onChange={(e) => setTaxRate(Number(e.target.value))}
+                          className="w-full pr-8 pl-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm font-semibold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                        />
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">%</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">Applied to taxable amount exceeding exemption threshold (e.g. 2.5%)</p>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1">Applied to taxable amount exceeding exemption threshold (e.g. 2.5%)</p>
-                </div>
+                ) : (
+                  /* FBR Progressive Slabs Section */
+                  <div className="space-y-4">
+                    {/* Legal Info Card */}
+                    <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#FF6B00]/10 text-[#FF6B00] flex items-center justify-center shrink-0 mt-0.5">
+                        <Info className="w-4 h-4" />
+                      </div>
+                      <div className="text-xs text-slate-300 space-y-1">
+                        <p className="font-bold text-white">
+                          FBR Salaried Slabs — Tax Year 2026-27 (Finance Act 2026)
+                        </p>
+                        <p className="text-slate-400 leading-relaxed text-[11px]">
+                          • <span className="text-white font-semibold">Tax-free threshold:</span> Rs 600,000/year (Rs 50,000/month).
+                          <br />
+                          • <span className="text-white font-semibold">Progressive slabs:</span> Each rate applies only to income above its respective threshold.
+                          <br />
+                          • <span className="text-white font-semibold">High-earner surcharge:</span> Abolished for salaried individuals from FY 2026-27.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Slabs Table Button */}
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setShowSlabsTable(!showSlabsTable)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Table className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <span>{showSlabsTable ? 'Hide 8 FBR Slabs Table' : 'View 8 Official FBR Slabs & Rates'}</span>
+                        {showSlabsTable ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+
+                      <span className="text-[11px] text-slate-500 font-mono">8 Progressive Slabs</span>
+                    </div>
+
+                    {/* Collapsible 8 Slabs Table */}
+                    {showSlabsTable && (
+                      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 animate-in fade-in duration-200">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 font-bold uppercase text-[10px]">
+                              <th className="py-2.5 px-3">Slab</th>
+                              <th className="py-2.5 px-3">Annual Range (PKR)</th>
+                              <th className="py-2.5 px-3">Monthly Equivalent</th>
+                              <th className="py-2.5 px-3 text-right">Rate on Excess</th>
+                              <th className="py-2.5 px-3 text-right">Base Tax</th>
+                              <th className="py-2.5 px-3">Formula Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                            {FBR_TAX_SLABS_2026_27.map((slab) => (
+                              <tr key={slab.slabNumber} className="hover:bg-slate-900/40">
+                                <td className="py-2.5 px-3 font-bold text-[#FF6B00]">#{slab.slabNumber}</td>
+                                <td className="py-2.5 px-3 text-slate-200">
+                                  {slab.maxIncome !== null
+                                    ? `${slab.minIncome.toLocaleString()} – ${slab.maxIncome.toLocaleString()}`
+                                    : `Above ${slab.minIncome.toLocaleString()}`}
+                                </td>
+                                <td className="py-2.5 px-3 text-slate-400">
+                                  {slab.maxIncome !== null
+                                    ? `${Math.round(slab.minIncome / 12).toLocaleString()} – ${Math.round(slab.maxIncome / 12).toLocaleString()}`
+                                    : `Above ${Math.round(slab.minIncome / 12).toLocaleString()}`}
+                                </td>
+                                <td className="py-2.5 px-3 text-right font-bold text-amber-400">
+                                  {(slab.rate * 100).toFixed(0)}%
+                                </td>
+                                <td className="py-2.5 px-3 text-right text-slate-300">
+                                  {slab.baseTax > 0 ? `PKR ${slab.baseTax.toLocaleString()}` : '0'}
+                                </td>
+                                <td className="py-2.5 px-3 font-sans text-slate-300 text-[11px]">
+                                  {slab.description}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* Interactive Live Tax Calculator / Simulator */}
+                    {(() => {
+                      const sim = calculateFBRTax(simSalary);
+                      return (
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-[#0B1120] to-slate-950 border border-slate-800 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                            <div className="flex items-center gap-2">
+                              <Calculator className="w-4 h-4 text-[#FF6B00]" />
+                              <span className="font-bold text-xs text-white uppercase tracking-wider">
+                                Live FBR Tax Simulator / Checker
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-400">
+                              Verify salary formulas against corporate sheet
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="sm:col-span-1">
+                              <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+                                Test Monthly Gross Salary (PKR)
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-xs">PKR</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step="5000"
+                                  value={simSalary}
+                                  onChange={(e) => setSimSalary(Number(e.target.value) || 0)}
+                                  className="w-full pl-11 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                                />
+                              </div>
+                              <p className="text-[10px] text-slate-500 mt-1">Try 162,000 as per company reference</p>
+                            </div>
+
+                            <div className="sm:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase block">Annual Gross</span>
+                                <span className="text-xs font-black text-slate-100 font-mono mt-0.5 block">
+                                  PKR {sim.annualTaxableIncome.toLocaleString()}
+                                </span>
+                                <span className="text-[9px] text-slate-500 block">Slab #{sim.applicableSlabNumber}</span>
+                              </div>
+
+                              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                                <span className="text-[10px] font-bold text-amber-400 uppercase block">Monthly Tax</span>
+                                <span className="text-xs font-black text-amber-400 font-mono mt-0.5 block">
+                                  - PKR {sim.monthlyTax.toLocaleString()}
+                                </span>
+                                <span className="text-[9px] text-slate-500 block">{(sim.marginalRate * 100).toFixed(0)}% marginal</span>
+                              </div>
+
+                              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                                <span className="text-[10px] font-bold text-emerald-400 uppercase block">Monthly Net</span>
+                                <span className="text-xs font-black text-emerald-400 font-mono mt-0.5 block">
+                                  PKR {(simSalary - sim.monthlyTax).toLocaleString()}
+                                </span>
+                                <span className="text-[9px] text-slate-500 block">Take-Home</span>
+                              </div>
+
+                              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase block">Annual Tax</span>
+                                <span className="text-xs font-black text-slate-200 font-mono mt-0.5 block">
+                                  PKR {sim.annualTax.toLocaleString()}
+                                </span>
+                                <span className="text-[9px] text-slate-500 block">Effective: {(sim.effectiveRate * 100).toFixed(2)}%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Progressive Slab Split Breakdown */}
+                          <div className="pt-2 border-t border-slate-800/80">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                              Tax Breakdown by Slab (Progressive Brackets):
+                            </span>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[11px]">
+                              {sim.breakdown
+                                .filter((b) => b.taxableInSlab > 0)
+                                .map((b) => (
+                                  <div key={b.slabNumber} className="p-2 rounded-lg bg-slate-900/60 border border-slate-800/60 font-mono">
+                                    <div className="flex items-center justify-between text-slate-400 text-[10px]">
+                                      <span>Slab #{b.slabNumber}</span>
+                                      <span className="text-amber-400">{(b.rate * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div className="text-white font-bold text-[11px] mt-0.5">
+                                      PKR {b.taxableInSlab.toLocaleString()}
+                                    </div>
+                                    <div className="text-[10px] text-amber-300">
+                                      Tax: PKR {b.taxFromSlab.toLocaleString()}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-xs text-slate-500 italic">
@@ -352,7 +602,7 @@ export default function CompanySettingsTab() {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white font-bold text-sm rounded-xl shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
             >
               {saving ? 'Saving Changes...' : 'Save Company Rules'}
             </button>

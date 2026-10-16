@@ -19,7 +19,9 @@ export async function GET() {
         allowedFreeLeaves: 1,
         allowedFreeHalfLeaves: 2,
         salaryCalculationDays: 30,
-        taxDeductionEnabled: false,
+        taxDeductionEnabled: true,
+        taxCalculationMode: 'FBR_SLABS',
+        taxYear: '2026-27',
         taxExemptionThreshold: 50000,
         taxRate: 2.5,
       });
@@ -63,6 +65,8 @@ export async function PUT(req: NextRequest) {
     if (body.allowedFreeHalfLeaves !== undefined) settings.allowedFreeHalfLeaves = Number(body.allowedFreeHalfLeaves);
     if (body.salaryCalculationDays !== undefined) settings.salaryCalculationDays = Number(body.salaryCalculationDays) || 30;
     if (body.taxDeductionEnabled !== undefined) settings.taxDeductionEnabled = Boolean(body.taxDeductionEnabled);
+    if (body.taxCalculationMode !== undefined) settings.taxCalculationMode = body.taxCalculationMode === 'FLAT_RATE' ? 'FLAT_RATE' : 'FBR_SLABS';
+    if (body.taxYear !== undefined) settings.taxYear = String(body.taxYear);
     if (body.taxExemptionThreshold !== undefined) settings.taxExemptionThreshold = Math.max(0, Number(body.taxExemptionThreshold) || 0);
     if (body.taxRate !== undefined) settings.taxRate = Math.max(0, Number(body.taxRate) || 0);
 

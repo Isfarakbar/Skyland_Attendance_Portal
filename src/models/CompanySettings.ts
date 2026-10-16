@@ -14,9 +14,11 @@ export interface ICompanySettings extends Document {
   allowedFreeLeaves?: number; // default: 1
   allowedFreeHalfLeaves?: number; // default: 2
   salaryCalculationDays?: number; // default: 30
-  taxDeductionEnabled?: boolean; // default: false
-  taxExemptionThreshold?: number; // default: 50000 (PKR)
-  taxRate?: number; // default: 2.5 (%)
+  taxDeductionEnabled?: boolean; // default: true
+  taxCalculationMode?: 'FBR_SLABS' | 'FLAT_RATE'; // default: 'FBR_SLABS'
+  taxYear?: string; // default: '2026-27'
+  taxExemptionThreshold?: number; // default: 50000 (PKR, used for flat rate mode)
+  taxRate?: number; // default: 2.5 (%, used for flat rate mode)
 }
 
 const CompanySettingsSchema = new Schema<ICompanySettings>(
@@ -34,7 +36,9 @@ const CompanySettingsSchema = new Schema<ICompanySettings>(
     allowedFreeLeaves: { type: Number, default: 1 },
     allowedFreeHalfLeaves: { type: Number, default: 2 },
     salaryCalculationDays: { type: Number, default: 30 },
-    taxDeductionEnabled: { type: Boolean, default: false },
+    taxDeductionEnabled: { type: Boolean, default: true },
+    taxCalculationMode: { type: String, enum: ['FBR_SLABS', 'FLAT_RATE'], default: 'FBR_SLABS' },
+    taxYear: { type: String, default: '2026-27' },
     taxExemptionThreshold: { type: Number, default: 50000 },
     taxRate: { type: Number, default: 2.5 },
   },

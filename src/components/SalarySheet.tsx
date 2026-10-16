@@ -298,10 +298,26 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                     </td>
 
                     {/* Income Tax */}
-                    <td className="py-3.5 px-3 text-right font-bold text-amber-400">
-                      {(record as any).taxDeduction > 0
-                        ? `-PKR ${(record as any).taxDeduction.toLocaleString()}`
-                        : 'PKR 0'}
+                    <td className="py-3.5 px-3 text-right">
+                      {(record as any).taxDeduction > 0 ? (
+                        <div>
+                          <span className="font-bold text-amber-400">
+                            -PKR {(record as any).taxDeduction.toLocaleString()}
+                          </span>
+                          {(record as any).taxSlab ? (
+                            <span className="block text-[9px] font-bold text-amber-300/80">
+                              Slab #{(record as any).taxSlab}
+                            </span>
+                          ) : (
+                            <span className="block text-[9px] text-slate-500">Withheld</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-slate-400 font-medium">PKR 0</span>
+                          <span className="block text-[9px] text-emerald-400/80 font-bold">Tax-Free</span>
+                        </div>
+                      )}
                     </td>
 
                     {/* Net Salary */}

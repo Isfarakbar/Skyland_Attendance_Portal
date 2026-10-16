@@ -25,6 +25,7 @@ import {
   Clock,
   HeartHandshake,
 } from 'lucide-react';
+import { calculateFBRTax } from '@/lib/taxCalculator';
 
 interface DeviceItem {
   name: string;
@@ -717,11 +718,28 @@ export default function AdminEditEmployeeModal({
                     </div>
                   )}
 
-                  {taxMode === 'COMPANY_DEFAULT' && (
-                    <div className="flex items-center text-xs text-slate-400 p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                      Calculates standard tax based on the global exemption threshold set in Company Settings.
-                    </div>
-                  )}
+                  {taxMode === 'COMPANY_DEFAULT' && (() => {
+                    const fbr = calculateFBRTax(Number(baseSalary) || 0);
+                    return (
+                      <div className="text-xs p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-white font-bold">
+                          <span>FBR Salaried Slabs (2026-27):</span>
+                          <span className="text-amber-400 font-mono">
+                            {fbr.monthlyTax > 0 ? `PKR ${fbr.monthlyTax.toLocaleString()}/mo` : 'Tax-Free (0 PKR)'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {fbr.annualTaxableIncome <= 600000 ? (
+                            <span>Annual Gross: PKR {fbr.annualTaxableIncome.toLocaleString()} (Below Rs 600,000 threshold &rarr; 0% tax)</span>
+                          ) : (
+                            <span>
+                              Annual Gross: PKR {fbr.annualTaxableIncome.toLocaleString()} &rarr; Slab #{fbr.applicableSlabNumber} ({(fbr.marginalRate * 100).toFixed(0)}%) &rarr; Annual Tax: PKR {fbr.annualTax.toLocaleString()}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   {taxMode === 'EXEMPT' && (
                     <div className="flex items-center text-xs text-emerald-400 font-semibold p-2 rounded-xl bg-emerald-950/20 border border-emerald-900/40">

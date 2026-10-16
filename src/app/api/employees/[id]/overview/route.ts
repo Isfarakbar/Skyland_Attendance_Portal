@@ -6,6 +6,7 @@ import Attendance from '@/models/Attendance';
 import DailyTask from '@/models/DailyTask';
 import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
+import { resolvePayrollTax } from '@/lib/taxCalculator';
 
 export async function GET(
   req: NextRequest,
@@ -77,26 +78,15 @@ export async function GET(
     const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
     const leaveDeduction = offDeduction + halfLeaveDeduction;
 
-    // Tax calculation
+    // Tax calculation (FBR 2026-27 Slabs / Corporate Rules)
     const taxableIncome = Math.max(0, baseSalary - leaveDeduction);
-    let taxDeduction = 0;
-    const userTax = (employee as any).taxSettings;
+    const taxResult = resolvePayrollTax({
+      monthlyTaxableIncome: taxableIncome,
+      companySettings: settings as any,
+      employeeTaxSettings: (employee as any).taxSettings,
+    });
 
-    if (userTax?.isExempt) {
-      taxDeduction = 0;
-    } else if (typeof userTax?.customFixedAmount === 'number' && userTax.customFixedAmount >= 0) {
-      taxDeduction = userTax.customFixedAmount;
-    } else if (typeof userTax?.customRate === 'number' && userTax.customRate >= 0) {
-      const threshold = typeof settings?.taxExemptionThreshold === 'number' ? settings.taxExemptionThreshold : 50000;
-      const taxableOverThreshold = Math.max(0, taxableIncome - threshold);
-      taxDeduction = Math.round((taxableOverThreshold * userTax.customRate) / 100);
-    } else if (settings?.taxDeductionEnabled) {
-      const threshold = typeof settings?.taxExemptionThreshold === 'number' ? settings.taxExemptionThreshold : 50000;
-      const rate = typeof settings?.taxRate === 'number' ? settings.taxRate : 2.5;
-      const taxableOverThreshold = Math.max(0, taxableIncome - threshold);
-      taxDeduction = Math.round((taxableOverThreshold * rate) / 100);
-    }
-
+    const taxDeduction = taxResult.monthlyTax;
     const totalDeduction = leaveDeduction + taxDeduction;
     const netSalary = Math.max(0, baseSalary - totalDeduction);
 
