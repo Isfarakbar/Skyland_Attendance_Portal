@@ -21,6 +21,8 @@ import {
   UserCheck,
   UserX,
   Sparkles,
+  UploadCloud,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface Employee {
@@ -90,6 +92,39 @@ export default function BiometricDeviceManager() {
 
   // Copy state
   const [copiedEndpoint, setCopiedEndpoint] = useState(false);
+
+  // USB Attendance Log Upload
+  const [uploadingUsb, setUploadingUsb] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleUsbUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingUsb(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/attendance/import-usb', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showBanner(data.message || `Imported ${data.syncedCount} punches from Dahua USB log!`, 'success');
+        fetchData();
+      } else {
+        showBanner(data.error || 'Failed to import USB attendance log', 'error');
+      }
+    } catch {
+      showBanner('Network error uploading USB attendance log', 'error');
+    } finally {
+      setUploadingUsb(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -327,6 +362,28 @@ export default function BiometricDeviceManager() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleUsbUpload}
+            accept=".xlsx,.xls,.csv,.dat,.txt"
+            className="hidden"
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingUsb}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            title="Import attendance logs exported from Dahua USB (.xlsx, .csv, .dat, .txt)"
+          >
+            {uploadingUsb ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-orange-400" />
+            ) : (
+              <UploadCloud className="w-3.5 h-3.5 text-orange-400" />
+            )}
+            <span>{uploadingUsb ? 'Importing Log...' : 'Import Dahua USB Log'}</span>
+          </button>
+
           <button
             onClick={() => setSimulatorOpen(!simulatorOpen)}
             className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 flex items-center gap-2 cursor-pointer"

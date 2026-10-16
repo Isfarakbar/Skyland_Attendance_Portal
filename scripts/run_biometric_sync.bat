@@ -1,13 +1,26 @@
 @echo off
 title Skyland Attendance Portal — Biometric Bridge Agent
 echo =================================================================
-echo   SKYLAND ENERGY - BIOMETRIC DEVICE LAN SYNC
+echo   SKYLAND ENERGY - DAHUA BIOMETRIC DEVICE LAN SYNC
 echo =================================================================
 echo.
-python scripts\dahua_bridge.py
+
+set PYTHON_CMD=python
+where python >nul 2>nul
+if errorlevel 1 (
+    if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" (
+        set PYTHON_CMD="%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+    )
+)
+
+echo [*] Starting Dahua Biometric LAN Bridge...
+echo.
+
+%PYTHON_CMD% scripts\dahua_bridge.py %*
 if errorlevel 1 (
     echo.
-    echo [!] Python is not installed or returned an error.
-    echo Please make sure Python is installed and added to PATH.
-    pause
+    echo [*] Python exited or returned an error. Falling back to native Node.js bridge...
+    node scripts\dahua_bridge.js %*
 )
+
+pause
