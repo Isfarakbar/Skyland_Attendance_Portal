@@ -1,0 +1,11 @@
+{
+  "portal_urls": [
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://192.168.100.245:3001"
+  ],
+  "device_ip": "192.168.100.110",
+  "device_port": 37777,
+  "device_user": "admin",
+  "device_pass": "admin123"
+}

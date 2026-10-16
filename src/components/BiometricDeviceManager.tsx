@@ -439,8 +439,8 @@ export default function BiometricDeviceManager() {
             <span className="text-xs font-semibold">Machine Model</span>
             <Cpu className="w-4 h-4 text-orange-400" />
           </div>
-          <p className="text-sm font-extrabold text-white truncate">Dahua ASA1222G</p>
-          <span className="text-[11px] text-slate-500 mt-1 block">TCP/IP Port 37777</span>
+          <p className="text-sm font-extrabold text-white truncate">DHI-ASA1222GL-D</p>
+          <span className="text-[11px] text-slate-500 mt-1 block font-mono">192.168.100.110:37777</span>
         </div>
       </div>
 

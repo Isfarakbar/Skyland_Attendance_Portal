@@ -46,13 +46,14 @@ export async function GET() {
         unlinkedCount,
       },
       device: {
-        model: 'Dahua ASA1222G Attendance Terminal',
-        ipAddress: '192.168.100.220 (Configurable)',
+        model: 'Dahua DHI-ASA1222GL-D Attendance Device',
+        ipAddress: '192.168.100.110',
         port: 37777,
-        protocol: 'TCP / IP & HTTP JSON Webhook',
+        serialNumber: '9L0D364PAJ7FEC8',
+        protocol: 'TCP / IP & Dahua NetSDK',
         endpoint: '/api/attendance/device-sync',
         timezone: settings?.timezone || 'Asia/Karachi',
-        status: 'READY',
+        status: 'ONLINE',
       },
       recentPunches,
     });
