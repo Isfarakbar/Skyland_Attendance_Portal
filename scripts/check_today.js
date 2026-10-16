@@ -13,13 +13,11 @@ async function check() {
   for (const u of users) {
     console.log(`  ${u.employeeId} - ${u.name} (biometricUserId: ${u.biometricUserId})`);
   }
-  const uHamza = users.find(x => x.employeeId === 'SKY-006');
-  if (uHamza) {
-    await mongoose.connection.collection('attendances').updateOne(
-      { user: uHamza._id, date: '2026-10-16' },
-      { $set: { clockOut: null, totalWorkMinutes: 0 } }
-    );
-    console.log('Reset accidental clockOut for Muhammad Hamza (SKY-006)');
+  const atts = await mongoose.connection.collection('attendances').find({ date: '2026-10-16' }).toArray();
+  console.log('\nAttendance records for today:');
+  for (const a of atts) {
+    const u = users.find(x => x._id.toString() === a.user.toString());
+    console.log(`  ${u ? u.name : a.user} (${u ? u.employeeId : ''}): In=${a.clockIn ? a.clockIn.toLocaleTimeString() : 'null'} Out=${a.clockOut ? a.clockOut.toLocaleTimeString() : 'null'} Status=${a.status}`);
   }
   await mongoose.disconnect();
 }
