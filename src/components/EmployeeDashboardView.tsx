@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Clock,
   CheckCircle2,
@@ -19,6 +19,9 @@ import {
   ShieldCheck,
   User,
   Plus,
+  RefreshCw,
+  AlertCircle,
+  Zap,
 } from 'lucide-react';
 import FieldCheckInWidget from '@/components/FieldCheckInWidget';
 import DailyTaskSection from '@/components/DailyTaskSection';
@@ -65,6 +68,46 @@ export default function EmployeeDashboardView({
   const netSalary = employeeStats?.netSalary ?? baseSalary;
   const presentDays = employeeStats?.presentDays ?? (isCheckedIn ? 1 : 0);
   const lateDays = employeeStats?.lateDays ?? (attendance?.status === 'LATE' ? 1 : 0);
+
+  const [punching, setPunching] = useState(false);
+  const [punchMessage, setPunchMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handleFingerprintPunch = async () => {
+    setPunching(true);
+    setPunchMessage(null);
+
+    try {
+      const endpoint = !isCheckedIn ? '/api/attendance/punch-in' : '/api/attendance/punch-out';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setPunchMessage({
+          text: !isCheckedIn
+            ? `Fingerprint verified! ${data.message || 'Clocked in successfully.'}`
+            : `Fingerprint verified! ${data.message || 'Clocked out successfully.'}`,
+          type: 'success',
+        });
+        onRefresh();
+        setTimeout(() => setPunchMessage(null), 6000);
+      } else {
+        setPunchMessage({
+          text: data.error || 'Attendance punch failed. Please try again.',
+          type: 'error',
+        });
+      }
+    } catch {
+      setPunchMessage({
+        text: 'Network error communicating with attendance service.',
+        type: 'error',
+      });
+    } finally {
+      setPunching(false);
+    }
+  };
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
@@ -356,6 +399,113 @@ export default function EmployeeDashboardView({
               </p>
             </div>
           </div>
+
+          {/* Notification Banner */}
+          {punchMessage && (
+            <div
+              className={`p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between gap-3 animate-in fade-in duration-200 ${
+                punchMessage.type === 'success'
+                  ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
+                  : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {punchMessage.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
+                <span>{punchMessage.text}</span>
+              </div>
+              <button
+                onClick={() => setPunchMessage(null)}
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Interactive Fingerprint Punch Controls */}
+          {!isCheckedIn ? (
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/90 border border-orange-500/30">
+              <div className="flex items-center gap-3">
+                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF6B00] to-orange-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-orange-500/25">
+                  <Fingerprint className="w-6 h-6" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-ping" />
+                </div>
+                <div>
+                  <p className="font-extrabold text-white text-sm">Mark Fingerprint Attendance</p>
+                  <p className="text-[11px] text-slate-400">
+                    Scan fingerprint or tap to check in with Biometric ID #{user?.biometricUserId || user?.employeeId}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleFingerprintPunch}
+                disabled={punching}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white font-black text-xs rounded-xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              >
+                {punching ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Verifying Fingerprint...</span>
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint className="w-4 h-4" />
+                    <span>Scan Fingerprint / Clock In</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : !isCheckedOut ? (
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-950/80 border border-emerald-800/80 flex items-center justify-center text-emerald-400 shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-extrabold text-white text-sm">
+                    Shift Active &bull; Clocked In at {formatTime(attendance?.clockIn)}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    When completing your workday, tap below to clock out
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleFingerprintPunch}
+                disabled={punching}
+                className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              >
+                {punching ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Recording Clock Out...</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4 text-orange-400" />
+                    <span>Clock Out / Conclude Shift</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <div className="pt-2 p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-800/50 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="text-xs">
+                <span className="font-extrabold text-emerald-300">Today&apos;s Shift Completed</span>
+                <span className="text-slate-400 ml-2">
+                  Total work recorded: {Math.floor((attendance?.totalWorkMinutes || 0) / 60)}h{' '}
+                  {(attendance?.totalWorkMinutes || 0) % 60}m
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

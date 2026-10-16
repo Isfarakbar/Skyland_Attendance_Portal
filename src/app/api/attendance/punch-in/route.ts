@@ -43,14 +43,17 @@ export async function POST(req: NextRequest) {
         clockIn: now,
         clockOut: null,
         status: evaluatedStatus,
+        source: 'BIOMETRIC',
         breaks: [],
         totalWorkMinutes: 0,
         totalBreakMinutes: 0,
         ipAddress,
+        notes: 'Punch recorded via portal fingerprint check-in',
       });
     } else {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
+      attendance.source = 'BIOMETRIC';
       attendance.ipAddress = ipAddress;
       await attendance.save();
     }
