@@ -1,7 +1,7 @@
 @echo off
-title Skyland Attendance Portal — Biometric Bridge Agent
+title Skyland Attendance Portal — Dahua Biometric Native NetSDK Sync
 echo =================================================================
-echo   SKYLAND ENERGY - DAHUA BIOMETRIC DEVICE LAN SYNC
+echo   SKYLAND ENERGY - DAHUA DHI-ASA1222GL-D LIVE NETSDK SYNC
 echo =================================================================
 echo.
 
@@ -13,14 +13,12 @@ if errorlevel 1 (
     )
 )
 
-echo [*] Starting Dahua Biometric LAN Bridge...
+echo [*] Connecting to Dahua terminal (192.168.100.110:37777)...
 echo.
 
-%PYTHON_CMD% scripts\dahua_bridge.py %*
+%PYTHON_CMD% -u scripts\dahua_live_listener.py %*
 if errorlevel 1 (
     echo.
-    echo [*] Python exited or returned an error. Falling back to native Node.js bridge...
-    node scripts\dahua_bridge.js %*
+    echo [!] NetSDK Bridge encountered an error.
+    pause
 )
-
-pause
