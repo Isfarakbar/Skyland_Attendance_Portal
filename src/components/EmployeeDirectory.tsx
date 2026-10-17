@@ -53,23 +53,16 @@ export default function EmployeeDirectory() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password123');
   const [role, setRole] = useState<'developer' | 'admin' | 'ceo' | 'manager' | 'employee'>('employee');
-  const [department, setDepartment] = useState('Field Operations');
-  const [designation, setDesignation] = useState('Solar Technician');
+  const [department, setDepartment] = useState('Operations');
+  const [designation, setDesignation] = useState('Employee');
   const [phone, setPhone] = useState('');
   const [baseSalary, setBaseSalary] = useState(30000);
-  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>('OFFICE');
-  const [biometricUserId, setBiometricUserId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Quick edit salary state
   const [editingSalaryEmpId, setEditingSalaryEmpId] = useState<string | null>(null);
   const [editingSalaryValue, setEditingSalaryValue] = useState<number>(30000);
   const [salaryUpdating, setSalaryUpdating] = useState(false);
-
-  // Quick edit biometric ID state
-  const [editingBioEmpId, setEditingBioEmpId] = useState<string | null>(null);
-  const [editingBioValue, setEditingBioValue] = useState<string>('');
-  const [bioUpdating, setBioUpdating] = useState(false);
 
   // 360 Employee Dossier Modal
   const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
@@ -112,8 +105,6 @@ export default function EmployeeDirectory() {
           designation,
           phone,
           baseSalary: Number(baseSalary) || 30000,
-          workMode,
-          biometricUserId: biometricUserId.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -123,8 +114,6 @@ export default function EmployeeDirectory() {
         setEmail('');
         setPhone('');
         setBaseSalary(30000);
-        setWorkMode('OFFICE');
-        setBiometricUserId('');
         fetchEmployees();
       } else {
         alert(data.error || 'Failed to create employee');
@@ -149,25 +138,6 @@ export default function EmployeeDirectory() {
       }
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const handleToggleWorkMode = async (emp: Employee) => {
-    const newMode = emp.workMode === 'FIELD' ? 'OFFICE' : 'FIELD';
-    try {
-      const res = await fetch(`/api/employees/${emp._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workMode: newMode }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchEmployees();
-      } else {
-        alert(data.error || 'Failed to change work mode');
-      }
-    } catch {
-      alert('Error changing work mode');
     }
   };
 
@@ -211,28 +181,6 @@ export default function EmployeeDirectory() {
     }
   };
 
-  const handleSaveBioId = async (empId: string) => {
-    setBioUpdating(true);
-    try {
-      const res = await fetch(`/api/employees/${empId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ biometricUserId: editingBioValue.trim() || null }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setEditingBioEmpId(null);
-        fetchEmployees();
-      } else {
-        alert(data.error || 'Failed to update biometric ID');
-      }
-    } catch {
-      alert('Error updating biometric ID');
-    } finally {
-      setBioUpdating(false);
-    }
-  };
-
   const handleDeleteEmployee = async (emp: Employee) => {
     if (
       !confirm(
@@ -270,7 +218,7 @@ export default function EmployeeDirectory() {
             <Users className="w-5 h-5 text-[#FF6B00]" />
             Company Roster &amp; Directory ({employees.length})
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">Manage team members, work location mode (Office vs Field GPS), base salaries, and status</p>
+          <p className="text-xs text-slate-400 mt-0.5">Manage employees, roles, base salaries, and account status</p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -303,7 +251,6 @@ export default function EmployeeDirectory() {
           <div className="col-span-full py-12 text-center text-slate-400 text-sm">No employees found.</div>
         ) : (
           filteredEmployees.map((emp) => {
-            const isField = emp.workMode === 'FIELD';
             return (
               <div
                 key={emp._id}
@@ -338,41 +285,10 @@ export default function EmployeeDirectory() {
                     }`}
                     title="Change employee role"
                   >
-                    <option value="employee" className="bg-[#0D1527] text-white">Staff Employee</option>
+                    <option value="employee" className="bg-[#0D1527] text-white">Employee</option>
                     <option value="ceo" className="bg-[#0D1527] text-white">CEO (Executive)</option>
                     <option value="admin" className="bg-[#0D1527] text-white">Operations Admin</option>
                   </select>
-                </div>
-
-                {/* Work Mode Badge */}
-                <div className="mt-3 flex items-center justify-between">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
-                      isField
-                        ? 'bg-amber-950/40 text-amber-300 border-amber-800/60'
-                        : 'bg-slate-800 text-slate-300 border-slate-700'
-                    }`}
-                  >
-                    {isField ? (
-                      <>
-                        <MapPin className="w-3 h-3 text-amber-400" />
-                        <span>Field / On-Site (GPS)</span>
-                      </>
-                    ) : (
-                      <>
-                        <Building className="w-3 h-3 text-slate-400" />
-                        <span>Office Staff (Register)</span>
-                      </>
-                    )}
-                  </span>
-
-                  <button
-                    onClick={() => handleToggleWorkMode(emp)}
-                    className="text-[10px] font-semibold text-orange-400 hover:text-orange-300 hover:underline cursor-pointer"
-                    title="Change employee work mode"
-                  >
-                    Switch to {isField ? 'Office' : 'Field'}
-                  </button>
                 </div>
 
                 <div className="mt-3 space-y-1.5 text-xs text-slate-400">
@@ -439,80 +355,23 @@ export default function EmployeeDirectory() {
                     )}
                   </div>
 
-                  {/* Biometric Device ID Line & Quick Edit */}
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
-                        <Fingerprint className="w-3.5 h-3.5 text-orange-400" />
-                        <span>Biometric Device ID:</span>
-                      </div>
-
-                      {editingBioEmpId === emp._id ? (
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            placeholder="e.g. 1"
-                            value={editingBioValue}
-                            onChange={(e) => setEditingBioValue(e.target.value)}
-                            className="w-20 px-1.5 py-0.5 text-xs font-bold bg-slate-950 text-white border border-[#FF6B00] rounded-md focus:outline-hidden font-mono"
-                          />
-                          <button
-                            onClick={() => handleSaveBioId(emp._id)}
-                            disabled={bioUpdating}
-                            className="p-1 text-emerald-400 hover:bg-emerald-950/40 rounded-md cursor-pointer"
-                            title="Save Biometric ID"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setEditingBioEmpId(null)}
-                            className="p-1 text-slate-400 hover:bg-slate-800 rounded-md cursor-pointer"
-                            title="Cancel"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
-                              emp.biometricUserId
-                                ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-                                : 'bg-slate-800 text-slate-500 border-slate-700 italic'
-                            }`}
-                          >
-                            {emp.biometricUserId ? `ID #${emp.biometricUserId}` : 'Not Linked'}
-                          </span>
-                          <button
-                            onClick={() => {
-                              setEditingBioEmpId(emp._id);
-                              setEditingBioValue(emp.biometricUserId || '');
-                            }}
-                            className="text-slate-400 hover:text-orange-400 p-0.5 rounded-md cursor-pointer transition-colors"
-                            title="Attach / Edit Fingerprint ID"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
+                  {/* Assigned Hardware / Devices Line */}
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+                      <Laptop className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Company Assets:</span>
                     </div>
-
-                    {/* Assigned Hardware / Devices Line */}
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
-                        <Laptop className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Company Assets:</span>
-                      </div>
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-md border ${
-                          emp.devices && emp.devices.length > 0
-                            ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold'
-                            : 'bg-slate-800 text-slate-500 border-slate-700 italic'
-                        }`}
-                      >
-                        {emp.devices && emp.devices.length > 0 ? `${emp.devices.length} Assigned` : 'None'}
-                      </span>
-                    </div>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-md border ${
+                        emp.devices && emp.devices.length > 0
+                          ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-bold'
+                          : 'bg-slate-800 text-slate-500 border-slate-700 italic'
+                      }`}
+                    >
+                      {emp.devices && emp.devices.length > 0 ? `${emp.devices.length} Assigned` : 'None'}
+                    </span>
                   </div>
+                </div>
 
                 <div className="mt-3.5 grid grid-cols-2 gap-2">
                   <button
@@ -570,7 +429,7 @@ export default function EmployeeDirectory() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-[#0D1527] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-800 animate-in zoom-in-95 duration-150">
             <h3 className="font-bold text-white text-lg mb-1">Add New Employee</h3>
-            <p className="text-xs text-slate-400 mb-4">Onboard a new team member to Skyland Energy</p>
+            <p className="text-xs text-slate-400 mb-4">Onboard a new employee to Skyland Energy</p>
 
             <form onSubmit={handleCreateEmployee} className="space-y-3.5">
               <div>
@@ -597,31 +456,17 @@ export default function EmployeeDirectory() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Account Role</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-semibold"
-                  >
-                    <option value="employee">Staff Employee</option>
-                    <option value="ceo">CEO (Executive Dashboard)</option>
-                    <option value="admin">Operations Admin (Master Access)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Work Location Mode</label>
-                  <select
-                    value={workMode}
-                    onChange={(e) => setWorkMode(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-semibold"
-                  >
-                    <option value="OFFICE">Office Staff (Desk Register)</option>
-                    <option value="FIELD">Field / On-Site (GPS Mobile Check-In)</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Account Role</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-semibold"
+                >
+                  <option value="employee">Employee</option>
+                  <option value="ceo">CEO (Executive Dashboard)</option>
+                  <option value="admin">Operations Admin (Master Access)</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -630,7 +475,7 @@ export default function EmployeeDirectory() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Field Operations"
+                    placeholder="e.g. Operations"
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
@@ -662,22 +507,6 @@ export default function EmployeeDirectory() {
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-mono"
                 />
                 <span className="text-[11px] text-slate-400 mt-0.5 block">Used to calculate daily rate (Base / 30) for excess leaves</span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  Biometric Device ID (Fingerprint Terminal ID)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 1, 101, or machine User ID"
-                  value={biometricUserId}
-                  onChange={(e) => setBiometricUserId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-mono"
-                />
-                <span className="text-[11px] text-slate-400 mt-0.5 block">
-                  Maps the employee to their fingerprint on the Dahua ASA1222G machine
-                </span>
               </div>
 
               <div>

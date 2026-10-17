@@ -65,7 +65,7 @@ export default function LoginPage() {
           />
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">SKYLAND ENERGY</h2>
-        <p className="mt-1 text-xs text-slate-400">Workforce & Biometric Attendance Portal</p>
+        <p className="mt-1 text-xs text-slate-400">Workforce &amp; GPS Attendance Portal</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10">
@@ -125,11 +125,21 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-800 text-center text-xs text-slate-400">
-            Need an account?{' '}
-            <Link href="/register" className="font-bold text-[#FF6B00] hover:text-amber-400">
-              Register here
-            </Link>
+          <div className="mt-5 pt-5 border-t border-slate-800 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-install'))}
+              className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 border border-orange-500/30 text-[#FF6B00] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>📲 Install Skyland Attendance App</span>
+            </button>
+
+            <div className="text-center text-xs text-slate-400">
+              Need an account?{' '}
+              <Link href="/register" className="font-bold text-[#FF6B00] hover:text-amber-400">
+                Register here
+              </Link>
+            </div>
           </div>
         </div>
       </div>

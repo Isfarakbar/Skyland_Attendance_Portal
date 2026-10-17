@@ -5,7 +5,7 @@ import User from '@/models/User';
 import { generateNextEmployeeId } from '@/lib/attendanceUtils';
 
 const SENSITIVE_FIELDS = '-password -verificationCode -verificationCodeExpires -resetPasswordCode -resetPasswordExpires';
-const PUBLIC_DIRECTORY_FIELDS = '_id name email employeeId department designation role workMode avatarUrl isActive';
+const PUBLIC_DIRECTORY_FIELDS = '_id name email employeeId department designation role avatarUrl isActive';
 
 export async function GET() {
   try {
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
-    const { name, email, password, role, department, designation, phone, employeeId, baseSalary, workMode, biometricUserId } = await req.json();
+    const { name, email, password, role, department, designation, phone, employeeId, baseSalary } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json({ success: false, error: 'Name, email, and temporary password are required' }, { status: 400 });
@@ -80,17 +80,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const normalizedBioId = biometricUserId?.toString().trim() || null;
-    if (normalizedBioId) {
-      const existingBio = await User.findOne({ biometricUserId: normalizedBioId });
-      if (existingBio) {
-        return NextResponse.json(
-          { success: false, error: `Biometric Device ID #${normalizedBioId} is already assigned to ${existingBio.name} (${existingBio.employeeId})` },
-          { status: 400 }
-        );
-      }
-    }
-
     const hashedPassword = await hashPassword(password);
 
     const newEmployee = await User.create({
@@ -103,8 +92,6 @@ export async function POST(req: NextRequest) {
       designation: designation?.trim() || 'Team Member',
       phone: phone?.trim() || '',
       baseSalary: typeof baseSalary === 'number' ? baseSalary : (Number(baseSalary) || 30000),
-      workMode: workMode === 'FIELD' ? 'FIELD' : 'OFFICE',
-      biometricUserId: normalizedBioId,
       joinDate: new Date(),
       isActive: true,
       isEmailVerified: true,

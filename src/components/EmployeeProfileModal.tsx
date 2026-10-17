@@ -155,14 +155,8 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                   <span className="font-mono text-xs font-bold text-orange-400 bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
                     {data.employee.employeeId}
                   </span>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      data.employee.workMode === 'FIELD'
-                        ? 'bg-amber-950/60 text-amber-300 border-amber-800/80'
-                        : 'bg-slate-800 text-slate-300 border-slate-700'
-                    }`}
-                  >
-                    {data.employee.workMode === 'FIELD' ? '📍 Field Staff (GPS)' : '🏢 Office Staff'}
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-emerald-950/60 text-emerald-300 border-emerald-800/80">
+                    👤 Employee
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">

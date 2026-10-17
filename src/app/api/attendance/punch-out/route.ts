@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
@@ -7,11 +7,38 @@ import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString, calculateBreakMinutes, calculateWorkMinutes, evaluateAttendanceStatus } from '@/lib/attendanceUtils';
 import { differenceInMinutes } from 'date-fns';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const { latitude, longitude, accuracy } = body;
+
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
+    if (
+      latitude === undefined ||
+      longitude === undefined ||
+      latitude === null ||
+      longitude === null ||
+      isNaN(latNum) ||
+      isNaN(lngNum) ||
+      (latNum === 0 && lngNum === 0) ||
+      latNum < -90 ||
+      latNum > 90 ||
+      lngNum < -180 ||
+      lngNum > 180
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Live GPS location is required to mark attendance! Please turn ON your device Location Services and allow location permission.',
+        },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
@@ -19,17 +46,6 @@ export async function POST() {
     const user = await User.findById(session.userId).lean();
     if (!user || !user.isActive) {
       return NextResponse.json({ success: false, error: 'Account not found or deactivated' }, { status: 403 });
-    }
-
-    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
-    if (!isManagement && user.workMode !== 'FIELD') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Office staff attendance is recorded exclusively via the Dahua biometric fingerprint terminal.',
-        },
-        { status: 403 }
-      );
     }
 
     const settings = await CompanySettings.findOne();
@@ -71,6 +87,12 @@ export async function POST() {
     attendance.clockOut = now;
     attendance.totalBreakMinutes = totalBreakMinutes;
     attendance.totalWorkMinutes = totalWorkMinutes;
+    attendance.location = {
+      latitude: latNum,
+      longitude: lngNum,
+      siteName: attendance.location?.siteName || 'Verified GPS Location',
+      accuracy: accuracy ? Number(accuracy) : attendance.location?.accuracy,
+    };
 
     // Check half-day threshold
     const halfDayHours = settings?.halfDayThresholdHours || 4;

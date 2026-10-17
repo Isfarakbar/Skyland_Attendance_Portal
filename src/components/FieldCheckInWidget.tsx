@@ -30,7 +30,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
     setSuccessMsg(null);
 
     if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser or device.');
+      setGpsError('Geolocation is not supported by your browser or device. Please enable GPS location.');
       return;
     }
 
@@ -50,7 +50,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               latitude,
               longitude,
               accuracy,
-              siteName: siteName.trim() || 'Solar Field Site',
+              siteName: siteName.trim() || 'GPS Verified Check-In',
               notes: notes.trim(),
               action: 'check-in',
             }),
@@ -58,13 +58,13 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
 
           const data = await res.json();
           if (data.success) {
-            setSuccessMsg(`Checked in successfully at ${siteName || 'Solar Field Site'}!`);
+            setSuccessMsg('Attendance marked! Checked in with live GPS location.');
             onRefresh();
           } else {
-            setGpsError(data.error || 'Failed to check in');
+            setGpsError(data.error || 'Failed to mark attendance');
           }
         } catch {
-          setGpsError('Network error checking in');
+          setGpsError('Network error while marking attendance');
         } finally {
           setLoading(false);
         }
@@ -73,16 +73,16 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
         setGpsLoading(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setGpsError('Location permission was denied. Please allow location access in your browser settings to check in.');
+            setGpsError('Location is required! Please turn ON your device location and allow browser GPS permission to mark attendance.');
             break;
           case error.POSITION_UNAVAILABLE:
-            setGpsError('Location information is unavailable. Please check your device GPS.');
+            setGpsError('Location information is unavailable. Please turn ON your device GPS.');
             break;
           case error.TIMEOUT:
-            setGpsError('GPS location request timed out. Please try again.');
+            setGpsError('GPS location request timed out. Please ensure Location is ON and try again.');
             break;
           default:
-            setGpsError('An unknown error occurred while retrieving GPS location.');
+            setGpsError('Unable to retrieve GPS location. Location must be ON to mark attendance.');
             break;
         }
       },
@@ -95,34 +95,72 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
   };
 
   const handleCheckOut = async () => {
-    if (!confirm('Are you sure you want to check out from your site for today?')) return;
-    setLoading(true);
+    if (!confirm('Are you sure you want to check out and complete your shift for today?')) return;
     setGpsError(null);
+    setSuccessMsg(null);
 
-    try {
-      const res = await fetch('/api/attendance/field-checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          latitude: attendance?.location?.latitude || 0,
-          longitude: attendance?.location?.longitude || 0,
-          siteName: attendance?.location?.siteName || '',
-          action: 'check-out',
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setSuccessMsg('Checked out from site successfully!');
-        onRefresh();
-      } else {
-        setGpsError(data.error || 'Failed to check out');
-      }
-    } catch {
-      setGpsError('Network error checking out');
-    } finally {
-      setLoading(false);
+    if (!navigator.geolocation) {
+      setGpsError('Geolocation is not supported by your browser or device. Location must be ON to check out.');
+      return;
     }
+
+    setGpsLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        setGpsLoading(false);
+        setLoading(true);
+
+        try {
+          const res = await fetch('/api/attendance/field-checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              latitude,
+              longitude,
+              accuracy,
+              siteName: attendance?.location?.siteName || siteName.trim() || 'GPS Verified Location',
+              action: 'check-out',
+            }),
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            setSuccessMsg('Checked out successfully with live GPS verification!');
+            onRefresh();
+          } else {
+            setGpsError(data.error || 'Failed to check out');
+          }
+        } catch {
+          setGpsError('Network error checking out');
+        } finally {
+          setLoading(false);
+        }
+      },
+      (error) => {
+        setGpsLoading(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setGpsError('Location is required to check out! Please turn ON your device GPS and allow location access.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setGpsError('Location information is unavailable. Please turn ON your device GPS to check out.');
+            break;
+          case error.TIMEOUT:
+            setGpsError('GPS location request timed out. Please ensure Location is ON and try again.');
+            break;
+          default:
+            setGpsError('Unable to retrieve GPS location for check-out.');
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const formatTime = (dateStr: string | null) => {
@@ -146,9 +184,9 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
-              <MapPin className="w-3.5 h-3.5 text-amber-400" />
-              Site Solar Attendance
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800">
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+              Live GPS Self-Attendance
             </span>
             <span className="text-xs text-slate-400 font-mono">
               {todayData?.todayDate || 'Today'}
@@ -157,13 +195,13 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
 
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
             {isCheckedOut
-              ? 'Site Duty Shift Completed'
+              ? 'Daily Shift Completed'
               : isCheckedIn
-              ? 'Currently Active On-Site'
-              : 'Field Site GPS Check-In'}
+              ? 'Currently Checked In'
+              : 'Mark Your Daily Attendance'}
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            Capture your live GPS coordinates and project location to log your site attendance.
+            Your device location (GPS) must be turned ON. Press the button below to mark your attendance with live coordinates.
           </p>
         </div>
 
@@ -185,7 +223,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               : isCheckedIn
               ? attendance?.status === 'LATE'
                 ? 'Late Arrival'
-                : 'Active On Site'
+                : 'Checked In'
               : 'Pending Check-In'}
           </span>
         </div>
@@ -202,10 +240,10 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                 </div>
                 <div>
                   <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                    {attendance?.status === 'LATE' ? 'Present (Late Arrival)' : 'Present on Site'}
+                    {attendance?.status === 'LATE' ? 'Present (Late Arrival)' : 'Present — GPS Verified'}
                   </div>
                   <div className="text-base font-extrabold text-white mt-0.5">
-                    {location?.siteName || 'Solar Field Site'}
+                    {location?.siteName || 'GPS Verified Location'}
                   </div>
                   <div className="text-xs text-slate-400 flex flex-wrap items-center gap-3 mt-1">
                     <span>Clock In: <strong className="text-white">{clockInFormatted}</strong></span>
@@ -242,25 +280,34 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                 <button
                   type="button"
                   onClick={handleCheckOut}
-                  disabled={loading}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  disabled={loading || gpsLoading}
+                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Check Out from Site
+                  {gpsLoading || loading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Verifying GPS &amp; Checking Out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Check Out Now (GPS Required)</span>
+                    </>
+                  )}
                 </button>
               </div>
             )}
           </div>
         ) : (
           <div className="space-y-4 max-w-xl">
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  Solar Project / Site Name &amp; City
+                  Location Label (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Multan 50MW Solar Plant, Site B"
+                  placeholder="e.g. Head Office / Multan Site"
                   value={siteName}
                   onChange={(e) => setSiteName(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
@@ -269,11 +316,11 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  Work Activity / Notes (Optional)
+                  Work Note (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Inverter installation, Site survey"
+                  placeholder="e.g. Regular shift / Project work"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
@@ -285,17 +332,17 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               type="button"
               onClick={handleCaptureGpsAndCheckIn}
               disabled={loading || gpsLoading}
-              className="w-full sm:w-auto px-6 py-3 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-bold text-xs rounded-2xl shadow-lg shadow-orange-950/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-7 py-3.5 bg-linear-to-r from-[#FF6B00] to-amber-600 hover:opacity-90 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-950/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 active:scale-98"
             >
               {gpsLoading || loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Acquiring GPS &amp; Checking In...</span>
+                  <span>Verifying GPS &amp; Marking Attendance...</span>
                 </>
               ) : (
                 <>
                   <MapPin className="w-4 h-4" />
-                  <span>Capture GPS &amp; Check In Now</span>
+                  <span>Mark Attendance Now (Check In)</span>
                 </>
               )}
             </button>

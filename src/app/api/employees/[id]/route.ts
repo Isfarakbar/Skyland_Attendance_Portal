@@ -84,20 +84,6 @@ export async function PUT(
       body.employeeId = normalizedEmpId;
     }
 
-    if (body.biometricUserId !== undefined) {
-      const normalizedBioId = body.biometricUserId ? String(body.biometricUserId).trim() : null;
-      if (normalizedBioId) {
-        const bioConflict = await User.findOne({ biometricUserId: normalizedBioId, _id: { $ne: id } });
-        if (bioConflict) {
-          return NextResponse.json(
-            { success: false, error: `Biometric Device ID #${normalizedBioId} is already assigned to ${bioConflict.name} (${bioConflict.employeeId})` },
-            { status: 400 }
-          );
-        }
-      }
-      body.biometricUserId = normalizedBioId;
-    }
-
     const allowedFields = [
       'name',
       'email',
@@ -109,8 +95,6 @@ export async function PUT(
       'isActive',
       'leaveBalance',
       'baseSalary',
-      'workMode',
-      'biometricUserId',
       'avatarUrl',
       'bio',
       'emergencyContact',

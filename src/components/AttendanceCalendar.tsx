@@ -14,6 +14,7 @@ import {
   Trash2,
   X,
   Edit3,
+  MapPin,
 } from 'lucide-react';
 
 interface AttendanceRecord {
@@ -22,6 +23,8 @@ interface AttendanceRecord {
   status: 'PRESENT' | 'LATE' | 'HALF_DAY' | 'HALF_LEAVE' | 'ABSENT' | 'OFF' | 'ON_LEAVE';
   clockIn: string | null;
   clockOut: string | null;
+  clockInLocation?: { latitude: number; longitude: number } | null;
+  clockOutLocation?: { latitude: number; longitude: number } | null;
   totalWorkMinutes: number;
   notes?: string;
 }
@@ -594,6 +597,40 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                   />
                 </div>
 
+                {/* GPS Location Links if recorded */}
+                {(selectedDayDetail.record?.clockInLocation?.latitude || selectedDayDetail.record?.clockOutLocation?.latitude) ? (
+                  <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="text-slate-400 font-semibold flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-orange-400" />
+                      Recorded GPS Location:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {selectedDayDetail.record?.clockInLocation?.latitude ? (
+                        <a
+                          href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockInLocation.latitude},${selectedDayDetail.record.clockInLocation.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-1 rounded-lg bg-orange-950/60 hover:bg-orange-900/80 text-orange-300 border border-orange-800/60 font-bold text-[11px] flex items-center gap-1"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          Check-In Pin
+                        </a>
+                      ) : null}
+                      {selectedDayDetail.record?.clockOutLocation?.latitude ? (
+                        <a
+                          href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockOutLocation.latitude},${selectedDayDetail.record.clockOutLocation.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-800/60 font-bold text-[11px] flex items-center gap-1"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          Check-Out Pin
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-3 border-t border-slate-800">
                   {selectedDayDetail.record ? (
@@ -660,6 +697,36 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                       </span>
                     </div>
                   )}
+                  {(selectedDayDetail.record.clockInLocation?.latitude || selectedDayDetail.record.clockOutLocation?.latitude) ? (
+                    <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-orange-400" />
+                        GPS Location
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {selectedDayDetail.record.clockInLocation?.latitude ? (
+                          <a
+                            href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockInLocation.latitude},${selectedDayDetail.record.clockInLocation.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-400 hover:underline font-bold"
+                          >
+                            Check-In Map
+                          </a>
+                        ) : null}
+                        {selectedDayDetail.record.clockOutLocation?.latitude ? (
+                          <a
+                            href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockOutLocation.latitude},${selectedDayDetail.record.clockOutLocation.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-400 hover:underline font-bold"
+                          >
+                            Check-Out Map
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                   {selectedDayDetail.record.notes && (
                     <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
                       <span className="text-slate-400 block mb-1">Notes / Reason:</span>

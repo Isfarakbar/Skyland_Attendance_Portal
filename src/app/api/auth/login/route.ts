@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
         employeeId: user.employeeId,
         department: user.department,
         designation: user.designation,
-        workMode: user.workMode || 'OFFICE',
       },
     });
   } catch (error: unknown) {

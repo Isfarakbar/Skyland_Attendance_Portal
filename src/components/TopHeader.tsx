@@ -77,21 +77,26 @@ export default function TopHeader({
               ? 'bg-purple-950/80 text-purple-300 border-purple-800'
               : isElevated
               ? 'bg-orange-950/80 text-orange-300 border-orange-800'
-              : user?.workMode === 'FIELD'
-              ? 'bg-amber-950/80 text-amber-300 border-amber-800'
               : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
           }`}
         >
-          {user?.role === 'ceo' ? '👑 CEO' : isElevated ? '⚡ Master Admin' : user?.workMode === 'FIELD' ? '☀️ Site Worker' : '🏢 Office Staff'}
+          {user?.role === 'ceo' ? '👑 CEO' : isElevated ? '⚡ Master Admin' : '👤 Employee'}
         </span>
       </div>
 
-      {/* Right Controls matching screenshot: Gateway status, notifications, Edit Profile, Logout */}
+      {/* Right Controls: Install App, GPS status, notifications, Edit Profile, Logout */}
       <div className="flex items-center gap-3">
-        {/* Gateway live status pill */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-install'))}
+          className="px-3 py-1.5 rounded-full bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-[#FF6B00] text-xs font-bold transition-all cursor-pointer"
+        >
+          📲 Install App
+        </button>
+
+        {/* GPS Attendance live status pill */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 text-xs font-bold shadow-xs">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Biometric Gateway Online</span>
+          <span>GPS Attendance Active</span>
         </div>
 
         {/* Notifications Bell */}
@@ -121,12 +126,12 @@ export default function TopHeader({
               </div>
               <div className="space-y-2 pt-2.5 text-xs">
                 <div className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 transition-colors">
-                  <p className="font-bold text-white text-xs">Dahua Terminal Connected</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Port 37777 ready for attendance sync</p>
+                  <p className="font-bold text-white text-xs">GPS Self-Attendance Active</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">All employees can check in &amp; out with live GPS</p>
                 </div>
                 <div className="p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 transition-colors">
-                  <p className="font-bold text-white text-xs">GPS Field Verification</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Mobile geolocation captures active</p>
+                  <p className="font-bold text-white text-xs">Manual Desk Register</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Admin manual attendance &amp; overrides enabled</p>
                 </div>
               </div>
             </div>

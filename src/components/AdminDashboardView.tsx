@@ -41,29 +41,6 @@ export default function AdminDashboardView({
   onOpenTab,
   onRefresh,
 }: AdminDashboardViewProps) {
-  const [syncingDevice, setSyncingDevice] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-
-  const handleDeviceSync = async () => {
-    setSyncingDevice(true);
-    setSyncResult(null);
-    try {
-      const res = await fetch('/api/attendance/device-sync');
-      const data = await res.json();
-      if (data.success) {
-        setSyncResult(`Machine online: ${data.message || 'Ready for punches'}`);
-        onRefresh();
-      } else {
-        setSyncResult(data.error || 'Sync returned notice');
-      }
-    } catch {
-      setSyncResult('Network error syncing biometric terminal');
-    } finally {
-      setSyncingDevice(false);
-      setTimeout(() => setSyncResult(null), 5000);
-    }
-  };
-
   const formatTime = (isoString?: string | null) => {
     if (!isoString) return '--:--';
     const d = new Date(isoString);
@@ -83,28 +60,18 @@ export default function AdminDashboardView({
             Skyland Energy Administration
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Master control for attendance registers, biometric device sync, employee directory &amp; settings
+            Master control for manual desk attendance, live employee GPS check-ins, staff directory &amp; settings
           </p>
         </div>
 
         {/* Master Actions Toolbar */}
         <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={handleDeviceSync}
-            disabled={syncingDevice}
-            className="px-4 py-2.5 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-60"
-            title="Poll punches from Dahua ASA1222G terminal"
-          >
-            <Fingerprint className={`w-4 h-4 ${syncingDevice ? 'animate-spin' : ''}`} />
-            <span>{syncingDevice ? 'Syncing...' : 'Sync Biometric Terminal'}</span>
-          </button>
-
-          <button
             onClick={() => onOpenTab('hiring')}
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white text-xs font-bold rounded-2xl shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all cursor-pointer"
           >
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span>Desk Register</span>
+            <Clock className="w-3.5 h-3.5" />
+            <span>Manual Desk Register</span>
           </button>
 
           <button
@@ -122,18 +89,16 @@ export default function AdminDashboardView({
             <Sliders className="w-3.5 h-3.5 text-slate-400" />
             <span>Settings</span>
           </button>
+
+          <button
+            onClick={onRefresh}
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
-
-      {syncResult && (
-        <div className="p-3 bg-emerald-950/40 border border-emerald-800 rounded-2xl text-xs font-bold text-emerald-300 flex items-center justify-between animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{syncResult}</span>
-          </div>
-          <span className="text-[10px] text-emerald-400 font-mono">Dahua ASA1222G IP: 192.168.100.110:37777</span>
-        </div>
-      )}
 
       {/* Admin KPI Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -149,7 +114,7 @@ export default function AdminDashboardView({
             {stats?.totalEmployees || 0}
           </p>
           <div className="text-[11px] text-slate-400 font-medium mt-1">
-            {stats?.officeTotal || 0} Office • {stats?.siteTotal || 0} Site
+            Active registered employees
           </div>
         </div>
 
@@ -165,7 +130,7 @@ export default function AdminDashboardView({
             {stats?.presentToday || 0}
           </p>
           <div className="text-[11px] text-emerald-300 font-medium mt-1">
-            {stats?.officePresent || 0} Office • {stats?.sitePresent || 0} Site
+            Checked in today
           </div>
         </div>
 
@@ -230,7 +195,7 @@ export default function AdminDashboardView({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Biometric Dahua punches, GPS field check-ins, and desk entries
+                Live GPS employee self-attendance &amp; manual desk entries
               </p>
             </div>
 
@@ -245,15 +210,15 @@ export default function AdminDashboardView({
 
           {presentEmployees.length === 0 ? (
             <div className="py-8 text-center text-slate-500 text-xs">
-              No employee punches recorded yet today. Click &quot;Desk Register&quot; to mark manually or &quot;Sync Biometric Terminal&quot;.
+              No employee attendance recorded yet today. Employees can mark attendance via the app (with GPS ON) or Admin can mark via &quot;Manual Desk Register&quot;.
             </div>
           ) : (
             <div className="divide-y divide-slate-800/80 max-h-[460px] overflow-y-auto pr-1">
               {presentEmployees.map((record, i) => {
                 const u = record.user;
                 if (!u) return null;
-                const isField = u.workMode === 'FIELD';
                 const isLate = record.status === 'LATE';
+                const hasGps = record.location?.latitude && record.location?.longitude;
 
                 return (
                   <div key={i} className="py-3 flex items-center justify-between gap-3">
@@ -270,9 +235,23 @@ export default function AdminDashboardView({
                           <span className="font-extrabold text-xs text-white truncate">{u.name}</span>
                           <span className="text-[10px] font-mono text-slate-500">{u.employeeId}</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 truncate">
-                          {isField ? `📍 Site: ${record.location?.siteName || 'Field'}` : '🏢 Dahua Terminal Verified'}
-                        </p>
+                        <div className="text-[11px] text-slate-400 truncate flex items-center gap-2">
+                          <span>
+                            {hasGps
+                              ? `📍 ${record.location?.siteName || 'GPS Self Check-In'}`
+                              : '📋 Manual Desk Register'}
+                          </span>
+                          {hasGps && (
+                            <a
+                              href={`https://www.google.com/maps?q=${record.location.latitude},${record.location.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-orange-400 font-bold hover:underline"
+                            >
+                              View Map →
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
 

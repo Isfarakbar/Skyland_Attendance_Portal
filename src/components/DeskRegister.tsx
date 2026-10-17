@@ -482,11 +482,6 @@ export default function DeskRegister() {
                           >
                             {emp.name}
                           </button>
-                          {emp.workMode === 'FIELD' && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-800">
-                              <MapPin className="w-2.5 h-2.5 text-amber-400" /> Field
-                            </span>
-                          )}
                           {emp.isDirty && (
                             <span className="w-2 h-2 rounded-full bg-amber-400" title="Unsaved changes on this row" />
                           )}
@@ -496,19 +491,17 @@ export default function DeskRegister() {
                           <span>•</span>
                           <span>{emp.designation}</span>
                         </div>
-                        {emp.isFieldCheckIn && emp.location && (
+                        {emp.location?.latitude && emp.location?.longitude && (
                           <div className="mt-1 text-[10px] text-orange-400 flex items-center gap-1.5">
-                            <span className="font-semibold">Site: {emp.location.siteName || 'Solar Field'}</span>
-                            {emp.location.latitude && emp.location.longitude && (
-                              <a
-                                href={`https://www.google.com/maps?q=${emp.location.latitude},${emp.location.longitude}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-0.5 text-orange-400 hover:underline font-bold"
-                              >
-                                [GPS Map]
-                              </a>
-                            )}
+                            <span className="font-semibold">📍 {emp.location.siteName || 'GPS Self Check-In'}</span>
+                            <a
+                              href={`https://www.google.com/maps?q=${emp.location.latitude},${emp.location.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-orange-400 hover:underline font-bold"
+                            >
+                              [GPS Map]
+                            </a>
                           </div>
                         )}
                       </td>

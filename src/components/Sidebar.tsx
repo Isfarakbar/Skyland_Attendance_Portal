@@ -74,7 +74,6 @@ export default function Sidebar({
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'people', label: 'Staff Directory', icon: Users },
         { id: 'hiring', label: 'Attendance Register', icon: Clock },
-        { id: 'biometric', label: 'Biometric Devices', icon: Fingerprint },
         { id: 'apps', label: 'Task Reports', icon: CheckSquare },
         { id: 'salary', label: 'Salary Sheet', icon: DollarSign },
         { id: 'calendar', label: 'Calendar', icon: Calendar },
@@ -103,14 +102,12 @@ export default function Sidebar({
   const getRoleLabel = () => {
     if (isCeo) return 'Chief Executive (CEO)';
     if (isAdmin) return 'Operations Admin';
-    if (user?.workMode === 'FIELD') return 'Site Solar Engineer';
-    return 'Office Staff Member';
+    return 'Employee';
   };
 
   const getRoleBadgeStyle = () => {
     if (isCeo) return 'bg-purple-950/80 text-purple-300 border-purple-800/80';
     if (isAdmin) return 'bg-orange-950/80 text-orange-300 border-orange-800/80';
-    if (user?.workMode === 'FIELD') return 'bg-amber-950/80 text-amber-300 border-amber-800/80';
     return 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80';
   };
 
@@ -189,8 +186,8 @@ export default function Sidebar({
                   </div>
                 )}
                 <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
-                  <p className="font-bold text-white text-xs">Biometric System</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Dahua Terminal sync service active</p>
+                  <p className="font-bold text-white text-xs">GPS Self-Attendance</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Live GPS &amp; manual register active</p>
                 </div>
               </div>
             </div>

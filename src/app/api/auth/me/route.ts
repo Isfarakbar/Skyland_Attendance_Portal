@@ -42,7 +42,6 @@ export async function GET() {
         bankName: user.bankName || '',
         accountNumber: user.accountNumber || '',
         iban: user.iban || '',
-        biometricUserId: user.biometricUserId || null,
         devices: Array.isArray(user.devices) ? user.devices : [],
         assignedDevices: Array.isArray(user.devices) ? user.devices : [],
         pensionFund: user.pensionFund || {
@@ -51,7 +50,6 @@ export async function GET() {
           monthlyAmount: Math.round((user.baseSalary || 30000) * 0.08),
         },
         baseSalary: user.baseSalary || 30000,
-        workMode: user.workMode || 'OFFICE',
         leaveBalance: user.leaveBalance || { sick: 8, casual: 10, annual: 14 },
         joinDate: user.joinDate,
       },
@@ -91,7 +89,6 @@ export async function PUT(req: NextRequest) {
       shiftTiming,
       reportingManager,
       employmentType,
-      workMode,
       baseSalary,
     } = body;
 
@@ -134,7 +131,6 @@ export async function PUT(req: NextRequest) {
       if (shiftTiming !== undefined) updateFields.shiftTiming = shiftTiming.trim();
       if (reportingManager !== undefined) updateFields.reportingManager = reportingManager.trim();
       if (employmentType !== undefined) updateFields.employmentType = employmentType.trim();
-      if (workMode !== undefined) updateFields.workMode = workMode;
       if (baseSalary !== undefined && !isNaN(Number(baseSalary))) updateFields.baseSalary = Number(baseSalary);
     }
 
@@ -175,12 +171,10 @@ export async function PUT(req: NextRequest) {
         bankName: updatedUser.bankName || '',
         accountNumber: updatedUser.accountNumber || '',
         iban: updatedUser.iban || '',
-        biometricUserId: updatedUser.biometricUserId || null,
         devices: Array.isArray(updatedUser.devices) ? updatedUser.devices : [],
         assignedDevices: Array.isArray(updatedUser.devices) ? updatedUser.devices : [],
         pensionFund: updatedUser.pensionFund,
         baseSalary: updatedUser.baseSalary,
-        workMode: updatedUser.workMode,
         leaveBalance: updatedUser.leaveBalance,
         joinDate: updatedUser.joinDate,
       },

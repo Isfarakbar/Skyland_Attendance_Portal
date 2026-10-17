@@ -34,11 +34,11 @@ export async function GET() {
         isActive: true,
         role: { $nin: ['admin', 'developer', 'ceo'] },
       })
-        .select('_id name email employeeId department designation avatarUrl workMode phone biometricUserId')
+        .select('_id name email employeeId department designation avatarUrl phone')
         .sort({ name: 1 })
         .lean(),
       Attendance.find({ date: todayStr })
-        .populate('user', '_id name email employeeId department designation avatarUrl workMode phone biometricUserId')
+        .populate('user', '_id name email employeeId department designation avatarUrl phone')
         .lean(),
       LeaveRequest.countDocuments({ status: 'PENDING' }),
       LeaveRequest.find({
@@ -67,28 +67,12 @@ export async function GET() {
     const presentEmployees: any[] = [];
     const absentEmployees: any[] = [];
 
-    let officeTotal = 0;
-    let siteTotal = 0;
-    let officePresent = 0;
-    let sitePresent = 0;
-
     for (const emp of allEmployees) {
       const empIdStr = emp._id.toString();
-      const isField = emp.workMode === 'FIELD';
-      if (isField) {
-        siteTotal++;
-      } else {
-        officeTotal++;
-      }
-
       const att = attendanceMap.get(empIdStr);
       const isOnLeave = approvedLeaveUserIds.has(empIdStr);
 
       if (att && att.clockIn) {
-        // Employee is present today
-        if (isField) sitePresent++;
-        else officePresent++;
-
         // Calculate late minutes if applicable
         const clockInDate = new Date(att.clockIn);
         const clockInMinutes = getClockInMinutesInTimezone(clockInDate, timezone);
@@ -100,7 +84,7 @@ export async function GET() {
           clockIn: att.clockIn,
           clockOut: att.clockOut,
           status: att.status,
-          source: att.source || (att.isFieldCheckIn ? 'FIELD' : 'WEB'),
+          source: att.source || 'WEB',
           location: att.location || null,
           isFieldCheckIn: !!att.isFieldCheckIn,
           notes: att.notes || '',
@@ -117,7 +101,7 @@ export async function GET() {
       }
     }
 
-    // Sort late employees by who arrived latest or who clocked in
+    // Sort late employees by who arrived latest
     lateEmployees.sort((a, b) => (b.minutesLate || 0) - (a.minutesLate || 0));
 
     // Sort present employees by most recent clock-in
@@ -127,7 +111,7 @@ export async function GET() {
 
     // Fetch recent tasks submitted today
     const recentTasks = await DailyTask.find({ date: todayStr })
-      .populate('user', 'name employeeId department designation workMode avatarUrl')
+      .populate('user', 'name employeeId department designation avatarUrl')
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
@@ -146,10 +130,6 @@ export async function GET() {
         lateToday,
         onLeaveToday,
         absentToday,
-        officeTotal,
-        siteTotal,
-        officePresent,
-        sitePresent,
         pendingLeaves,
       },
       lateEmployees,

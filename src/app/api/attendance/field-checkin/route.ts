@@ -20,15 +20,21 @@ export async function POST(req: NextRequest) {
     if (
       latitude === undefined ||
       longitude === undefined ||
+      latitude === null ||
+      longitude === null ||
       isNaN(latNum) ||
       isNaN(lngNum) ||
+      (latNum === 0 && lngNum === 0) ||
       latNum < -90 ||
       latNum > 90 ||
       lngNum < -180 ||
       lngNum > 180
     ) {
       return NextResponse.json(
-        { success: false, error: 'Valid GPS coordinates (latitude and longitude) are required for field site check-in.' },
+        {
+          success: false,
+          error: 'Live GPS location is required to mark attendance! Please turn ON your device Location Services and allow location permission.',
+        },
         { status: 400 }
       );
     }
@@ -38,17 +44,6 @@ export async function POST(req: NextRequest) {
     const user = await User.findById(session.userId);
     if (!user || !user.isActive) {
       return NextResponse.json({ success: false, error: 'User not found or deactivated' }, { status: 403 });
-    }
-
-    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
-    if (!isManagement && user.workMode !== 'FIELD') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Field GPS check-in is only enabled for On-Site / Field staff. Office staff must use the biometric fingerprint terminal.',
-        },
-        { status: 403 }
-      );
     }
 
     const settings = await CompanySettings.findOne().lean();
@@ -62,6 +57,10 @@ export async function POST(req: NextRequest) {
     if (action === 'check-out') {
       if (!attendance || !attendance.clockIn) {
         return NextResponse.json({ success: false, error: 'Cannot check out before checking in' }, { status: 400 });
+      }
+
+      if (attendance.clockOut) {
+        return NextResponse.json({ success: false, error: 'You have already checked out for today' }, { status: 400 });
       }
 
       const workMins = calculateWorkMinutes(attendance.clockIn, now, attendance.totalBreakMinutes || 0);
@@ -80,14 +79,21 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (siteName) {
-        attendance.notes = `${attendance.notes ? attendance.notes + ' • ' : ''}Checked out from ${siteName.trim()}`;
+      attendance.location = {
+        latitude: latNum,
+        longitude: lngNum,
+        siteName: siteName?.trim() || attendance.location?.siteName || 'Verified GPS Location',
+        accuracy: accuracy ? Number(accuracy) : attendance.location?.accuracy,
+      };
+
+      if (notes?.trim()) {
+        attendance.notes = `${attendance.notes ? attendance.notes + ' • ' : ''}${notes.trim()}`;
       }
       await attendance.save();
 
       return NextResponse.json({
         success: true,
-        message: 'Field site check-out recorded successfully',
+        message: 'Attendance check-out recorded successfully!',
         attendance,
       });
     }
@@ -95,7 +101,7 @@ export async function POST(req: NextRequest) {
     // Default action: 'check-in'
     if (attendance && attendance.clockIn) {
       return NextResponse.json(
-        { success: false, error: 'You have already checked in for today', attendance },
+        { success: false, error: 'You have already marked your check-in for today', attendance },
         { status: 400 }
       );
     }
@@ -103,12 +109,14 @@ export async function POST(req: NextRequest) {
     const evaluatedStatus = evaluateAttendanceStatus(
       now,
       settings?.officeStartTime || '09:00',
-      settings?.gracePeriodMinutes || 15,
+      settings?.gracePeriodMinutes ?? 15,
       timezone
     );
 
-    const siteLabel = siteName ? siteName.trim() : 'On-Site Field Duty';
-    const noteText = notes ? `${siteLabel}: ${notes.trim()}` : siteLabel;
+    const locationLabel = siteName?.trim() || 'Verified GPS Location';
+    const noteText = notes?.trim()
+      ? (siteName?.trim() ? `${locationLabel}: ${notes.trim()}` : notes.trim())
+      : locationLabel;
 
     if (!attendance) {
       attendance = new Attendance({
@@ -118,23 +126,23 @@ export async function POST(req: NextRequest) {
         status: evaluatedStatus,
         isFieldCheckIn: true,
         location: {
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          siteName: siteLabel,
+          latitude: latNum,
+          longitude: lngNum,
+          siteName: locationLabel,
           accuracy: accuracy ? Number(accuracy) : undefined,
         },
         notes: noteText,
-        source: 'FIELD',
+        source: 'WEB',
       });
     } else {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
       attendance.isFieldCheckIn = true;
-      attendance.source = 'FIELD';
+      attendance.source = 'WEB';
       attendance.location = {
-        latitude: Number(latitude),
-        longitude: Number(longitude),
-        siteName: siteLabel,
+        latitude: latNum,
+        longitude: lngNum,
+        siteName: locationLabel,
         accuracy: accuracy ? Number(accuracy) : undefined,
       };
       attendance.notes = noteText;
@@ -144,11 +152,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Checked in successfully at ${siteLabel}!`,
+      message: evaluatedStatus === 'LATE'
+        ? 'Attendance marked (Recorded as Late Arrival)'
+        : 'Attendance marked successfully (On Time)!',
       attendance,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Error processing field check-in';
+    const message = error instanceof Error ? error.message : 'Error marking attendance';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

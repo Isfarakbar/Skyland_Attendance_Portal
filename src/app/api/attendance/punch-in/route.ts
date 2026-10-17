@@ -13,22 +13,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    const body = await req.json().catch(() => ({}));
+    const { latitude, longitude, accuracy, siteName, notes } = body;
+
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
+    if (
+      latitude === undefined ||
+      longitude === undefined ||
+      latitude === null ||
+      longitude === null ||
+      isNaN(latNum) ||
+      isNaN(lngNum) ||
+      (latNum === 0 && lngNum === 0) ||
+      latNum < -90 ||
+      latNum > 90 ||
+      lngNum < -180 ||
+      lngNum > 180
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Live GPS location is required to mark attendance! Please turn ON your device Location Services and allow location permission.',
+        },
+        { status: 400 }
+      );
+    }
+
     await connectToDatabase();
 
     const user = await User.findById(session.userId).lean();
     if (!user || !user.isActive) {
       return NextResponse.json({ success: false, error: 'Account not found or deactivated' }, { status: 403 });
-    }
-
-    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
-    if (!isManagement && user.workMode !== 'FIELD') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Office staff attendance is recorded exclusively via the Dahua biometric fingerprint terminal.',
-        },
-        { status: 403 }
-      );
     }
 
     const settings = await CompanySettings.findOne();
@@ -53,6 +69,7 @@ export async function POST(req: NextRequest) {
     // Client IP
     const forwarded = req.headers.get('x-forwarded-for');
     const ipAddress = forwarded ? forwarded.split(',')[0] : '127.0.0.1';
+    const locationLabel = siteName?.trim() || 'Verified GPS Location';
 
     if (!attendance) {
       attendance = await Attendance.create({
@@ -61,18 +78,33 @@ export async function POST(req: NextRequest) {
         clockIn: now,
         clockOut: null,
         status: evaluatedStatus,
-        source: user.workMode === 'FIELD' ? 'FIELD' : 'WEB',
+        source: 'WEB',
+        isFieldCheckIn: true,
+        location: {
+          latitude: latNum,
+          longitude: lngNum,
+          siteName: locationLabel,
+          accuracy: accuracy ? Number(accuracy) : undefined,
+        },
         breaks: [],
         totalWorkMinutes: 0,
         totalBreakMinutes: 0,
         ipAddress,
-        notes: 'Punch recorded via portal check-in',
+        notes: notes?.trim() || 'Marked via Skyland App (GPS Verified)',
       });
     } else {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
-      attendance.source = user.workMode === 'FIELD' ? 'FIELD' : 'WEB';
+      attendance.source = 'WEB';
+      attendance.isFieldCheckIn = true;
+      attendance.location = {
+        latitude: latNum,
+        longitude: lngNum,
+        siteName: locationLabel,
+        accuracy: accuracy ? Number(accuracy) : undefined,
+      };
       attendance.ipAddress = ipAddress;
+      attendance.notes = notes?.trim() || 'Marked via Skyland App (GPS Verified)';
       await attendance.save();
     }
 

@@ -73,7 +73,6 @@ export async function POST(req: NextRequest) {
       role: assignedRole,
       department: department?.trim() || 'General',
       designation: designation?.trim() || 'Team Member',
-      workMode: 'OFFICE',
       joinDate: new Date(),
       isActive: true,
       isEmailVerified: false,

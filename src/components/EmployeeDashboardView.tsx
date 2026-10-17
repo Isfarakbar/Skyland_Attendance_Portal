@@ -43,7 +43,6 @@ export default function EmployeeDashboardView({
   onOpenTab,
   onRefresh,
 }: EmployeeDashboardViewProps) {
-  const isFieldWorker = user?.workMode === 'FIELD';
   const attendance = todayData?.attendance;
   const isCheckedIn = !!attendance?.clockIn;
   const isCheckedOut = !!attendance?.clockOut;
@@ -77,24 +76,9 @@ export default function EmployeeDashboardView({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
-                isFieldWorker
-                  ? 'bg-amber-950/80 text-amber-300 border-amber-800'
-                  : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
-              }`}
-            >
-              {isFieldWorker ? (
-                <>
-                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                  Site Solar Engineer
-                </>
-              ) : (
-                <>
-                  <Building className="w-3.5 h-3.5 text-emerald-400" />
-                  Office Staff Member
-                </>
-              )}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border bg-emerald-950/80 text-emerald-300 border-emerald-800">
+              <User className="w-3.5 h-3.5 text-emerald-400" />
+              Employee
             </span>
 
             <span className="text-xs font-mono text-slate-400">
@@ -110,9 +94,7 @@ export default function EmployeeDashboardView({
             👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            {isFieldWorker
-              ? 'Mark your GPS site attendance and submit your daily project milestones.'
-              : 'Scan your registered fingerprint upon arrival and keep your daily work logs updated.'}
+            Keep your device location (GPS) turned ON to mark your daily attendance and submit your work logs.
           </p>
         </div>
 
@@ -270,122 +252,9 @@ export default function EmployeeDashboardView({
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. TODAY'S ATTENDANCE SECTION */}
+      {/* 4. TODAY'S ATTENDANCE SECTION (UNIFIED LIVE GPS SELF-ATTENDANCE) */}
       {/* ========================================================================= */}
-      {isFieldWorker ? (
-        /* Site Solar Employee: Live GPS Check-In Widget */
-        <FieldCheckInWidget todayData={todayData} onRefresh={onRefresh} />
-      ) : (
-        /* Office Employee: Streamlined Biometric Card */
-        <div className="bg-[#131E36] rounded-3xl p-6 sm:p-7 border border-slate-800 shadow-xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-orange-950/80 text-orange-400 flex items-center justify-center shrink-0 border border-orange-800/80">
-                <Fingerprint className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-white tracking-tight">
-                  Office Fingerprint Attendance
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Biometric Terminal • Auto-syncs via office network
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border ${
-                  isCheckedIn
-                    ? attendance?.status === 'LATE'
-                      ? 'bg-amber-950 text-amber-300 border-amber-800'
-                      : 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                    : 'bg-slate-900 text-slate-400 border-slate-800'
-                }`}
-              >
-                {isCheckedIn
-                  ? attendance?.status === 'LATE'
-                    ? 'Late Arrival'
-                    : 'Checked In'
-                  : 'Pending Punch'}
-              </span>
-            </div>
-          </div>
-
-          {/* Punch In & Out Timeline Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                Clock In
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black text-white">
-                  {isCheckedIn ? formatTime(attendance?.clockIn) : '--:--'}
-                </span>
-                {isCheckedIn && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {isCheckedIn ? 'Recorded successfully' : 'Scan fingerprint on arrival'}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                Clock Out
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black text-white">
-                  {isCheckedOut ? formatTime(attendance?.clockOut) : '--:--'}
-                </span>
-                {isCheckedOut && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {isCheckedOut ? 'Shift completed' : 'Scan fingerprint when leaving'}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                Assigned Shift
-              </span>
-              <span className="text-base font-extrabold text-white font-mono block">
-                {user?.shiftTiming || '09:00 AM - 06:00 PM'}
-              </span>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Biometric ID:{' '}
-                <strong className="text-orange-400 font-mono">
-                  {user?.biometricUserId || user?.employeeId || 'Assigned'}
-                </strong>
-              </p>
-            </div>
-          </div>
-
-          {/* Office Biometric Terminal Notice */}
-          <div className="pt-2 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 shrink-0">
-                <Fingerprint className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-bold text-white text-xs">
-                  Physical Biometric Terminal Verification
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  {isCheckedOut
-                    ? 'Shift completed for today. Thank you for your work!'
-                    : isCheckedIn
-                    ? `Clocked in at ${formatTime(attendance?.clockIn)}. Punch on the office terminal when leaving.`
-                    : `Please scan your registered fingerprint (Biometric ID #${user?.biometricUserId || user?.employeeId || 'Assigned'}) on the office Dahua machine.`}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-[11px] font-mono text-slate-300 self-start sm:self-auto shrink-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Dahua ASA1222G Terminal</span>
-            </div>
-          </div>
-        </div>
-      )}
+      <FieldCheckInWidget todayData={todayData} onRefresh={onRefresh} />
 
       {/* ========================================================================= */}
       {/* 5. DAILY TASK SUBMISSIONS (DIRECT COMPONENT - NO DOUBLE NESTING) */}

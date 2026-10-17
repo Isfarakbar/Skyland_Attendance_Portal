@@ -68,12 +68,12 @@ export default function InstallAppBanner() {
       setTimeout(() => setJustInstalled(false), 5000);
     });
 
-    // 6. On mobile phones, surface notification banner immediately
-    const dismissedTime = localStorage.getItem('skyland_pwa_dismissed');
+    // 6. Surface notification banner immediately when opening portal link (if not installed)
+    const dismissedTime = sessionStorage.getItem('skyland_pwa_dismissed');
     const isRecentlyDismissed =
-      dismissedTime && Date.now() - parseInt(dismissedTime, 10) < 60 * 60 * 1000; // 1 hour
+      dismissedTime && Date.now() - parseInt(dismissedTime, 10) < 15 * 60 * 1000; // 15 mins in current session
 
-    if (isMobile && !isRecentlyDismissed && !isStandalone) {
+    if (!isRecentlyDismissed && !isStandalone) {
       const timer = setTimeout(() => {
         setShowBanner(true);
       }, 150);
@@ -121,7 +121,7 @@ export default function InstallAppBanner() {
 
   const handleDismiss = () => {
     setShowBanner(false);
-    localStorage.setItem('skyland_pwa_dismissed', Date.now().toString());
+    sessionStorage.setItem('skyland_pwa_dismissed', Date.now().toString());
   };
 
   if (isInstalled && !justInstalled) return null;
@@ -136,9 +136,9 @@ export default function InstallAppBanner() {
         </div>
       )}
 
-      {/* Floating Mobile App Download Notification Banner */}
+      {/* Floating App Download Notification Banner */}
       {showBanner && !isInstalled && (
-        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40 bg-[#0D1527]/95 backdrop-blur-md text-white p-4 sm:p-5 rounded-3xl shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40 bg-[#0D1527]/95 backdrop-blur-md text-white p-4 sm:p-5 rounded-3xl shadow-2xl border border-orange-500/40 animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF6B00] to-amber-500 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25">
@@ -147,10 +147,10 @@ export default function InstallAppBanner() {
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <h4 className="font-bold text-sm text-white leading-tight">Install Skyland App</h4>
+                  <h4 className="font-bold text-sm text-white leading-tight">Install Skyland Attendance App</h4>
                 </div>
                 <p className="text-xs text-slate-300 mt-0.5 leading-snug">
-                  Install on your phone home screen for instant shift punch, offline support & live attendance.
+                  Install the app now to mark your daily attendance with live GPS location in one tap.
                 </p>
               </div>
             </div>
@@ -170,12 +170,12 @@ export default function InstallAppBanner() {
               className="flex-1 py-2.5 px-4 bg-[#FF6B00] hover:bg-[#FF8533] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               <Download className="w-4 h-4" />
-              <span>{isIOS ? 'Install on iPhone' : 'Install on Android Phone'}</span>
+              <span>{isIOS ? 'Install on iPhone' : isAndroid ? 'Install on Android Phone' : 'Install Skyland App'}</span>
             </button>
 
             <button
               onClick={handleDismiss}
-              className="py-2 px-3 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+              className="py-2 px-3 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
             >
               Later
             </button>

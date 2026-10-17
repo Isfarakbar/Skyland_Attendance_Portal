@@ -335,9 +335,9 @@ export default function CompleteProfileModal({
               {/* Quick Spec Highlights */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 <div className="p-4 bg-[#131E36] rounded-2xl border border-slate-800 shadow-sm">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Work Mode</span>
-                  <div className="text-sm font-black text-white mt-1">
-                    {workMode === 'FIELD' ? '📍 Field Staff (GPS)' : '🏢 On-Site Desk'}
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Attendance Mode</span>
+                  <div className="text-sm font-black text-emerald-400 mt-1">
+                    📍 Live GPS App
                   </div>
                 </div>
                 <div className="p-4 bg-[#131E36] rounded-2xl border border-slate-800 shadow-sm">
@@ -489,7 +489,7 @@ export default function CompleteProfileModal({
                 <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2 text-xs text-slate-400">
                   <Lock className="w-3.5 h-3.5 text-orange-400 shrink-0" />
                   <span>
-                    Official job title, department, shift timings, and work mode are assigned by Operations Administration.
+                    Official job title, department, and shift timings are assigned by Operations Administration.
                   </span>
                 </div>
               )}
@@ -530,7 +530,7 @@ export default function CompleteProfileModal({
                     />
                   ) : (
                     <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm text-white font-semibold">
-                      {designation || 'Staff Member'}
+                      {designation || 'Employee'}
                     </div>
                   )}
                 </div>
@@ -573,26 +573,6 @@ export default function CompleteProfileModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Work Mode &amp; Attendance Type</label>
-                  {isElevated ? (
-                    <select
-                      value={workMode}
-                      onChange={(e) => setWorkMode(e.target.value as any)}
-                      className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                    >
-                      <option value="OFFICE">Office Desk Staff (Biometric Fingerprint)</option>
-                      <option value="FIELD">Field Staff (Live GPS Site Check-in)</option>
-                    </select>
-                  ) : (
-                    <div className="px-3.5 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2">
-                      <span className={workMode === 'FIELD' ? 'text-amber-400' : 'text-blue-400'}>
-                        {workMode === 'FIELD' ? '📍 Field Staff (Live GPS Check-in)' : '🏢 Office Desk Staff (Biometric)'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-300 mb-1">Official Shift Timing</label>
                   {isElevated ? (
                     <input

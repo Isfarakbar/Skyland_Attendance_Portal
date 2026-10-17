@@ -12,8 +12,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'developer' | 'admin' | 'manager' | 'employee'>('employee');
   const [department, setDepartment] = useState('Operations');
-  const [designation, setDesignation] = useState('Team Member');
-  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>('OFFICE');
+  const [designation, setDesignation] = useState('Employee');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
@@ -31,7 +30,7 @@ export default function RegisterPage() {
           setIsFirstUser(false);
           setRole('employee');
           setDepartment('Operations');
-          setDesignation('Team Member');
+          setDesignation('Employee');
         }
       })
       .catch(() => setIsFirstUser(false));
@@ -58,7 +57,6 @@ export default function RegisterPage() {
           role,
           department,
           designation,
-          workMode,
         }),
       });
 
@@ -150,7 +148,7 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Field Operations"
+                  placeholder="e.g. Operations"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
@@ -162,47 +160,11 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Solar Technician"
+                  placeholder="e.g. Solar Engineer"
                   value={designation}
                   onChange={(e) => setDesignation(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 />
-              </div>
-            </div>
-
-            {/* Work Mode / Location Selection */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">Work Type / Location</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setWorkMode('OFFICE')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                    workMode === 'OFFICE'
-                      ? 'border-[#FF6B00] bg-orange-950/30 ring-2 ring-orange-500/20'
-                      : 'border-slate-800 bg-slate-900 hover:bg-slate-800/80'
-                  }`}
-                >
-                  <p className="text-xs font-black text-white">Office Staff</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Biometric Fingerprint / Reception Desk
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setWorkMode('FIELD')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                    workMode === 'FIELD'
-                      ? 'border-[#FF6B00] bg-orange-950/30 ring-2 ring-orange-500/20'
-                      : 'border-slate-800 bg-slate-900 hover:bg-slate-800/80'
-                  }`}
-                >
-                  <p className="text-xs font-black text-white">Site / Field Engineer</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Marks attendance directly via GPS
-                  </p>
-                </button>
               </div>
             </div>
 
