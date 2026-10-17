@@ -131,3 +131,59 @@ export function getClockInMinutesInTimezone(date: Date, timezone: string = DEFAU
     return d.getHours() * 60 + d.getMinutes();
   }
 }
+
+export function formatTimeInTimezone(
+  date: Date | string | null | undefined,
+  timezone: string = DEFAULT_TIMEZONE
+): string {
+  if (!date) return '--';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || DEFAULT_TIMEZONE,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).format(new Date(date));
+  } catch {
+    return format(new Date(date), 'hh:mm:ss a');
+  }
+}
+
+export function isValidMonthParam(month: string | null | undefined): month is string {
+  return typeof month === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(month.trim());
+}
+
+export function isValidDateParam(date: string | null | undefined): date is string {
+  return typeof date === 'string' && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date.trim());
+}
+
+export async function generateNextEmployeeId(): Promise<string> {
+  const User = (await import('@/models/User')).default;
+  const users = await User.find({}, { employeeId: 1 }).lean();
+  let maxNum = 0;
+  const existingSet = new Set<string>();
+
+  for (const u of users) {
+    if (u.employeeId) {
+      const upper = String(u.employeeId).trim().toUpperCase();
+      existingSet.add(upper);
+      const match = upper.match(/^SKY-(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+  }
+
+  let candidateNum = maxNum + 1;
+  let candidate = `SKY-${String(candidateNum).padStart(3, '0')}`;
+  while (existingSet.has(candidate)) {
+    candidateNum++;
+    candidate = `SKY-${String(candidateNum).padStart(3, '0')}`;
+  }
+  return candidate;
+}
+

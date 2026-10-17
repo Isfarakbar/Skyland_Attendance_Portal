@@ -19,7 +19,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       user: {
-        id: user._id,
+        id: user._id.toString(),
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
@@ -38,12 +39,14 @@ export async function GET() {
         shiftTiming: user.shiftTiming || '09:00 AM - 06:00 PM',
         reportingManager: user.reportingManager || 'Department Lead',
         employmentType: user.employmentType || 'Full-time Permanent',
-        bankName: user.bankName || 'Standard Chartered',
+        bankName: user.bankName || '',
         accountNumber: user.accountNumber || '',
         iban: user.iban || '',
+        biometricUserId: user.biometricUserId || null,
         devices: Array.isArray(user.devices) ? user.devices : [],
+        assignedDevices: Array.isArray(user.devices) ? user.devices : [],
         pensionFund: user.pensionFund || {
-          enrolled: true,
+          enrolled: false,
           contributionPercent: 8,
           monthlyAmount: Math.round((user.baseSalary || 30000) * 0.08),
         },
@@ -98,6 +101,11 @@ export async function PUT(req: NextRequest) {
 
     await connectToDatabase();
 
+    const currentUser = await User.findById(session.userId);
+    if (!currentUser || !currentUser.isActive) {
+      return NextResponse.json({ success: false, error: 'Account not found or deactivated' }, { status: 403 });
+    }
+
     const isElevated = ['developer', 'admin', 'ceo'].includes(session.role);
     const updateFields: Record<string, unknown> = {};
 
@@ -144,7 +152,8 @@ export async function PUT(req: NextRequest) {
       success: true,
       message: 'Profile updated successfully',
       user: {
-        id: updatedUser._id,
+        id: updatedUser._id.toString(),
+        _id: updatedUser._id.toString(),
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
@@ -163,10 +172,12 @@ export async function PUT(req: NextRequest) {
         shiftTiming: updatedUser.shiftTiming || '09:00 AM - 06:00 PM',
         reportingManager: updatedUser.reportingManager || 'Department Lead',
         employmentType: updatedUser.employmentType || 'Full-time Permanent',
-        bankName: updatedUser.bankName || 'Standard Chartered',
+        bankName: updatedUser.bankName || '',
         accountNumber: updatedUser.accountNumber || '',
         iban: updatedUser.iban || '',
-        devices: updatedUser.devices,
+        biometricUserId: updatedUser.biometricUserId || null,
+        devices: Array.isArray(updatedUser.devices) ? updatedUser.devices : [],
+        assignedDevices: Array.isArray(updatedUser.devices) ? updatedUser.devices : [],
         pensionFund: updatedUser.pensionFund,
         baseSalary: updatedUser.baseSalary,
         workMode: updatedUser.workMode,

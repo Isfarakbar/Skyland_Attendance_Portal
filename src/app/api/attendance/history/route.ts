@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
+import { isValidMonthParam } from '@/lib/attendanceUtils';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get('userId');
-    const month = searchParams.get('month'); // e.g. "10"
+    const month = searchParams.get('month'); // e.g. "2026-10" or "10"
     const year = searchParams.get('year'); // e.g. "2026"
 
     let queryUserId = session.userId;
@@ -26,11 +27,17 @@ export async function GET(req: NextRequest) {
     const query: Record<string, unknown> = { user: queryUserId };
 
     if (month && month.includes('-')) {
-      // Formatted as "YYYY-MM"
-      query.date = { $regex: `^${month}` };
+      if (!isValidMonthParam(month)) {
+        return NextResponse.json({ success: false, error: 'Invalid month format (expected YYYY-MM)' }, { status: 400 });
+      }
+      query.date = { $regex: `^${month.trim()}` };
     } else if (year && month) {
-      const monthPadded = month.padStart(2, '0');
-      query.date = { $regex: `^${year}-${monthPadded}` };
+      const monthPadded = month.trim().padStart(2, '0');
+      const combined = `${year.trim()}-${monthPadded}`;
+      if (!isValidMonthParam(combined)) {
+        return NextResponse.json({ success: false, error: 'Invalid year or month parameter' }, { status: 400 });
+      }
+      query.date = { $regex: `^${combined}` };
     }
 
     const records = await Attendance.find(query)

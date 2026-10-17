@@ -76,13 +76,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       user: {
-        id: user._id,
+        id: user._id.toString(),
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
         employeeId: user.employeeId,
         department: user.department,
         designation: user.designation,
+        workMode: user.workMode || 'OFFICE',
       },
     });
   } catch (error: unknown) {

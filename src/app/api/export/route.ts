@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
+import CompanySettings from '@/models/CompanySettings';
+import { formatTimeInTimezone, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,15 +19,18 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
 
+    const settings = await CompanySettings.findOne().lean();
+    const timezone = settings?.timezone || DEFAULT_TIMEZONE;
+
     const query: Record<string, unknown> = {};
-    if (month && year) {
+    if (month && year && /^\d{4}$/.test(year) && /^\d{1,2}$/.test(month)) {
       const monthPadded = month.padStart(2, '0');
       query.date = { $regex: `^${year}-${monthPadded}` };
     }
 
     const records = await Attendance.find(query)
       .sort({ date: -1, 'user.name': 1 })
-      .populate('user', 'name email employeeId department designation')
+      .populate('user', 'name email employeeId department designation role')
       .lean();
 
     const reportRows = records
@@ -34,9 +38,9 @@ export async function GET(req: NextRequest) {
       .map((r) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = (r.user as any) || {};
-      const clockInStr = r.clockIn ? format(new Date(r.clockIn), 'hh:mm:ss a') : '--';
-      const clockOutStr = r.clockOut ? format(new Date(r.clockOut), 'hh:mm:ss a') : '--';
-      const workHours = (r.totalWorkMinutes / 60).toFixed(2);
+      const clockInStr = formatTimeInTimezone(r.clockIn, timezone);
+      const clockOutStr = formatTimeInTimezone(r.clockOut, timezone);
+      const workHours = ((r.totalWorkMinutes || 0) / 60).toFixed(2);
 
       return {
         'Employee ID': user.employeeId || 'N/A',

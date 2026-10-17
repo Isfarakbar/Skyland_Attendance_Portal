@@ -15,9 +15,20 @@ export async function POST(req: NextRequest) {
 
     const { latitude, longitude, accuracy, siteName, notes, action } = await req.json();
 
-    if (latitude === undefined || longitude === undefined) {
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
+    if (
+      latitude === undefined ||
+      longitude === undefined ||
+      isNaN(latNum) ||
+      isNaN(lngNum) ||
+      latNum < -90 ||
+      latNum > 90 ||
+      lngNum < -180 ||
+      lngNum > 180
+    ) {
       return NextResponse.json(
-        { success: false, error: 'GPS coordinates (latitude and longitude) are required for field site check-in.' },
+        { success: false, error: 'Valid GPS coordinates (latitude and longitude) are required for field site check-in.' },
         { status: 400 }
       );
     }
@@ -25,8 +36,19 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findById(session.userId);
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
+    if (!user || !user.isActive) {
+      return NextResponse.json({ success: false, error: 'User not found or deactivated' }, { status: 403 });
+    }
+
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
+    if (!isManagement && user.workMode !== 'FIELD') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Field GPS check-in is only enabled for On-Site / Field staff. Office staff must use the biometric fingerprint terminal.',
+        },
+        { status: 403 }
+      );
     }
 
     const settings = await CompanySettings.findOne().lean();
@@ -42,8 +64,22 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Cannot check out before checking in' }, { status: 400 });
       }
 
+      const workMins = calculateWorkMinutes(attendance.clockIn, now, attendance.totalBreakMinutes || 0);
       attendance.clockOut = now;
-      attendance.totalWorkMinutes = calculateWorkMinutes(attendance.clockIn, now, attendance.totalBreakMinutes || 0);
+      attendance.totalWorkMinutes = workMins;
+
+      const halfDayHours = settings?.halfDayThresholdHours || 4;
+      if (workMins < halfDayHours * 60) {
+        attendance.status = 'HALF_DAY';
+      } else {
+        attendance.status = evaluateAttendanceStatus(
+          attendance.clockIn,
+          settings?.officeStartTime || '09:00',
+          settings?.gracePeriodMinutes ?? 15,
+          timezone
+        );
+      }
+
       if (siteName) {
         attendance.notes = `${attendance.notes ? attendance.notes + ' • ' : ''}Checked out from ${siteName.trim()}`;
       }

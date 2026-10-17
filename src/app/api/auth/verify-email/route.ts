@@ -26,6 +26,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!user.isActive) {
+      return NextResponse.json(
+        { success: false, error: 'Account is deactivated. Please contact HR.' },
+        { status: 403 }
+      );
+    }
+
     if (user.isEmailVerified) {
       // Already verified, just log in
       const payload = {
@@ -42,7 +49,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Email already verified. Logging you in...',
-        user: payload,
+        user: { ...payload, id: user._id.toString(), _id: user._id.toString() },
       });
     }
 
@@ -81,7 +88,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Email successfully verified! Welcome to Skyland.',
-      user: payload,
+      user: { ...payload, id: user._id.toString(), _id: user._id.toString() },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Error verifying email';

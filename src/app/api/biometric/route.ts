@@ -93,24 +93,27 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'auto-assign-code') {
-      const staff = await User.find({ role: { $in: ['employee', 'manager'] } });
+      const staff = await User.find({ role: { $in: ['employee', 'manager'] } }).sort({ employeeId: 1 });
       let updatedCount = 0;
 
       for (const emp of staff) {
-        if (emp.employeeId) {
+        if (!emp.biometricUserId && emp.employeeId) {
           const numMatch = emp.employeeId.match(/\d+/);
           if (numMatch) {
             const parsedNum = String(parseInt(numMatch[0], 10));
-            emp.biometricUserId = parsedNum;
-            await emp.save();
-            updatedCount++;
+            const conflict = await User.findOne({ _id: { $ne: emp._id }, biometricUserId: parsedNum });
+            if (!conflict) {
+              emp.biometricUserId = parsedNum;
+              await emp.save();
+              updatedCount++;
+            }
           }
         }
       }
 
       return NextResponse.json({
         success: true,
-        message: `Mapped ${updatedCount} employees using employee code numeric suffix`,
+        message: `Mapped ${updatedCount} unlinked employees using employee code numeric suffix (preserving existing device links)`,
       });
     }
 
@@ -167,12 +170,13 @@ export async function POST(req: NextRequest) {
     if (action === 'test-punch') {
       const { employeeId, biometricUserId, type = 'AUTO', timestamp } = body;
 
-      const user = await User.findOne({
-        $or: [
-          ...(biometricUserId ? [{ biometricUserId: String(biometricUserId).trim() }] : []),
-          ...(employeeId ? [{ employeeId: String(employeeId).trim().toUpperCase() }] : []),
-        ],
-      });
+      let user = null;
+      if (biometricUserId) {
+        user = await User.findOne({ biometricUserId: String(biometricUserId).trim() });
+      }
+      if (!user && employeeId) {
+        user = await User.findOne({ employeeId: String(employeeId).trim().toUpperCase() });
+      }
 
       if (!user) {
         return NextResponse.json({
@@ -184,7 +188,7 @@ export async function POST(req: NextRequest) {
       const settings = await CompanySettings.findOne();
       const timezone = settings?.timezone || 'Asia/Karachi';
       const startTimeStr = settings?.officeStartTime || '09:00';
-      const graceMinutes = settings?.gracePeriodMinutes || 15;
+      const graceMinutes = settings?.gracePeriodMinutes ?? 15;
       const halfDayHours = settings?.halfDayThresholdHours || 4;
 
       const punchDate = timestamp ? new Date(timestamp) : new Date();
@@ -210,7 +214,7 @@ export async function POST(req: NextRequest) {
           notes: `Punch simulated via Dahua ASA1222G Device Manager (${type})`,
         });
         statusResult = evaluatedStatus;
-      } else if (!attendance.clockIn) {
+      } else if (!attendance.clockIn || type === 'IN') {
         const evaluatedStatus = evaluateAttendanceStatus(punchDate, startTimeStr, graceMinutes, timezone);
         attendance.clockIn = punchDate;
         attendance.status = evaluatedStatus;
@@ -225,8 +229,10 @@ export async function POST(req: NextRequest) {
         attendance.totalBreakMinutes = totalBreak;
         attendance.totalWorkMinutes = totalWork;
 
-        if (totalWork < halfDayHours * 60 && attendance.status !== 'LATE') {
+        if (totalWork < halfDayHours * 60) {
           attendance.status = 'HALF_DAY';
+        } else {
+          attendance.status = evaluateAttendanceStatus(attendance.clockIn, startTimeStr, graceMinutes, timezone);
         }
         await attendance.save();
 

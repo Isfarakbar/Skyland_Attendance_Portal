@@ -4,7 +4,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import Attendance from '@/models/Attendance';
 import CompanySettings from '@/models/CompanySettings';
-import { getTodayDateString, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
+import { getTodayDateString, DEFAULT_TIMEZONE, isValidMonthParam } from '@/lib/attendanceUtils';
 import { resolvePayrollTax } from '@/lib/taxCalculator';
 import * as XLSX from 'xlsx';
 
@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     const settings = await CompanySettings.findOne().lean();
     const timezone = settings?.timezone || DEFAULT_TIMEZONE;
     const currentMonthStr = getTodayDateString(new Date(), timezone).substring(0, 7);
-    const month = searchParams.get('month') || currentMonthStr;
+    const rawMonth = searchParams.get('month');
+    const month = rawMonth && isValidMonthParam(rawMonth) ? rawMonth : currentMonthStr;
     const requestedUserId = searchParams.get('userId');
 
     const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);

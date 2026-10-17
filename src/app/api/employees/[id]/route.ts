@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 
+const SENSITIVE_FIELDS = '-password -verificationCode -verificationCodeExpires -resetPasswordCode -resetPasswordExpires';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -16,7 +18,7 @@ export async function GET(
     const { id } = await params;
     await connectToDatabase();
 
-    const employee = await User.findById(id).select('-password').lean();
+    const employee = await User.findById(id).select(SENSITIVE_FIELDS).lean();
     if (!employee) {
       return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
     }
@@ -45,6 +47,56 @@ export async function PUT(
     const body = await req.json();
 
     await connectToDatabase();
+
+    const targetEmployee = await User.findById(id);
+    if (!targetEmployee) {
+      return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
+    }
+
+    if (targetEmployee.role === 'developer' && session.role !== 'developer') {
+      return NextResponse.json({ success: false, error: 'Cannot modify a Developer account' }, { status: 403 });
+    }
+
+    if (body.role !== undefined) {
+      if (body.role === 'developer' && session.role !== 'developer') {
+        return NextResponse.json({ success: false, error: 'Only a Developer can assign the developer role' }, { status: 403 });
+      }
+      if (['admin', 'ceo'].includes(body.role) && !['developer', 'admin', 'ceo'].includes(session.role)) {
+        return NextResponse.json({ success: false, error: 'Insufficient permissions to assign Admin or CEO role' }, { status: 403 });
+      }
+    }
+
+    if (body.email !== undefined) {
+      const normalizedEmail = String(body.email).toLowerCase().trim();
+      const emailConflict = await User.findOne({ email: normalizedEmail, _id: { $ne: id } });
+      if (emailConflict) {
+        return NextResponse.json({ success: false, error: `Email ${normalizedEmail} is already used by ${emailConflict.name}` }, { status: 400 });
+      }
+      body.email = normalizedEmail;
+    }
+
+    if (body.employeeId !== undefined) {
+      const normalizedEmpId = String(body.employeeId).toUpperCase().trim();
+      const empIdConflict = await User.findOne({ employeeId: normalizedEmpId, _id: { $ne: id } });
+      if (empIdConflict) {
+        return NextResponse.json({ success: false, error: `Employee ID ${normalizedEmpId} is already assigned to ${empIdConflict.name}` }, { status: 400 });
+      }
+      body.employeeId = normalizedEmpId;
+    }
+
+    if (body.biometricUserId !== undefined) {
+      const normalizedBioId = body.biometricUserId ? String(body.biometricUserId).trim() : null;
+      if (normalizedBioId) {
+        const bioConflict = await User.findOne({ biometricUserId: normalizedBioId, _id: { $ne: id } });
+        if (bioConflict) {
+          return NextResponse.json(
+            { success: false, error: `Biometric Device ID #${normalizedBioId} is already assigned to ${bioConflict.name} (${bioConflict.employeeId})` },
+            { status: 400 }
+          );
+        }
+      }
+      body.biometricUserId = normalizedBioId;
+    }
 
     const allowedFields = [
       'name',
@@ -85,7 +137,7 @@ export async function PUT(
       }
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select('-password');
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select(SENSITIVE_FIELDS);
     if (!updatedUser) {
       return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
     }

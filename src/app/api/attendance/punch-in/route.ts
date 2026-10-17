@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
+import User from '@/models/User';
 import CompanySettings from '@/models/CompanySettings';
 import { getTodayDateString, evaluateAttendanceStatus } from '@/lib/attendanceUtils';
 
@@ -13,6 +14,23 @@ export async function POST(req: NextRequest) {
     }
 
     await connectToDatabase();
+
+    const user = await User.findById(session.userId).lean();
+    if (!user || !user.isActive) {
+      return NextResponse.json({ success: false, error: 'Account not found or deactivated' }, { status: 403 });
+    }
+
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
+    if (!isManagement && user.workMode !== 'FIELD') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Office staff attendance is recorded exclusively via the Dahua biometric fingerprint terminal.',
+        },
+        { status: 403 }
+      );
+    }
+
     const settings = await CompanySettings.findOne();
     const timezone = settings?.timezone || 'Asia/Karachi';
     const now = new Date();
@@ -28,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     const startTimeStr = settings?.officeStartTime || '09:00';
-    const graceMinutes = settings?.gracePeriodMinutes || 15;
+    const graceMinutes = settings?.gracePeriodMinutes ?? 15;
 
     const evaluatedStatus = evaluateAttendanceStatus(now, startTimeStr, graceMinutes, timezone);
 
@@ -43,17 +61,17 @@ export async function POST(req: NextRequest) {
         clockIn: now,
         clockOut: null,
         status: evaluatedStatus,
-        source: 'BIOMETRIC',
+        source: user.workMode === 'FIELD' ? 'FIELD' : 'WEB',
         breaks: [],
         totalWorkMinutes: 0,
         totalBreakMinutes: 0,
         ipAddress,
-        notes: 'Punch recorded via portal fingerprint check-in',
+        notes: 'Punch recorded via portal check-in',
       });
     } else {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
-      attendance.source = 'BIOMETRIC';
+      attendance.source = user.workMode === 'FIELD' ? 'FIELD' : 'WEB';
       attendance.ipAddress = ipAddress;
       await attendance.save();
     }

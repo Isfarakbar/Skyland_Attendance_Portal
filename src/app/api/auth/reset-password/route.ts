@@ -33,6 +33,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!user.isActive) {
+      return NextResponse.json(
+        { success: false, error: 'Account is deactivated. Please contact HR.' },
+        { status: 403 }
+      );
+    }
+
     if (!user.resetPasswordCode || user.resetPasswordCode !== code.trim()) {
       return NextResponse.json(
         { success: false, error: 'Invalid security code. Please check your email.' },

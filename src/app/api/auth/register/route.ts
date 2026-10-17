@@ -3,10 +3,11 @@ import { connectToDatabase } from '@/lib/mongodb';
 import User, { UserRole } from '@/models/User';
 import { hashPassword } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/email';
+import { generateNextEmployeeId } from '@/lib/attendanceUtils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, role, department, designation, employeeId, workMode } = await req.json();
+    const { name, email, password, role, department, designation, employeeId } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -33,11 +34,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Auto-generate employeeId if not given
+    // Auto-generate collision-safe employeeId if not given
     let empId = employeeId?.trim().toUpperCase();
     if (!empId) {
-      const count = await User.countDocuments();
-      empId = `SKY-${String(count + 1).padStart(3, '0')}`;
+      empId = await generateNextEmployeeId();
     } else {
       const existingEmpId = await User.findOne({ employeeId: empId });
       if (existingEmpId) {
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       role: assignedRole,
       department: department?.trim() || 'General',
       designation: designation?.trim() || 'Team Member',
-      workMode: workMode === 'FIELD' ? 'FIELD' : 'OFFICE',
+      workMode: 'OFFICE',
       joinDate: new Date(),
       isActive: true,
       isEmailVerified: false,

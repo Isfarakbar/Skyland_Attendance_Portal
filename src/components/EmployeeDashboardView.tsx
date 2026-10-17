@@ -390,7 +390,7 @@ export default function EmployeeDashboardView({
       {/* ========================================================================= */}
       {/* 5. DAILY TASK SUBMISSIONS (DIRECT COMPONENT - NO DOUBLE NESTING) */}
       {/* ========================================================================= */}
-      <DailyTaskSection userId={user?._id} />
+      <DailyTaskSection userId={user?._id || user?.id} />
 
       {/* ========================================================================= */}
       {/* 6. COMPACT PROFILE & JOB OVERVIEW */}
@@ -437,7 +437,9 @@ export default function EmployeeDashboardView({
           <div>
             <span className="text-slate-400 uppercase font-bold text-[10px] block">Registered Devices</span>
             <span className="text-orange-400 font-bold font-mono">
-              {user?.assignedDevices?.length ? `${user.assignedDevices.length} Assigned` : 'None'}
+              {(user?.devices?.length || user?.assignedDevices?.length)
+                ? `${user?.devices?.length || user?.assignedDevices?.length} Assigned`
+                : 'None'}
             </span>
           </div>
 

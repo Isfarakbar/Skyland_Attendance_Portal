@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession, hashPassword } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
+import { generateNextEmployeeId } from '@/lib/attendanceUtils';
+
+const SENSITIVE_FIELDS = '-password -verificationCode -verificationCodeExpires -resetPasswordCode -resetPasswordExpires';
+const PUBLIC_DIRECTORY_FIELDS = '_id name email employeeId department designation role workMode avatarUrl isActive';
 
 export async function GET() {
   try {
@@ -12,16 +16,18 @@ export async function GET() {
 
     await connectToDatabase();
 
-    // Ghost profiles: Admin, Manager (CEO), and Developer are ghost management accounts.
-    // In Staff Directory, show only regular staff employees to non-developers.
-    // In Staff Directory, allow developer, admin, and ceo to view accounts
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
     const query: Record<string, unknown> = {};
-    if (session.role === 'employee') {
+
+    if (!isManagement) {
       query.role = 'employee';
+      query.isActive = true;
+    } else if (session.role !== 'developer') {
+      query.role = { $ne: 'developer' };
     }
 
     const employees = await User.find(query)
-      .select('-password')
+      .select(isManagement ? SENSITIVE_FIELDS : PUBLIC_DIRECTORY_FIELDS)
       .sort({ createdAt: -1 })
       .lean();
 
@@ -48,33 +54,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Name, email, and temporary password are required' }, { status: 400 });
     }
 
+    const targetRole = role || 'employee';
+    if (targetRole === 'developer' && session.role !== 'developer') {
+      return NextResponse.json({ success: false, error: 'Only a Developer can assign the developer role' }, { status: 403 });
+    }
+    if (['admin', 'ceo'].includes(targetRole) && !['developer', 'admin', 'ceo'].includes(session.role)) {
+      return NextResponse.json({ success: false, error: 'Insufficient permissions to create an Admin or CEO account' }, { status: 403 });
+    }
+
     await connectToDatabase();
 
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json({ success: false, error: 'User with this email already exists' }, { status: 400 });
     }
 
     let empId = employeeId?.trim().toUpperCase();
     if (!empId) {
-      const count = await User.countDocuments();
-      empId = `SKY-${String(count + 1).padStart(3, '0')}`;
+      empId = await generateNextEmployeeId();
+    } else {
+      const existingEmpId = await User.findOne({ employeeId: empId });
+      if (existingEmpId) {
+        return NextResponse.json({ success: false, error: `Employee ID ${empId} is already assigned to ${existingEmpId.name}` }, { status: 400 });
+      }
+    }
+
+    const normalizedBioId = biometricUserId?.toString().trim() || null;
+    if (normalizedBioId) {
+      const existingBio = await User.findOne({ biometricUserId: normalizedBioId });
+      if (existingBio) {
+        return NextResponse.json(
+          { success: false, error: `Biometric Device ID #${normalizedBioId} is already assigned to ${existingBio.name} (${existingBio.employeeId})` },
+          { status: 400 }
+        );
+      }
     }
 
     const hashedPassword = await hashPassword(password);
 
     const newEmployee = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password: hashedPassword,
       employeeId: empId,
-      role: role || 'employee',
+      role: targetRole,
       department: department?.trim() || 'General',
       designation: designation?.trim() || 'Team Member',
       phone: phone?.trim() || '',
       baseSalary: typeof baseSalary === 'number' ? baseSalary : (Number(baseSalary) || 30000),
       workMode: workMode === 'FIELD' ? 'FIELD' : 'OFFICE',
-      biometricUserId: biometricUserId?.trim() || null,
+      biometricUserId: normalizedBioId,
       joinDate: new Date(),
       isActive: true,
       isEmailVerified: true,

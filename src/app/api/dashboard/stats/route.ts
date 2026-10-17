@@ -14,6 +14,9 @@ export async function GET() {
     if (!session) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+    if (!['developer', 'admin', 'ceo', 'manager'].includes(session.role)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: Management access required' }, { status: 403 });
+    }
 
     await connectToDatabase();
     const settings = await CompanySettings.findOne();
@@ -31,7 +34,7 @@ export async function GET() {
         isActive: true,
         role: { $nin: ['admin', 'developer', 'ceo'] },
       })
-        .select('_id name email employeeId department designation avatarUrl workMode phone baseSalary biometricUserId')
+        .select('_id name email employeeId department designation avatarUrl workMode phone biometricUserId')
         .sort({ name: 1 })
         .lean(),
       Attendance.find({ date: todayStr })

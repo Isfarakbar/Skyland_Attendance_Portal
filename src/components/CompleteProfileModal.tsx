@@ -45,20 +45,17 @@ export default function CompleteProfileModal({
   // Form states
   const [name, setName] = useState(user.name || '');
   const [phone, setPhone] = useState(user.phone || '');
-  const [avatarUrl, setAvatarUrl] = useState(
-    user.avatarUrl ||
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80'
-  );
-  const [bio, setBio] = useState(user.bio || 'Passionate professional driving excellence and growth at Skyland Energy.');
-  const [emergencyContact, setEmergencyContact] = useState(user.emergencyContact || '+92 321 9876543');
-  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || 'Family');
-  const [address, setAddress] = useState(user.address || 'Business District, Pakistan');
-  const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth || '1995-01-01');
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || '');
+  const [bio, setBio] = useState(user.bio || '');
+  const [emergencyContact, setEmergencyContact] = useState(user.emergencyContact || '');
+  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || '');
+  const [address, setAddress] = useState(user.address || '');
+  const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth || '');
   const [gender, setGender] = useState(user.gender || 'Unspecified');
-  const [cnic, setCnic] = useState(user.cnic || '42101-1234567-1');
-  const [bankName, setBankName] = useState(user.bankName || 'Standard Chartered Bank');
-  const [accountNumber, setAccountNumber] = useState(user.accountNumber || '01-2948291-01');
-  const [iban, setIban] = useState(user.iban || 'PK36SCBL0000001294829101');
+  const [cnic, setCnic] = useState(user.cnic || '');
+  const [bankName, setBankName] = useState(user.bankName || '');
+  const [accountNumber, setAccountNumber] = useState(user.accountNumber || '');
+  const [iban, setIban] = useState(user.iban || '');
   
   // Job & Compensation states
   const [department, setDepartment] = useState(user.department || 'Skyland Energy');

@@ -46,24 +46,39 @@ export async function PUT(
         }
       }
 
-      // Automatically sync to Attendance
+      // Automatically sync to Attendance (skip non-working days on multi-day leaves & preserve real punches)
       const Attendance = (await import('@/models/Attendance')).default;
+      const CompanySettings = (await import('@/models/CompanySettings')).default;
+      const settings = await CompanySettings.findOne().lean();
+      const workingDays = Array.isArray(settings?.workingDays) && settings.workingDays.length > 0
+        ? settings.workingDays
+        : [1, 2, 3, 4, 5];
+
       const attStatus = leave.leaveType === 'HALF_LEAVE' ? 'HALF_LEAVE' : 'ON_LEAVE';
+      const isSingleDay = leave.startDate === leave.endDate;
       const curr = new Date(leave.startDate + 'T00:00:00Z');
       const end = new Date(leave.endDate + 'T00:00:00Z');
+
       while (curr <= end) {
-        const dateStr = curr.toISOString().substring(0, 10);
-        await Attendance.findOneAndUpdate(
-          { user: leave.user, date: dateStr },
-          {
-            $set: {
-              status: attStatus,
-              notes: `Approved Leave: ${leave.leaveType} (${leave.reason || 'Management Approved'})`,
-              source: 'WEB',
-            },
-          },
-          { upsert: true, new: true }
-        );
+        const dayOfWeek = curr.getUTCDay();
+        if (isSingleDay || workingDays.includes(dayOfWeek)) {
+          const dateStr = curr.toISOString().substring(0, 10);
+          const existingAtt = await Attendance.findOne({ user: leave.user, date: dateStr });
+
+          if (!existingAtt || !existingAtt.clockIn || attStatus === 'HALF_LEAVE') {
+            await Attendance.findOneAndUpdate(
+              { user: leave.user, date: dateStr },
+              {
+                $set: {
+                  status: attStatus,
+                  notes: `Approved Leave: ${leave.leaveType} (${leave.reason || 'Management Approved'})`,
+                  ...(existingAtt?.source ? {} : { source: 'WEB' }),
+                },
+              },
+              { upsert: true, new: true }
+            );
+          }
+        }
         curr.setUTCDate(curr.getUTCDate() + 1);
       }
     }

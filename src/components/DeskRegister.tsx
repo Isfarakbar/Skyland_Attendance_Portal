@@ -383,7 +383,7 @@ export default function DeskRegister() {
             </span>
           </div>
           <span className="text-slate-400 text-[11px]">
-            Company policy: 1 free Off &amp; 1 free Half Leave / month
+            Company policy: 1 free Off &amp; 2 free Half Leaves / month
           </span>
         </div>
 

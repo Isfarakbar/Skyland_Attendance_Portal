@@ -59,14 +59,16 @@ export async function POST(req: NextRequest) {
     const graceMinutes = settings?.gracePeriodMinutes || 15;
     const halfDayHours = settings?.halfDayThresholdHours || 4;
 
-    const allUsers = await User.find({});
-    const userMap = new Map<string, any>();
+    const allUsers = await User.find({ isActive: true });
+    const bioUserMap = new Map<string, any>();
+    const empCodeMap = new Map<string, any>();
     for (const u of allUsers) {
-      if (u.biometricUserId) userMap.set(String(u.biometricUserId).trim(), u);
-      if (u.employeeId) userMap.set(String(u.employeeId).trim().toUpperCase(), u);
-      // clean numeric
-      const cleanNum = String(u.employeeId || '').replace(/\D+/g, '');
-      if (cleanNum) userMap.set(cleanNum, u);
+      if (u.biometricUserId) {
+        bioUserMap.set(String(u.biometricUserId).trim(), u);
+      }
+      if (u.employeeId) {
+        empCodeMap.set(String(u.employeeId).trim().toUpperCase(), u);
+      }
     }
 
     const importedResults: any[] = [];
@@ -79,7 +81,12 @@ export async function POST(req: NextRequest) {
     }).filter((r) => r.rawId !== '');
 
     for (const item of parsedRows) {
-      const user = userMap.get(item.rawId) || userMap.get(item.rawId.toUpperCase()) || userMap.get(item.rawId.replace(/^0+/, ''));
+      const strippedId = item.rawId.replace(/^0+/, '');
+      const user =
+        bioUserMap.get(item.rawId) ||
+        bioUserMap.get(strippedId) ||
+        empCodeMap.get(item.rawId.toUpperCase()) ||
+        empCodeMap.get(`SKY-${strippedId.padStart(3, '0')}`);
       if (!user) {
         importedResults.push({
           rawId: item.rawId,
@@ -119,7 +126,9 @@ export async function POST(req: NextRequest) {
           status: evaluatedStatus,
         });
       } else if (!attendance.clockIn || punchDate < new Date(attendance.clockIn)) {
+        const evaluatedStatus = evaluateAttendanceStatus(punchDate, startTimeStr, graceMinutes, timezone);
         attendance.clockIn = punchDate;
+        attendance.status = evaluatedStatus;
         attendance.source = 'BIOMETRIC';
         await attendance.save();
 
@@ -131,15 +140,17 @@ export async function POST(req: NextRequest) {
         });
       } else {
         const diffFromIn = differenceInMinutes(punchDate, new Date(attendance.clockIn));
-        if (diffFromIn >= 2 && (!attendance.clockOut || punchDate > new Date(attendance.clockOut))) {
+        if (diffFromIn >= 15 && (!attendance.clockOut || punchDate > new Date(attendance.clockOut))) {
           const totalBreak = calculateBreakMinutes(attendance.breaks || []);
           const totalWork = calculateWorkMinutes(attendance.clockIn, punchDate, totalBreak);
 
           attendance.clockOut = punchDate;
           attendance.totalBreakMinutes = totalBreak;
           attendance.totalWorkMinutes = totalWork;
-          if (totalWork < halfDayHours * 60 && attendance.status !== 'LATE') {
+          if (totalWork < halfDayHours * 60) {
             attendance.status = 'HALF_DAY';
+          } else {
+            attendance.status = evaluateAttendanceStatus(attendance.clockIn, startTimeStr, graceMinutes, timezone);
           }
           await attendance.save();
 

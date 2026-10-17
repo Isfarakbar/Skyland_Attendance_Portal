@@ -31,6 +31,8 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
     dailyRate: number;
     totalOffs: number;
     totalHalfLeaves: number;
+    allowedOffs: number;
+    allowedHalfLeaves: number;
     excessOffs: number;
     excessHalfLeaves: number;
     deductions: number;
@@ -39,6 +41,8 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
     dailyRate: 1000,
     totalOffs: 0,
     totalHalfLeaves: 0,
+    allowedOffs: 1,
+    allowedHalfLeaves: 2,
     excessOffs: 0,
     excessHalfLeaves: 0,
     deductions: 0,
@@ -88,9 +92,11 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
           dailyRate: p.dailyRate || Math.round((p.baseSalary || 30000) / 30),
           totalOffs: p.totalOffs || 0,
           totalHalfLeaves: p.totalHalfLeaves || 0,
+          allowedOffs: p.allowedOffs ?? 1,
+          allowedHalfLeaves: p.allowedHalfLeaves ?? 2,
           excessOffs: p.excessOffs || 0,
           excessHalfLeaves: p.excessHalfLeaves || 0,
-          deductions: p.totalDeduction || 0,
+          deductions: p.leaveDeduction ?? 0,
         });
       }
     } catch {
@@ -115,8 +121,9 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
   };
 
   const getEstimatedDays = () => {
-    if (!startDate || !endDate) return 0;
+    if (!startDate) return 0;
     if (leaveType === 'HALF_LEAVE') return 0.5;
+    if (!endDate) return 0;
     try {
       const s = parseISO(startDate);
       const e = parseISO(endDate);
@@ -131,7 +138,8 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
     e.preventDefault();
     setFormError('');
 
-    if (!startDate || !endDate || !reason) {
+    const effectiveEnd = leaveType === 'HALF_LEAVE' ? startDate : endDate;
+    if (!startDate || !effectiveEnd || !reason) {
       setFormError('Please fill out all fields');
       return;
     }
@@ -144,7 +152,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
         body: JSON.stringify({
           leaveType,
           startDate,
-          endDate: leaveType === 'HALF_LEAVE' ? startDate : endDate,
+          endDate: effectiveEnd,
           reason,
         }),
       });
@@ -214,7 +222,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
             Time Off & Leave Requests
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Office Policy: 1 Free Off and 1 Free Half Leave allowed per month. Additional leaves deduct salary.
+            Office Policy: {monthStats.allowedOffs} Free Off and {monthStats.allowedHalfLeaves} Free Half Leaves allowed per month. Additional leaves deduct salary.
           </p>
         </div>
 
@@ -246,12 +254,12 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
           <div className="flex items-center justify-center gap-4 mt-1">
             <div>
               <span className="text-xs font-bold text-slate-300 block">Offs</span>
-              <span className="text-lg font-black text-white">{monthStats.totalOffs} <span className="text-xs font-normal text-slate-400">/ 1 Free</span></span>
+              <span className="text-lg font-black text-white">{monthStats.totalOffs} <span className="text-xs font-normal text-slate-400">/ {monthStats.allowedOffs} Free</span></span>
             </div>
             <div className="h-6 w-px bg-slate-800" />
             <div>
               <span className="text-xs font-bold text-slate-300 block">Half Leaves</span>
-              <span className="text-lg font-black text-white">{monthStats.totalHalfLeaves} <span className="text-xs font-normal text-slate-400">/ 1 Free</span></span>
+              <span className="text-lg font-black text-white">{monthStats.totalHalfLeaves} <span className="text-xs font-normal text-slate-400">/ {monthStats.allowedHalfLeaves} Free</span></span>
             </div>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
@@ -270,7 +278,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
             {monthStats.deductions > 0 ? `-PKR ${monthStats.deductions.toLocaleString()}` : 'PKR 0'}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">
-            {monthStats.deductions > 0 ? `Fined at PKR ${monthStats.dailyRate.toLocaleString()} per excess day` : 'No fine (within 1 free off / 1 half leave)'}
+            {monthStats.deductions > 0 ? `Fined at PKR ${monthStats.dailyRate.toLocaleString()} per excess day` : `No fine (within ${monthStats.allowedOffs} free off / ${monthStats.allowedHalfLeaves} half leaves)`}
           </p>
         </div>
       </div>
@@ -353,11 +361,16 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Leave Type</label>
                 <select
                   value={leaveType}
-                  onChange={(e) => setLeaveType(e.target.value)}
+                  onChange={(e) => {
+                    setLeaveType(e.target.value);
+                    if (e.target.value === 'HALF_LEAVE' && startDate) {
+                      setEndDate(startDate);
+                    }
+                  }}
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm font-medium text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
                 >
-                  <option value="FULL_OFF">Full Day Off (1 free per month)</option>
-                  <option value="HALF_LEAVE">Half Day Leave (1 free per month)</option>
+                  <option value="FULL_OFF">Full Day Off ({monthStats.allowedOffs} free per month)</option>
+                  <option value="HALF_LEAVE">Half Day Leave ({monthStats.allowedHalfLeaves} free per month)</option>
                   <option value="CASUAL">Casual / Personal Emergency</option>
                   <option value="SICK">Medical / Sick Off</option>
                 </select>
@@ -403,7 +416,7 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
                     Duration: <strong className="text-white">{getEstimatedDays()} {leaveType === 'HALF_LEAVE' ? 'half day' : 'day(s)'}</strong>
                   </span>
                   <span className="text-slate-500">
-                    Policy: 1 free off & 1 free half leave / mo
+                    Policy: {monthStats.allowedOffs} free off & {monthStats.allowedHalfLeaves} free half leaves / mo
                   </span>
                 </div>
               )}

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import Attendance from '@/models/Attendance';
+import User from '@/models/User';
 import CompanySettings from '@/models/CompanySettings';
-import { getTodayDateString, calculateBreakMinutes, calculateWorkMinutes } from '@/lib/attendanceUtils';
+import { getTodayDateString, calculateBreakMinutes, calculateWorkMinutes, evaluateAttendanceStatus } from '@/lib/attendanceUtils';
 import { differenceInMinutes } from 'date-fns';
 
 export async function POST() {
@@ -14,6 +15,23 @@ export async function POST() {
     }
 
     await connectToDatabase();
+
+    const user = await User.findById(session.userId).lean();
+    if (!user || !user.isActive) {
+      return NextResponse.json({ success: false, error: 'Account not found or deactivated' }, { status: 403 });
+    }
+
+    const isManagement = ['developer', 'admin', 'ceo', 'manager'].includes(session.role);
+    if (!isManagement && user.workMode !== 'FIELD') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Office staff attendance is recorded exclusively via the Dahua biometric fingerprint terminal.',
+        },
+        { status: 403 }
+      );
+    }
+
     const settings = await CompanySettings.findOne();
     const timezone = settings?.timezone || 'Asia/Karachi';
     const now = new Date();
@@ -58,6 +76,13 @@ export async function POST() {
     const halfDayHours = settings?.halfDayThresholdHours || 4;
     if (totalWorkMinutes < halfDayHours * 60) {
       attendance.status = 'HALF_DAY';
+    } else {
+      attendance.status = evaluateAttendanceStatus(
+        attendance.clockIn,
+        settings?.officeStartTime || '09:00',
+        settings?.gracePeriodMinutes ?? 15,
+        timezone
+      );
     }
 
     await attendance.save();

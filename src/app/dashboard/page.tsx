@@ -47,6 +47,21 @@ export default function DashboardPage() {
     fetchSessionAndData();
   }, []);
 
+  // Live 15-second background sync so physical biometric swipes appear in real-time
+  useEffect(() => {
+    if (!user) return;
+    const isMgmt = ['developer', 'admin', 'ceo', 'manager'].includes(user.role);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchTodayState();
+        if (isMgmt) {
+          fetchDashboardStats();
+        }
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   const fetchSessionAndData = async () => {
     try {
       // 1. Get User
@@ -62,8 +77,10 @@ export default function DashboardPage() {
       }
       setUser(data.user);
 
-      // Fetch stats for executive/admin view
-      fetchDashboardStats();
+      // Fetch stats only for executive/admin/management view
+      if (['developer', 'admin', 'ceo', 'manager'].includes(data.user.role)) {
+        fetchDashboardStats();
+      }
 
       // Fetch today's desk-marked state & employee monthly stats
       fetchTodayState();
@@ -158,6 +175,7 @@ export default function DashboardPage() {
   const fetchDashboardStats = async () => {
     try {
       const res = await fetch('/api/dashboard/stats');
+      if (!res.ok) return;
       const data = await res.json();
       if (data.success) {
         setDashboardStats(data.stats);
@@ -172,7 +190,9 @@ export default function DashboardPage() {
   };
 
   const handleRefreshAll = () => {
-    fetchDashboardStats();
+    if (user && ['developer', 'admin', 'ceo', 'manager'].includes(user.role)) {
+      fetchDashboardStats();
+    }
     fetchTodayState();
     if (user) fetchEmployeeHistory(user);
   };
@@ -328,7 +348,7 @@ export default function DashboardPage() {
                       onRefresh={handleRefreshAll}
                     />
                   )}
-                  <AttendanceCalendar currentUserId={user?._id} userRole={user?.role} />
+                  <AttendanceCalendar currentUserId={user?._id || user?.id} userRole={user?.role} />
                 </div>
               )}
             </div>
@@ -387,7 +407,7 @@ export default function DashboardPage() {
                   ← Back to Dashboard
                 </button>
               </div>
-              <DailyTaskSection userId={!isElevatedUser ? user?._id : undefined} />
+              <DailyTaskSection userId={!isElevatedUser ? (user?._id || user?.id) : undefined} />
             </div>
           )}
 
@@ -414,7 +434,7 @@ export default function DashboardPage() {
               </div>
               <SalarySheet
                 isEmployeeOnly={!isElevatedUser}
-                userId={!isElevatedUser ? user?._id : undefined}
+                userId={!isElevatedUser ? (user?._id || user?.id) : undefined}
               />
             </div>
           )}
@@ -437,7 +457,7 @@ export default function DashboardPage() {
                 </button>
               </div>
               <AttendanceCalendar
-                currentUserId={user?._id}
+                currentUserId={user?._id || user?.id}
                 userRole={user?.role}
               />
             </div>
@@ -469,7 +489,7 @@ export default function DashboardPage() {
               {isElevatedUser ? (
                 <LeaveApprovals />
               ) : (
-                <LeaveSection userId={user?._id} />
+                <LeaveSection userId={user?._id || user?.id} />
               )}
             </div>
           )}

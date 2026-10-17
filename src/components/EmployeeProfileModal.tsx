@@ -220,8 +220,8 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                     {data.monthlySummary.totalOffs} Off • {data.monthlySummary.totalHalfLeaves} Half
                   </div>
                   <span className="text-[10px] text-rose-300/80 font-semibold">
-                    {data.monthlySummary.totalDeduction > 0
-                      ? `Fine: -PKR ${data.monthlySummary.totalDeduction.toLocaleString()}`
+                    {(data.monthlySummary.leaveDeduction ?? 0) > 0
+                      ? `Fine: -PKR ${(data.monthlySummary.leaveDeduction ?? 0).toLocaleString()}`
                       : 'Within free allowance'}
                   </span>
                 </div>

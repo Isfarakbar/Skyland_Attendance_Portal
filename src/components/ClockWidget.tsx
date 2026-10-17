@@ -141,7 +141,7 @@ export default function ClockWidget({ todayData }: ClockWidgetProps) {
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
             Attendance is recorded directly via biometric fingerprint or live site GPS.
-            Policy: <strong className="text-slate-200">1 free off</strong> and <strong className="text-slate-200">1 free half leave</strong> per month. Excess leaves deducted at per-day income rate (Pay ÷ 30).
+            Policy: <strong className="text-slate-200">1 free off</strong> and <strong className="text-slate-200">2 free half leaves</strong> per month. Excess leaves deducted at per-day income rate (Pay ÷ 30).
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import DailyTask from '@/models/DailyTask';
 import CompanySettings from '@/models/CompanySettings';
-import { getTodayDateString, DEFAULT_TIMEZONE } from '@/lib/attendanceUtils';
+import { getTodayDateString, DEFAULT_TIMEZONE, isValidDateParam, isValidMonthParam } from '@/lib/attendanceUtils';
 
 export async function GET(req: NextRequest) {
   try {
@@ -32,9 +32,9 @@ export async function GET(req: NextRequest) {
     if (targetUserId) {
       query.user = targetUserId;
     }
-    if (date) {
+    if (date && isValidDateParam(date)) {
       query.date = date;
-    } else if (month) {
+    } else if (month && isValidMonthParam(month)) {
       query.date = { $regex: `^${month}` };
     }
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     const settings = await CompanySettings.findOne().lean();
     const timezone = settings?.timezone || DEFAULT_TIMEZONE;
-    const taskDate = customDate || getTodayDateString(new Date(), timezone);
+    const taskDate = (customDate && isValidDateParam(customDate)) ? customDate : getTodayDateString(new Date(), timezone);
 
     const task = await DailyTask.create({
       user: session.userId,

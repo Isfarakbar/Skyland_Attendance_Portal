@@ -110,35 +110,42 @@ export async function POST(req: NextRequest) {
 
       const dateStr = getTodayDateString(punchDate, timezone);
 
-      // 3. Multi-strategy user matching (handles "1", "001", "SKY-001", "SKY-1", etc.)
-      const searchCriteria: any[] = [
-        { biometricUserId: strId },
-        { employeeId: strId.toUpperCase() },
-      ];
+      // 3. Strict Priority User Matching:
+      // Priority 1: Match by biometricUserId FIRST so Device ID "2" (Nadeem, SKY-004) never collides with SKY-002 (Isfar, Bio ID "1")!
+      const bioIdCandidates = Array.from(
+        new Set([strId, cleanNumericId, strippedLeadingZeros].filter((v): v is string => Boolean(v)))
+      );
 
-      if (cleanNumericId) {
-        searchCriteria.push({ biometricUserId: cleanNumericId });
-        searchCriteria.push({ employeeId: `SKY-${cleanNumericId.padStart(3, '0')}` });
-        searchCriteria.push({ employeeId: `SKY-${cleanNumericId}` });
+      let user = await User.findOne({
+        isActive: true,
+        biometricUserId: { $in: bioIdCandidates },
+      });
+
+      // Priority 2: Fallback to employeeId ONLY if no user has this biometricUserId
+      if (!user) {
+        const empIdCandidates = [strId.toUpperCase()];
+        if (cleanNumericId) {
+          empIdCandidates.push(`SKY-${cleanNumericId.padStart(3, '0')}`);
+          empIdCandidates.push(`SKY-${cleanNumericId}`);
+        }
+        user = await User.findOne({
+          isActive: true,
+          employeeId: { $in: empIdCandidates },
+        });
       }
-
-      if (strippedLeadingZeros && strippedLeadingZeros !== strId) {
-        searchCriteria.push({ biometricUserId: strippedLeadingZeros });
-      }
-
-      const user = await User.findOne({ $or: searchCriteria });
 
       if (!user) {
         results.push({
           userId: strId,
           status: 'SKIPPED_USER_NOT_FOUND',
-          message: `No employee matched device ID '${strId}'`,
+          message: `No active employee matched device ID '${strId}'`,
         });
         continue;
       }
 
       let attendance = await Attendance.findOne({ user: user._id, date: dateStr });
       const verifyMode = item.verifyMode || item.VerifyMode || item.mode || 'Fingerprint';
+      const explicitType = String(item.type || item.punchType || 'AUTO').toUpperCase();
 
       if (!attendance) {
         // First punch of the day -> Clock In
@@ -164,25 +171,50 @@ export async function POST(req: NextRequest) {
           status: evaluatedStatus,
           time: punchDate.toISOString(),
         });
-      } else if (!attendance.clockIn) {
-        const evaluatedStatus = evaluateAttendanceStatus(punchDate, startTimeStr, graceMinutes, timezone);
-        attendance.clockIn = punchDate;
-        attendance.status = evaluatedStatus;
-        attendance.source = 'BIOMETRIC';
-        await attendance.save();
+      } else if (!attendance.clockIn || explicitType === 'IN') {
+        // If explicitly IN or record had no clockIn yet
+        if (!attendance.clockIn) {
+          const evaluatedStatus = evaluateAttendanceStatus(punchDate, startTimeStr, graceMinutes, timezone);
+          attendance.clockIn = punchDate;
+          attendance.status = evaluatedStatus;
+          attendance.source = 'BIOMETRIC';
+          await attendance.save();
 
-        results.push({
-          userId: strId,
-          employeeName: user.name,
-          employeeId: user.employeeId,
-          action: 'CLOCKED_IN',
-          status: evaluatedStatus,
-          time: punchDate.toISOString(),
-        });
+          results.push({
+            userId: strId,
+            employeeName: user.name,
+            employeeId: user.employeeId,
+            action: 'CLOCKED_IN',
+            status: evaluatedStatus,
+            time: punchDate.toISOString(),
+          });
+        } else {
+          results.push({
+            userId: strId,
+            employeeName: user.name,
+            employeeId: user.employeeId,
+            action: 'IGNORED_RECENT_PUNCH',
+            message: 'Already clocked in for today',
+          });
+        }
       } else {
-        // Subsequent punch -> Check if at least 2 minutes have elapsed since clockIn
+        // Subsequent punch -> Prevent accidental double-swipes within 15 minutes from clocking out early (unless explicitly forced OUT)
         const diffFromIn = differenceInMinutes(punchDate, new Date(attendance.clockIn));
-        if (diffFromIn >= 2) {
+        const diffFromOut = attendance.clockOut
+          ? Math.abs(differenceInMinutes(punchDate, new Date(attendance.clockOut)))
+          : Infinity;
+
+        const minMinutesForAutoOut = explicitType === 'OUT' ? 1 : 15;
+
+        if (diffFromOut < 3 && explicitType !== 'OUT') {
+          results.push({
+            userId: strId,
+            employeeName: user.name,
+            employeeId: user.employeeId,
+            action: 'IGNORED_RECENT_PUNCH',
+            message: 'Duplicate punch within 3 minutes of clock out',
+          });
+        } else if (diffFromIn >= minMinutesForAutoOut) {
           const totalBreak = calculateBreakMinutes(attendance.breaks || []);
           const totalWork = calculateWorkMinutes(attendance.clockIn, punchDate, totalBreak);
 
@@ -190,8 +222,10 @@ export async function POST(req: NextRequest) {
           attendance.totalBreakMinutes = totalBreak;
           attendance.totalWorkMinutes = totalWork;
 
-          if (totalWork < halfDayHours * 60 && attendance.status !== 'LATE') {
+          if (totalWork < halfDayHours * 60) {
             attendance.status = 'HALF_DAY';
+          } else {
+            attendance.status = evaluateAttendanceStatus(attendance.clockIn, startTimeStr, graceMinutes, timezone);
           }
 
           await attendance.save();
@@ -201,6 +235,7 @@ export async function POST(req: NextRequest) {
             employeeName: user.name,
             employeeId: user.employeeId,
             action: 'CLOCKED_OUT',
+            status: attendance.status,
             workMinutes: totalWork,
             time: punchDate.toISOString(),
           });
@@ -208,8 +243,9 @@ export async function POST(req: NextRequest) {
           results.push({
             userId: strId,
             employeeName: user.name,
+            employeeId: user.employeeId,
             action: 'IGNORED_RECENT_PUNCH',
-            message: 'Duplicate punch within 2 minutes of clock in',
+            message: `Re-verification punch within ${minMinutesForAutoOut} minutes of clock in (${diffFromIn}m elapsed)`,
           });
         }
       }

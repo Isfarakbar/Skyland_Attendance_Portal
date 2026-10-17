@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { UserRole } from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'skyland_default_secret_key_change_in_production_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'skyland_super_secret_jwt_key_2026_portal';
 const key = new TextEncoder().encode(JWT_SECRET);
 
 export const COOKIE_NAME = 'skyland_token';
@@ -62,7 +62,7 @@ export async function setSessionCookie(payload: TokenPayload): Promise<string> {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true' || process.env.VERCEL === '1',
     sameSite: 'lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 7 days
