@@ -19,7 +19,7 @@ export async function GET() {
     }
 
     await connectToDatabase();
-    const settings = await CompanySettings.findOne();
+    const settings = await CompanySettings.findOne().lean();
     const timezone = settings?.timezone || 'Asia/Karachi';
     const todayStr = getTodayDateString(new Date(), timezone);
     const officeStartTime = settings?.officeStartTime || '09:00';
@@ -29,7 +29,7 @@ export async function GET() {
     const [startH, startM] = officeStartTime.split(':').map(Number);
     const startMinutes = (startH || 9) * 60 + (startM || 0);
 
-    const [allEmployees, todayAttendances, pendingLeaves, approvedLeaves] = await Promise.all([
+    const [allEmployees, todayAttendances, pendingLeaves, approvedLeaves, recentTasks] = await Promise.all([
       User.find({
         isActive: true,
         role: { $nin: ['admin', 'developer', 'ceo'] },
@@ -47,6 +47,11 @@ export async function GET() {
         endDate: { $gte: todayStr },
       })
         .populate('user', '_id name email employeeId department designation')
+        .lean(),
+      DailyTask.find({ date: todayStr })
+        .populate('user', 'name employeeId department designation avatarUrl')
+        .sort({ createdAt: -1 })
+        .limit(10)
         .lean(),
     ]);
 
@@ -108,13 +113,6 @@ export async function GET() {
     presentEmployees.sort(
       (a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime()
     );
-
-    // Fetch recent tasks submitted today
-    const recentTasks = await DailyTask.find({ date: todayStr })
-      .populate('user', 'name employeeId department designation avatarUrl')
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
 
     const totalEmployees = allEmployees.length;
     const presentToday = presentEmployees.length;

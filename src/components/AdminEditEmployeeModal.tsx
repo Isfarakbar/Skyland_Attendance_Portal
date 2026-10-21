@@ -8,7 +8,6 @@ import {
   Building2,
   DollarSign,
   Laptop,
-  Fingerprint,
   Calendar,
   CreditCard,
   Phone,
@@ -24,6 +23,7 @@ import {
   MapPin,
   Clock,
   HeartHandshake,
+  KeyRound,
 } from 'lucide-react';
 import { calculateFBRTax } from '@/lib/taxCalculator';
 
@@ -55,9 +55,7 @@ interface EmployeeData {
   shiftTiming?: string;
   reportingManager?: string;
   employmentType?: string;
-  workMode?: 'OFFICE' | 'FIELD';
   baseSalary?: number;
-  biometricUserId?: string;
   isActive: boolean;
   leaveBalance?: { sick: number; casual: number; annual: number };
   bankName?: string;
@@ -106,12 +104,11 @@ export default function AdminEditEmployeeModal({
   const [role, setRole] = useState(employee.role || 'employee');
   const [department, setDepartment] = useState(employee.department || 'Operations');
   const [designation, setDesignation] = useState(employee.designation || 'Staff Member');
-  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>(employee.workMode || 'OFFICE');
   const [shiftTiming, setShiftTiming] = useState(employee.shiftTiming || '09:00 AM - 06:00 PM');
   const [reportingManager, setReportingManager] = useState(employee.reportingManager || 'Management');
   const [employmentType, setEmploymentType] = useState(employee.employmentType || 'Full-time Permanent');
   const [isActive, setIsActive] = useState(employee.isActive ?? true);
-  const [biometricUserId, setBiometricUserId] = useState(employee.biometricUserId || '');
+  const [newPassword, setNewPassword] = useState('');
 
   // Form states - Compensation & Leaves
   const [baseSalary, setBaseSalary] = useState<number>(employee.baseSalary || 30000);
@@ -202,12 +199,11 @@ export default function AdminEditEmployeeModal({
         role,
         department: department.trim(),
         designation: designation.trim(),
-        workMode,
         shiftTiming: shiftTiming.trim(),
         reportingManager: reportingManager.trim(),
         employmentType: employmentType.trim(),
         isActive,
-        biometricUserId: biometricUserId.trim() || null,
+        ...(newPassword.trim() ? { newPassword: newPassword.trim() } : {}),
         baseSalary: Number(baseSalary) || 30000,
         address: address.trim(),
         cnic: cnic.trim(),
@@ -443,6 +439,20 @@ export default function AdminEditEmployeeModal({
                     onChange={(e) => setReportingManager(e.target.value)}
                     placeholder="e.g. Director Operations"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:border-[#FF6B00]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-orange-400 uppercase mb-1 flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Reset Login Password (Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Leave blank to keep existing password, or enter new password (min 6 chars)"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white focus:outline-hidden focus:border-[#FF6B00]"
                   />
                 </div>
 

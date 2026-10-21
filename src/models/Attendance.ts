@@ -30,6 +30,7 @@ export interface IAttendance extends Document {
   ipAddress?: string;
   isFieldCheckIn?: boolean;
   location?: IFieldLocation;
+  checkOutLocation?: IFieldLocation;
   source?: 'WEB' | 'BIOMETRIC' | 'FIELD';
   isRegularized: boolean;
   regularizedReason?: string;
@@ -63,6 +64,12 @@ const AttendanceSchema = new Schema<IAttendance>(
     ipAddress: { type: String, default: '' },
     isFieldCheckIn: { type: Boolean, default: false },
     location: {
+      latitude: { type: Number },
+      longitude: { type: Number },
+      siteName: { type: String, default: '' },
+      accuracy: { type: Number },
+    },
+    checkOutLocation: {
       latitude: { type: Number },
       longitude: { type: Number },
       siteName: { type: String, default: '' },

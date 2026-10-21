@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, Lock, Mail, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -79,11 +79,11 @@ export default function RegisterPage() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
-        <div className="mx-auto w-48 mb-3 p-3 rounded-2xl bg-white shadow-xl flex items-center justify-center">
+        <div className="mx-auto w-20 h-20 mb-3.5 p-2.5 rounded-3xl bg-white shadow-2xl shadow-orange-500/15 flex items-center justify-center border border-white/80">
           <img
-            src="/skyland-logo.png"
-            alt="Skyland Energy"
-            className="w-full h-auto max-h-16 object-contain"
+            src="/skyland-icon.png"
+            alt="Skyland App Icon"
+            className="w-full h-full object-contain"
           />
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">SKYLAND ENERGY</h2>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 <input
                   type="email"
                   required
-                  placeholder="name@skylandenergy.com"
+                  placeholder="name@theskylandenergy.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] transition-all"

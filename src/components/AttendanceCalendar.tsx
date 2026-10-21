@@ -23,8 +23,8 @@ interface AttendanceRecord {
   status: 'PRESENT' | 'LATE' | 'HALF_DAY' | 'HALF_LEAVE' | 'ABSENT' | 'OFF' | 'ON_LEAVE';
   clockIn: string | null;
   clockOut: string | null;
-  clockInLocation?: { latitude: number; longitude: number } | null;
-  clockOutLocation?: { latitude: number; longitude: number } | null;
+  location?: { latitude?: number; longitude?: number; siteName?: string } | null;
+  checkOutLocation?: { latitude?: number; longitude?: number; siteName?: string } | null;
   totalWorkMinutes: number;
   notes?: string;
 }
@@ -598,16 +598,16 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                 </div>
 
                 {/* GPS Location Links if recorded */}
-                {(selectedDayDetail.record?.clockInLocation?.latitude || selectedDayDetail.record?.clockOutLocation?.latitude) ? (
+                {(selectedDayDetail.record?.location?.latitude || selectedDayDetail.record?.checkOutLocation?.latitude) ? (
                   <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="text-slate-400 font-semibold flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-orange-400" />
                       Recorded GPS Location:
                     </span>
                     <div className="flex items-center gap-2">
-                      {selectedDayDetail.record?.clockInLocation?.latitude ? (
+                      {selectedDayDetail.record?.location?.latitude ? (
                         <a
-                          href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockInLocation.latitude},${selectedDayDetail.record.clockInLocation.longitude}`}
+                          href={`https://www.google.com/maps?q=${selectedDayDetail.record.location.latitude},${selectedDayDetail.record.location.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-2 py-1 rounded-lg bg-orange-950/60 hover:bg-orange-900/80 text-orange-300 border border-orange-800/60 font-bold text-[11px] flex items-center gap-1"
@@ -616,9 +616,9 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                           Check-In Pin
                         </a>
                       ) : null}
-                      {selectedDayDetail.record?.clockOutLocation?.latitude ? (
+                      {selectedDayDetail.record?.checkOutLocation?.latitude ? (
                         <a
-                          href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockOutLocation.latitude},${selectedDayDetail.record.clockOutLocation.longitude}`}
+                          href={`https://www.google.com/maps?q=${selectedDayDetail.record.checkOutLocation.latitude},${selectedDayDetail.record.checkOutLocation.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-2 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-800/60 font-bold text-[11px] flex items-center gap-1"
@@ -697,16 +697,16 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                       </span>
                     </div>
                   )}
-                  {(selectedDayDetail.record.clockInLocation?.latitude || selectedDayDetail.record.clockOutLocation?.latitude) ? (
+                  {(selectedDayDetail.record.location?.latitude || selectedDayDetail.record.checkOutLocation?.latitude) ? (
                     <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
                       <span className="text-slate-400 flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-orange-400" />
                         GPS Location
                       </span>
                       <div className="flex items-center gap-2">
-                        {selectedDayDetail.record.clockInLocation?.latitude ? (
+                        {selectedDayDetail.record.location?.latitude ? (
                           <a
-                            href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockInLocation.latitude},${selectedDayDetail.record.clockInLocation.longitude}`}
+                            href={`https://www.google.com/maps?q=${selectedDayDetail.record.location.latitude},${selectedDayDetail.record.location.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-orange-400 hover:underline font-bold"
@@ -714,9 +714,9 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                             Check-In Map
                           </a>
                         ) : null}
-                        {selectedDayDetail.record.clockOutLocation?.latitude ? (
+                        {selectedDayDetail.record.checkOutLocation?.latitude ? (
                           <a
-                            href={`https://www.google.com/maps?q=${selectedDayDetail.record.clockOutLocation.latitude},${selectedDayDetail.record.clockOutLocation.longitude}`}
+                            href={`https://www.google.com/maps?q=${selectedDayDetail.record.checkOutLocation.latitude},${selectedDayDetail.record.checkOutLocation.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-indigo-400 hover:underline font-bold"

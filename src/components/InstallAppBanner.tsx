@@ -141,8 +141,8 @@ export default function InstallAppBanner() {
         <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40 bg-[#0D1527]/95 backdrop-blur-md text-white p-4 sm:p-5 rounded-3xl shadow-2xl border border-orange-500/40 animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#FF6B00] to-amber-500 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25">
-                <Smartphone className="w-6 h-6 text-white" />
+              <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25">
+                <img src="/skyland-icon.png" alt="Skyland App Icon" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">

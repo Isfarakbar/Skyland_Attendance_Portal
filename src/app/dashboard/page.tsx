@@ -45,15 +45,16 @@ export default function DashboardPage() {
     fetchSessionAndData();
   }, []);
 
-  // Live 15-second background sync so physical biometric swipes appear in real-time
+  // Live 15-second background sync for real-time attendance updates
   useEffect(() => {
     if (!user) return;
     const isMgmt = ['developer', 'admin', 'ceo', 'manager'].includes(user.role);
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        fetchTodayState();
         if (isMgmt) {
           fetchDashboardStats();
+        } else {
+          fetchTodayState();
         }
       }
     }, 15000);
@@ -62,27 +63,36 @@ export default function DashboardPage() {
 
   const fetchSessionAndData = async () => {
     try {
-      // 1. Get User
-      const res = await fetch('/api/auth/me');
-      if (!res.ok) {
+      const [meRes, todayRes] = await Promise.all([
+        fetch('/api/auth/me'),
+        fetch('/api/attendance/today'),
+      ]);
+
+      if (!meRes.ok) {
         router.push('/login');
         return;
       }
-      const data = await res.json();
+
+      const [data, todayJson] = await Promise.all([
+        meRes.json(),
+        todayRes.ok ? todayRes.json() : Promise.resolve(null),
+      ]);
+
       if (!data.user) {
         router.push('/login');
         return;
       }
-      setUser(data.user);
 
-      // Fetch stats only for executive/admin/management view
-      if (['developer', 'admin', 'ceo', 'manager'].includes(data.user.role)) {
-        fetchDashboardStats();
+      setUser(data.user);
+      if (todayJson?.success) {
+        setTodayData(todayJson);
       }
 
-      // Fetch today's desk-marked state & employee monthly stats
-      fetchTodayState();
-      fetchEmployeeHistory(data.user);
+      if (['developer', 'admin', 'ceo', 'manager'].includes(data.user.role)) {
+        fetchDashboardStats();
+      } else {
+        fetchEmployeeHistory(data.user);
+      }
     } catch (err) {
       console.error(err);
       router.push('/login');

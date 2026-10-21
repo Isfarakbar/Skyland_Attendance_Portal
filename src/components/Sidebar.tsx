@@ -131,8 +131,8 @@ export default function Sidebar({
             onClick={() => handleNavClick('dashboard')}
             className="flex items-center gap-2 cursor-pointer"
           >
-            <div className="bg-white rounded-xl p-1 shadow-xs">
-              <img src="/skyland-logo.png" alt="Skyland Energy" className="h-7 w-auto object-contain" />
+            <div className="bg-white rounded-xl p-1 shadow-xs w-9 h-9 flex items-center justify-center">
+              <img src="/skyland-icon.png" alt="Skyland App Icon" className="w-full h-full object-contain" />
             </div>
             <span className="font-black text-sm text-white tracking-tight">SKYLAND</span>
           </div>
@@ -222,8 +222,14 @@ export default function Sidebar({
             <div className="space-y-4">
               {/* Drawer Top Brand + Close Button */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
-                <div className="bg-white rounded-xl p-1.5 shadow-sm">
-                  <img src="/skyland-logo.png" alt="Skyland Energy" className="h-8 w-auto object-contain" />
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-white rounded-xl p-1.5 shadow-sm w-10 h-10 flex items-center justify-center">
+                    <img src="/skyland-icon.png" alt="Skyland App Icon" className="w-full h-full object-contain" />
+                  </div>
+                  <div>
+                    <span className="font-black text-sm text-white tracking-wider block leading-tight">SKYLAND ENERGY</span>
+                    <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest block">ATTENDANCE PORTAL</span>
+                  </div>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
@@ -330,16 +336,16 @@ export default function Sidebar({
       {/* ========================================================================= */}
       <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-64 bg-[#0D1527] border-r border-slate-800/80 z-30 justify-between select-none">
         <div className="p-4 space-y-4 overflow-y-auto">
-          {/* Top Brand with Skyland Energy Corporate Logo */}
+          {/* Top Brand with Skyland Left-Side Graphical Logo */}
           <div
             onClick={() => onSelectTab('dashboard')}
             className="flex items-center gap-3 cursor-pointer p-1 group"
           >
-            <div className="bg-white rounded-2xl p-2 shadow-md shadow-orange-500/10 flex items-center justify-center transition-transform group-hover:scale-105">
+            <div className="bg-white rounded-2xl p-2 shadow-md shadow-orange-500/10 w-12 h-12 flex items-center justify-center transition-transform group-hover:scale-105 shrink-0">
               <img
-                src="/skyland-logo.png"
-                alt="Skyland Energy"
-                className="h-9 w-auto object-contain"
+                src="/skyland-icon.png"
+                alt="Skyland App Icon"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>

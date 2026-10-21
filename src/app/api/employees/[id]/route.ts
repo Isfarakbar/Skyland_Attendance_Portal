@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { getSession } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
@@ -119,6 +120,14 @@ export async function PUT(
       if (body[field] !== undefined) {
         updateData[field] = body[field];
       }
+    }
+
+    if (typeof body.newPassword === 'string' && body.newPassword.trim().length > 0) {
+      if (body.newPassword.trim().length < 6) {
+        return NextResponse.json({ success: false, error: 'New password must be at least 6 characters' }, { status: 400 });
+      }
+      updateData.password = await bcrypt.hash(body.newPassword.trim(), 10);
+      updateData.isEmailVerified = true;
     }
 
     const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select(SENSITIVE_FIELDS);

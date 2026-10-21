@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MapPin, Navigation, Clock, CheckCircle2, AlertCircle, ExternalLink, ShieldCheck, LogOut } from 'lucide-react';
+import { MapPin, Navigation, CheckCircle2, AlertCircle, ExternalLink, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface FieldCheckInWidgetProps {
@@ -25,20 +25,67 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const handleCaptureGpsAndCheckIn = () => {
-    setGpsError(null);
-    setSuccessMsg(null);
-
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser or device. Please enable GPS location.');
+  // Two-stage fast GPS acquisition:
+  // 1. Attempts high-accuracy GPS lock (up to 7s, accepts 30s fresh fix)
+  // 2. If indoor roof blocks satellite signal, automatically falls back to fast network/Wi-Fi GPS
+  const acquireLiveGps = (
+    onSuccess: (coords: GeolocationCoordinates) => void,
+    onError: (msg: string) => void
+  ) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      onError('Geolocation is not supported by your browser or device. Please enable GPS location.');
       return;
     }
 
+    navigator.geolocation.getCurrentPosition(
+      (pos) => onSuccess(pos.coords),
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          onError('Location is required! Please turn ON your device Location and allow browser GPS permission to mark attendance.');
+          return;
+        }
+        // Fallback for indoor buildings where satellite GPS times out
+        navigator.geolocation.getCurrentPosition(
+          (fallbackPos) => onSuccess(fallbackPos.coords),
+          (fallbackErr) => {
+            switch (fallbackErr.code) {
+              case fallbackErr.PERMISSION_DENIED:
+                onError('Location is required! Please turn ON your device Location and allow GPS permission.');
+                break;
+              case fallbackErr.POSITION_UNAVAILABLE:
+                onError('Location information is unavailable. Please turn ON your device GPS.');
+                break;
+              case fallbackErr.TIMEOUT:
+                onError('GPS location request timed out. Please ensure Location is ON and try again.');
+                break;
+              default:
+                onError('Unable to retrieve GPS location. Location must be ON to mark attendance.');
+                break;
+            }
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 8000,
+            maximumAge: 60000,
+          }
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 7000,
+        maximumAge: 30000,
+      }
+    );
+  };
+
+  const handleCaptureGpsAndCheckIn = () => {
+    setGpsError(null);
+    setSuccessMsg(null);
     setGpsLoading(true);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
+    acquireLiveGps(
+      async (coords) => {
+        const { latitude, longitude, accuracy } = coords;
         setGpsLoading(false);
         setLoading(true);
 
@@ -69,27 +116,9 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
           setLoading(false);
         }
       },
-      (error) => {
+      (errMsg) => {
         setGpsLoading(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setGpsError('Location is required! Please turn ON your device location and allow browser GPS permission to mark attendance.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setGpsError('Location information is unavailable. Please turn ON your device GPS.');
-            break;
-          case error.TIMEOUT:
-            setGpsError('GPS location request timed out. Please ensure Location is ON and try again.');
-            break;
-          default:
-            setGpsError('Unable to retrieve GPS location. Location must be ON to mark attendance.');
-            break;
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+        setGpsError(errMsg);
       }
     );
   };
@@ -98,17 +127,11 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
     if (!confirm('Are you sure you want to check out and complete your shift for today?')) return;
     setGpsError(null);
     setSuccessMsg(null);
-
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser or device. Location must be ON to check out.');
-      return;
-    }
-
     setGpsLoading(true);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
+    acquireLiveGps(
+      async (coords) => {
+        const { latitude, longitude, accuracy } = coords;
         setGpsLoading(false);
         setLoading(true);
 
@@ -138,27 +161,9 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
           setLoading(false);
         }
       },
-      (error) => {
+      (errMsg) => {
         setGpsLoading(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setGpsError('Location is required to check out! Please turn ON your device GPS and allow location access.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setGpsError('Location information is unavailable. Please turn ON your device GPS to check out.');
-            break;
-          case error.TIMEOUT:
-            setGpsError('GPS location request timed out. Please ensure Location is ON and try again.');
-            break;
-          default:
-            setGpsError('Unable to retrieve GPS location for check-out.');
-            break;
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+        setGpsError(errMsg);
       }
     );
   };
@@ -175,8 +180,12 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
   const clockInFormatted = formatTime(attendance?.clockIn);
   const clockOutFormatted = formatTime(attendance?.clockOut);
   const location = attendance?.location;
+  const checkOutLocation = attendance?.checkOutLocation;
   const mapsUrl = location?.latitude && location?.longitude
     ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
+    : null;
+  const checkOutMapsUrl = checkOutLocation?.latitude && checkOutLocation?.longitude
+    ? `https://www.google.com/maps?q=${checkOutLocation.latitude},${checkOutLocation.longitude}`
     : null;
 
   return (
@@ -254,23 +263,37 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                 </div>
               </div>
 
-              {mapsUrl && (
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[#FF6B00] text-xs font-bold rounded-xl border border-slate-800 shadow-sm transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  View Exact GPS on Maps
-                  <ExternalLink className="w-3 h-3 text-slate-400" />
-                </a>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {mapsUrl && (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-[#FF6B00] text-xs font-bold rounded-xl border border-slate-800 shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    Check-In GPS Pin
+                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </a>
+                )}
+                {checkOutMapsUrl && (
+                  <a
+                    href={checkOutMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-indigo-400 text-xs font-bold rounded-xl border border-slate-800 shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    Check-Out GPS Pin
+                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </a>
+                )}
+              </div>
             </div>
 
             {location?.latitude && (
               <div className="px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-[11px] text-slate-400 flex flex-wrap items-center gap-3 font-mono">
-                <span>GPS: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</span>
+                <span>Check-In GPS: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}</span>
                 {location.accuracy && <span>• Accuracy: ±{Math.round(location.accuracy)}m</span>}
               </div>
             )}

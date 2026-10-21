@@ -41,12 +41,15 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    const user = await User.findById(session.userId);
+    const [user, settings] = await Promise.all([
+      User.findById(session.userId).select('isActive').lean(),
+      CompanySettings.findOne().lean(),
+    ]);
+
     if (!user || !user.isActive) {
       return NextResponse.json({ success: false, error: 'User not found or deactivated' }, { status: 403 });
     }
 
-    const settings = await CompanySettings.findOne().lean();
     const timezone = settings?.timezone || DEFAULT_TIMEZONE;
     const todayStr = getTodayDateString(new Date(), timezone);
 
@@ -79,12 +82,16 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      attendance.location = {
+      attendance.checkOutLocation = {
         latitude: latNum,
         longitude: lngNum,
-        siteName: siteName?.trim() || attendance.location?.siteName || 'Verified GPS Location',
-        accuracy: accuracy ? Number(accuracy) : attendance.location?.accuracy,
+        siteName: siteName?.trim() || attendance.location?.siteName || 'Verified GPS Check-Out',
+        accuracy: accuracy ? Number(accuracy) : undefined,
       };
+
+      if (!attendance.location?.latitude) {
+        attendance.location = attendance.checkOutLocation;
+      }
 
       if (notes?.trim()) {
         attendance.notes = `${attendance.notes ? attendance.notes + ' • ' : ''}${notes.trim()}`;
