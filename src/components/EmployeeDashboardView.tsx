@@ -21,6 +21,8 @@ import {
   RefreshCw,
   AlertCircle,
   Zap,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import FieldCheckInWidget from '@/components/FieldCheckInWidget';
 import DailyTaskSection from '@/components/DailyTaskSection';
@@ -62,6 +64,9 @@ export default function EmployeeDashboardView({
   const netSalary = employeeStats?.netSalary ?? baseSalary;
   const presentDays = employeeStats?.presentDays ?? (isCheckedIn ? 1 : 0);
   const lateDays = employeeStats?.lateDays ?? (attendance?.status === 'LATE' ? 1 : 0);
+
+  // Privacy mask: pay/wage is hidden by default (like banking apps), revealable via Eye icon
+  const [showPay, setShowPay] = useState(false);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
@@ -164,22 +169,50 @@ export default function EmployeeDashboardView({
           </p>
         </div>
 
-        {/* Card 3: Estimated Salary */}
-        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
+        {/* Card 3: Estimated Salary (Hidden by default, revealable with Eye icon like banking apps) */}
+        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs relative">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Estimated Wage
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Estimated Wage
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPay((prev) => !prev)}
+                className="p-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center shadow-xs"
+                title={showPay ? 'Hide salary' : 'View salary'}
+                aria-label={showPay ? 'Hide salary' : 'View salary'}
+              >
+                {showPay ? (
+                  <EyeOff className="w-3.5 h-3.5 text-slate-400 hover:text-white" />
+                ) : (
+                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+              </button>
+            </div>
             <div className="w-8 h-8 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-white mt-2">
-            PKR {netSalary.toLocaleString()}
-          </p>
-          <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
-            {baseSalary > 0 ? `Base: PKR ${baseSalary.toLocaleString()}` : 'Base: Not configured'}
-          </p>
+
+          <div
+            onClick={() => setShowPay((prev) => !prev)}
+            className="cursor-pointer select-none"
+            title={showPay ? 'Click to hide' : 'Click to view'}
+          >
+            <p className="text-xl sm:text-2xl font-black text-white mt-2 tracking-tight">
+              {showPay ? (
+                `PKR ${netSalary.toLocaleString()}`
+              ) : (
+                <span className="tracking-widest font-mono text-slate-300">PKR ••••••</span>
+              )}
+            </p>
+            <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
+              {showPay
+                ? (baseSalary > 0 ? `Base: PKR ${baseSalary.toLocaleString()}` : 'Base: Not configured')
+                : 'Base: PKR ••••••'}
+            </p>
+          </div>
         </div>
       </div>
 

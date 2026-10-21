@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, FileSpreadsheet, DollarSign, Calendar, Search, AlertCircle, ArrowDownRight, User } from 'lucide-react';
+import { Download, FileSpreadsheet, DollarSign, Calendar, Search, AlertCircle, ArrowDownRight, User, Eye, EyeOff } from 'lucide-react';
 import { PayrollRecord } from '@/app/api/payroll/route';
 
 interface SalarySheetProps {
@@ -29,6 +29,8 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Hidden by default for employee personal view like banking apps, revealable via Eye icon
+  const [showPay, setShowPay] = useState(!isEmployeeOnly);
 
   useEffect(() => {
     fetchPayroll();
@@ -102,6 +104,21 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               />
             </div>
 
+            {/* Eye toggle button for privacy */}
+            <button
+              type="button"
+              onClick={() => setShowPay((prev) => !prev)}
+              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-bold rounded-2xl shadow-xs transition-all cursor-pointer flex items-center gap-2"
+              title={showPay ? 'Hide salary amounts' : 'View salary amounts'}
+            >
+              {showPay ? (
+                <EyeOff className="w-4 h-4 text-slate-400" />
+              ) : (
+                <Eye className="w-4 h-4 text-emerald-400" />
+              )}
+              <span>{showPay ? 'Hide Figures' : 'View Figures'}</span>
+            </button>
+
             {!isEmployeeOnly && (
               <button
                 onClick={handleDownloadCompanySheet}
@@ -131,7 +148,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               {isEmployeeOnly ? 'Base Salary' : 'Total Base Salaries'}
             </div>
             <div className="text-xl font-black text-white mt-1">
-              PKR {summary.totalBaseSalary.toLocaleString()}
+              {showPay ? `PKR ${summary.totalBaseSalary.toLocaleString()}` : <span className="font-mono tracking-widest text-slate-300">PKR ••••••</span>}
             </div>
             <div className="text-[11px] text-slate-500 mt-0.5">Gross monthly earnings</div>
           </div>
@@ -142,7 +159,9 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               Excess Leave Deductions
             </div>
             <div className="text-xl font-black text-rose-400 mt-1">
-              - PKR {(summary as any).totalLeaveDeductions !== undefined ? (summary as any).totalLeaveDeductions.toLocaleString() : summary.totalDeductions.toLocaleString()}
+              {showPay
+                ? `- PKR ${(summary as any).totalLeaveDeductions !== undefined ? (summary as any).totalLeaveDeductions.toLocaleString() : summary.totalDeductions.toLocaleString()}`
+                : <span className="font-mono tracking-widest text-rose-300">- PKR ••••••</span>}
             </div>
             <div className="text-[11px] text-rose-300/70 mt-0.5">Exceeding 1 off / 2 half leaves</div>
           </div>
@@ -153,7 +172,9 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               Tax Withholding
             </div>
             <div className="text-xl font-black text-amber-400 mt-1">
-              - PKR {((summary as any).totalTaxDeductions ?? 0).toLocaleString()}
+              {showPay
+                ? `- PKR ${((summary as any).totalTaxDeductions ?? 0).toLocaleString()}`
+                : <span className="font-mono tracking-widest text-amber-300">- PKR ••••••</span>}
             </div>
             <div className="text-[11px] text-amber-300/70 mt-0.5">FBR / Income tax deduction</div>
           </div>
@@ -163,7 +184,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               {isEmployeeOnly ? 'Net Payable Salary' : 'Total Net Payroll'}
             </div>
             <div className="text-xl font-black text-emerald-400 mt-1">
-              PKR {summary.totalPayroll.toLocaleString()}
+              {showPay ? `PKR ${summary.totalPayroll.toLocaleString()}` : <span className="font-mono tracking-widest text-emerald-300">PKR ••••••</span>}
             </div>
             <div className="text-[11px] text-emerald-300/70 mt-0.5">Final take-home amount</div>
           </div>
@@ -234,12 +255,12 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
 
                     {/* Base Salary */}
                     <td className="py-3.5 px-3 text-right font-medium text-slate-300">
-                      PKR {record.baseSalary.toLocaleString()}
+                      {showPay ? `PKR ${record.baseSalary.toLocaleString()}` : <span className="font-mono text-xs text-slate-400">••••••</span>}
                     </td>
 
                     {/* Per Day Rate */}
                     <td className="py-3.5 px-3 text-right font-mono font-medium text-amber-400 bg-amber-950/20 rounded-lg">
-                      PKR {record.dailyRate.toLocaleString()}
+                      {showPay ? `PKR ${record.dailyRate.toLocaleString()}` : <span className="font-mono text-xs text-amber-400/80">••••••</span>}
                       <span className="text-[10px] text-slate-400 block font-sans">/day</span>
                     </td>
 
@@ -323,7 +344,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                     {/* Net Salary */}
                     <td className="py-3.5 px-3 text-right">
                       <span className="font-black text-emerald-400 text-sm">
-                        PKR {record.netSalary.toLocaleString()}
+                        {showPay ? `PKR ${record.netSalary.toLocaleString()}` : <span className="font-mono text-xs">PKR ••••••</span>}
                       </span>
                     </td>
 
