@@ -1,0 +1,57 @@
+{
+  "name": "Skyland Attendance Portal",
+  "short_name": "Skyland",
+  "description": "Skyland Energy Workforce & Live GPS Attendance Portal",
+  "id": "/?app=skyland-v6",
+  "start_url": "/?app=skyland-v6",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1120",
+  "theme_color": "#FF6B00",
+  "prefer_related_applications": false,
+  "lang": "en",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192-v6.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-v6.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192-v6.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512-v6.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mark GPS Attendance",
+      "short_name": "Check In",
+      "description": "Mark your daily attendance with live GPS",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-192-v6.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Sign In / Register",
+      "short_name": "Sign In",
+      "description": "Sign in to Skyland Attendance Portal",
+      "url": "/login",
+      "icons": [{ "src": "/icon-192-v6.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Skyland Attendance Portal',
   description: 'Skyland Energy Workforce & Live GPS Attendance Portal',
-  manifest: '/manifest.json',
+  manifest: '/manifest-v6.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -31,14 +31,47 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon-192-v5.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512-v5.png', sizes: '512x512', type: 'image/png' },
+      { url: '/icon-192-v6.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512-v6.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
   },
 };
+
+const EARLY_PWA_CAPTURE_SCRIPT = `
+(function() {
+  try {
+    window.__deferredPwaPrompt = window.__deferredPwaPrompt || null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.__deferredPwaPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa-prompt-captured'));
+    });
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        var hadOldCache = false;
+        keys.forEach(function(k) {
+          if (k !== 'skyland-pwa-v6') {
+            hadOldCache = true;
+            caches.delete(k);
+          }
+        });
+        if (hadOldCache && !sessionStorage.getItem('skyland_v6_reloaded')) {
+          sessionStorage.setItem('skyland_v6_reloaded', '1');
+          window.location.reload();
+        }
+      });
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(function(reg) {
+        reg.update();
+      }).catch(function() {});
+    }
+  } catch (err) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -50,6 +83,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: EARLY_PWA_CAPTURE_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         {children}
         <InstallAppBanner />
