@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Smartphone, Download, X, Share, PlusSquare, CheckCircle, MoreVertical, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Smartphone, Download, X, Share, PlusSquare, CheckCircle, MoreVertical, Loader2 } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,27 +10,43 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function InstallAppBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [installingInProgress, setInstallingInProgress] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [justInstalled, setJustInstalled] = useState(false);
 
   useEffect(() => {
-    // 1. Instant Service Worker Registration (No waiting for window.onload)
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then((reg) => {
-          console.log('PWA Service Worker registered at scope:', reg.scope);
+    if (typeof window === 'undefined') return;
+
+    // 1. Purge any legacy PWA caches (v1-v4) immediately so Android WebAPK icon hashes match the server 100%
+    if ('caches' in window) {
+      caches
+        .keys()
+        .then((keys) => {
+          keys.forEach((key) => {
+            if (key !== 'skyland-pwa-v5') {
+              caches.delete(key).catch(() => {});
+            }
+          });
         })
-        .catch((err) => {
-          console.log('PWA Service Worker registration notice:', err);
-        });
+        .catch(() => {});
     }
 
-    // 2. Check if already installed / standalone
+    // 2. Register & force-update Service Worker immediately
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then((reg) => {
+          reg.update().catch(() => {});
+        })
+        .catch(() => {});
+    }
+
+    // 3. Check if already running inside installed standalone app
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
@@ -41,49 +57,52 @@ export default function InstallAppBanner() {
       return;
     }
 
-    // 3. Platform Detection
+    // 4. Platform Detection
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     const isAndroidDevice = /android/.test(userAgent);
-    const isMobile = isIosDevice || isAndroidDevice || window.innerWidth <= 768;
 
     setIsIOS(isIosDevice);
     setIsAndroid(isAndroidDevice);
 
-    // 4. Capture native browser install prompt (Android Chrome, Edge, desktop Chrome)
+    // 5. Capture native browser install prompt (Android Chrome, Edge, desktop Chrome)
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const promptEvent = e as BeforeInstallPromptEvent;
+      deferredPromptRef.current = promptEvent;
+      setDeferredPrompt(promptEvent);
       setShowBanner(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-    // 5. Track successful install
-    window.addEventListener('appinstalled', () => {
+    // 6. Track when Android/Chrome finishes installing the WebAPK
+    const handleAppInstalled = () => {
+      setInstallingInProgress(false);
       setIsInstalled(true);
       setShowBanner(false);
       setShowGuideModal(false);
       setJustInstalled(true);
-      setTimeout(() => setJustInstalled(false), 5000);
-    });
+      setTimeout(() => setJustInstalled(false), 8000);
+    };
 
-    // 6. Surface notification banner immediately when opening portal link (if not installed)
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // 7. Surface notification banner immediately when opening portal link (if not installed)
     const dismissedTime = sessionStorage.getItem('skyland_pwa_dismissed');
     const isRecentlyDismissed =
-      dismissedTime && Date.now() - parseInt(dismissedTime, 10) < 15 * 60 * 1000; // 15 mins in current session
+      dismissedTime && Date.now() - parseInt(dismissedTime, 10) < 15 * 60 * 1000;
 
-    if (!isRecentlyDismissed && !isStandalone) {
-      const timer = setTimeout(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (!isRecentlyDismissed) {
+      timer = setTimeout(() => {
         setShowBanner(true);
-      }, 150);
-      return () => clearTimeout(timer);
+      }, 250);
     }
 
-    // 7. Global listener for Navbar "Install App" button clicks
+    // 8. Global listener for "Install App" button clicks
     const handleOpenInstall = () => {
-      if (deferredPrompt) {
-        handleInstallClick();
+      if (deferredPromptRef.current) {
+        triggerNativePrompt(deferredPromptRef.current);
       } else {
         setShowGuideModal(true);
       }
@@ -91,31 +110,58 @@ export default function InstallAppBanner() {
     window.addEventListener('open-pwa-install', handleOpenInstall);
 
     return () => {
+      if (timer) clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
       window.removeEventListener('open-pwa-install', handleOpenInstall);
     };
-  }, [deferredPrompt]);
+  }, []);
+
+  const triggerNativePrompt = async (promptEvent: BeforeInstallPromptEvent) => {
+    try {
+      await promptEvent.prompt();
+      const choiceResult = await promptEvent.userChoice;
+      deferredPromptRef.current = null;
+      setDeferredPrompt(null);
+
+      if (choiceResult.outcome === 'accepted') {
+        setShowBanner(false);
+        setShowGuideModal(false);
+        setInstallingInProgress(true);
+        // Fallback timeout in case the browser doesn't fire 'appinstalled'
+        setTimeout(() => {
+          setInstallingInProgress((prev) => {
+            if (prev) {
+              setJustInstalled(true);
+              setTimeout(() => setJustInstalled(false), 7000);
+            }
+            return false;
+          });
+        }, 12000);
+      }
+    } catch (err) {
+      console.error('Install prompt error:', err);
+      setShowGuideModal(true);
+    }
+  };
 
   const handleInstallClick = async () => {
-    // If native prompt is captured, trigger it immediately
-    if (deferredPrompt) {
-      try {
-        await deferredPrompt.prompt();
-        const choiceResult = await deferredPrompt.userChoice;
-        if (choiceResult.outcome === 'accepted') {
-          setShowBanner(false);
-          setShowGuideModal(false);
-          setJustInstalled(true);
-          setTimeout(() => setJustInstalled(false), 5000);
+    if (deferredPromptRef.current) {
+      await triggerNativePrompt(deferredPromptRef.current);
+      return;
+    }
+
+    // If user clicked very fast before Chrome finished evaluating beforeinstallprompt, wait up to 1.5s
+    if (isAndroid) {
+      for (let i = 0; i < 6; i++) {
+        await new Promise((r) => setTimeout(r, 250));
+        if (deferredPromptRef.current) {
+          await triggerNativePrompt(deferredPromptRef.current);
+          return;
         }
-        setDeferredPrompt(null);
-        return;
-      } catch (err) {
-        console.error('Install prompt error:', err);
       }
     }
 
-    // Otherwise (iOS, or Android without deferred prompt triggered yet), open visual guide
     setShowGuideModal(true);
   };
 
@@ -124,25 +170,39 @@ export default function InstallAppBanner() {
     sessionStorage.setItem('skyland_pwa_dismissed', Date.now().toString());
   };
 
-  if (isInstalled && !justInstalled) return null;
+  if (isInstalled && !justInstalled && !installingInProgress) return null;
 
   return (
     <>
-      {/* Success Notification after install */}
-      {justInstalled && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
-          <CheckCircle className="w-5 h-5 text-emerald-100" />
-          <span className="text-sm font-bold">Skyland App successfully installed!</span>
+      {/* Live Installing Progress Toast (while Android builds the WebAPK) */}
+      {installingInProgress && (
+        <div className="fixed top-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-md z-50 bg-[#0D1527] border border-orange-500/50 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3.5 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Loader2 className="w-5 h-5 text-[#FF6B00] animate-spin shrink-0" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-bold text-white">Building &amp; Installing Skyland App...</p>
+            <p className="text-slate-300">Keep Chrome open for 5–10 seconds while Android adds it to your Apps &amp; Home Screen.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Success Notification after Android finishes installing */}
+      {justInstalled && !installingInProgress && (
+        <div className="fixed top-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-md z-50 bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle className="w-5 h-5 text-emerald-100 shrink-0" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-bold">Skyland App Installed!</p>
+            <p className="text-emerald-100">Look for &ldquo;Skyland&rdquo; on your Home Screen or at the end of your App Drawer.</p>
+          </div>
         </div>
       )}
 
       {/* Floating App Download Notification Banner */}
-      {showBanner && !isInstalled && (
+      {showBanner && !isInstalled && !installingInProgress && (
         <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-40 bg-[#0D1527]/95 backdrop-blur-md text-white p-4 sm:p-5 rounded-3xl shadow-2xl border border-orange-500/40 animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25">
-                <img src="/skyland-icon.png" alt="Skyland App Icon" className="w-full h-full object-contain" />
+                <img src="/icon-192-v5.png" alt="Skyland App Icon" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -170,7 +230,15 @@ export default function InstallAppBanner() {
               className="flex-1 py-2.5 px-4 bg-[#FF6B00] hover:bg-[#FF8533] text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               <Download className="w-4 h-4" />
-              <span>{isIOS ? 'Install on iPhone' : isAndroid ? 'Install on Android Phone' : 'Install Skyland App'}</span>
+              <span>
+                {deferredPrompt
+                  ? 'Install App Now'
+                  : isIOS
+                  ? 'Install on iPhone'
+                  : isAndroid
+                  ? 'Install on Android Phone'
+                  : 'Install Skyland App'}
+              </span>
             </button>
 
             <button
@@ -196,7 +264,7 @@ export default function InstallAppBanner() {
                   <h3 className="font-bold text-base text-white">
                     {isIOS ? 'Install on iPhone / iPad' : 'Install on Android'}
                   </h3>
-                  <p className="text-[11px] text-slate-400">Add to your Home Screen as an App</p>
+                  <p className="text-[11px] text-slate-400">Add to your Home Screen &amp; App Drawer</p>
                 </div>
               </div>
               <button
@@ -253,9 +321,9 @@ export default function InstallAppBanner() {
                   </div>
                   <div>
                     <p className="font-bold text-slate-100 flex items-center gap-1.5">
-                      Tap Chrome menu <MoreVertical className="w-3.5 h-3.5 text-[#FF6B00] inline" />
+                      Open in Chrome &amp; tap menu <MoreVertical className="w-3.5 h-3.5 text-[#FF6B00] inline" />
                     </p>
-                    <p className="text-slate-400 mt-0.5">The three dots in the top-right corner of Chrome.</p>
+                    <p className="text-slate-400 mt-0.5">Tap the three dots in the top-right corner of Google Chrome.</p>
                   </div>
                 </div>
 
@@ -264,10 +332,12 @@ export default function InstallAppBanner() {
                     2
                   </div>
                   <div>
-                    <p className="font-bold text-slate-100 flex items-center gap-1.5">
+                    <p className="font-bold text-slate-100">
                       Tap &quot;Install app&quot; or &quot;Add to Home screen&quot;
                     </p>
-                    <p className="text-slate-400 mt-0.5">Select the option from the browser menu.</p>
+                    <p className="text-slate-400 mt-0.5">
+                      If it says &quot;Open Skyland&quot;, an older version is already installed — tap it to open or uninstall the old one first.
+                    </p>
                   </div>
                 </div>
 
@@ -276,8 +346,10 @@ export default function InstallAppBanner() {
                     3
                   </div>
                   <div>
-                    <p className="font-bold text-slate-100">Tap &quot;Install&quot; to confirm</p>
-                    <p className="text-slate-400 mt-0.5">The native APK app will install on your phone instantly.</p>
+                    <p className="font-bold text-slate-100">Wait 5–10 seconds for Android installer</p>
+                    <p className="text-slate-400 mt-0.5">
+                      Keep Chrome open for a few seconds until Android finishes adding &quot;Skyland&quot; to your Home Screen &amp; App Drawer.
+                    </p>
                   </div>
                 </div>
               </div>

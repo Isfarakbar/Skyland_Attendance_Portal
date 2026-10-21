@@ -25,14 +25,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 0. Root route '/': go straight to /dashboard if authenticated, otherwise straight to /login (Sign In / Register)
-  if (pathname === '/') {
-    if (isValidSession) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
   // 1. Protected routes: /dashboard
   if (pathname.startsWith('/dashboard')) {
     if (!isValidSession) {
@@ -55,5 +47,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/login', '/register'],
 };

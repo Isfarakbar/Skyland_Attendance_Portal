@@ -1,20 +1,8 @@
-// Skyland Attendance Portal - Progressive Web App Service Worker
-const CACHE_NAME = 'skyland-pwa-v4';
-const STATIC_ASSETS = [
-  '/manifest.json',
-  '/skyland-icon.png',
-  '/icon-192.png?v=4',
-  '/icon-512.png?v=4',
-  '/apple-touch-icon.png?v=4',
-];
+// Skyland Attendance Portal - Progressive Web App Service Worker (v5)
+const CACHE_NAME = 'skyland-pwa-v5';
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {});
-    })
-  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -27,48 +15,39 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Always use Network-First for API routes and HTML page navigations so auth/redirects are instant and fresh
+  // Never serve manifest or icons from stale SW cache so Android WebAPK SHA-256 icon verification always matches the server
   if (
-    event.request.mode === 'navigate' ||
+    url.pathname.endsWith('manifest.json') ||
+    url.pathname.includes('icon-') ||
+    url.pathname.includes('skyland-icon') ||
+    url.pathname.includes('apple-touch-icon') ||
     url.pathname.startsWith('/api/') ||
-    url.pathname === '/' ||
-    url.pathname.startsWith('/login') ||
-    url.pathname.startsWith('/register') ||
-    url.pathname.startsWith('/dashboard')
+    event.request.mode === 'navigate'
   ) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
-      })
+      fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first strategy only for static image/font/bundle assets
+  // Network-first with cache fallback for other assets
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
