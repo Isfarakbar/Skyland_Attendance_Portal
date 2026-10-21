@@ -35,8 +35,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Auth routes: /login, /register -> redirect to /dashboard if already logged in
-  if (pathname === '/login' || pathname === '/register') {
+  // 2. Auth routes: /login, /register, and root entry '/' -> redirect to /dashboard if already logged in
+  if (pathname === '/' || pathname === '/login' || pathname === '/register') {
     if (isValidSession) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -47,5 +47,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: ['/', '/dashboard/:path*', '/login', '/register'],
 };

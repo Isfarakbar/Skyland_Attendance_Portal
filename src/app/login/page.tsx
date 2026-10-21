@@ -9,8 +9,24 @@ export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'register'>('signin');
 
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [hasCachedSession, setHasCachedSession] = useState(false);
+
   useEffect(() => {
-    // If the user already has a valid persistent session, forward straight to /dashboard
+    // Fast local check: if session exists in cache, forward to dashboard immediately
+    try {
+      const cached = localStorage.getItem('skyland_user_cache');
+      if (cached) {
+        const user = JSON.parse(cached);
+        if (user && user.email) {
+          setHasCachedSession(true);
+          router.replace('/dashboard');
+          return;
+        }
+      }
+    } catch {}
+
+    // If the user already has a valid persistent session cookie, forward straight to /dashboard
     fetch('/api/auth/me')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -18,10 +34,15 @@ export default function LoginPage() {
           try {
             localStorage.setItem('skyland_user_cache', JSON.stringify(data.user));
           } catch {}
+          setHasCachedSession(true);
           router.replace('/dashboard');
+        } else {
+          setCheckingSession(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setCheckingSession(false);
+      });
   }, [router]);
 
   // Sign In state
@@ -121,6 +142,19 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (hasCachedSession) {
+    return (
+      <div className="min-h-screen bg-[#0B1120] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs font-black uppercase tracking-wider text-orange-400">
+            Opening Skyland Portal...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-slate-200 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

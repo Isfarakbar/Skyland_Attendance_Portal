@@ -52,6 +52,7 @@ export default function TopHeader({
   const handleLogout = async () => {
     try {
       localStorage.removeItem('skyland_user_cache');
+      localStorage.removeItem('skyland_active_tab');
     } catch {}
     try {
       await fetch('/api/auth/logout', { method: 'POST' });

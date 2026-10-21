@@ -19,13 +19,79 @@ import CompanySettingsTab from '@/components/CompanySettingsTab';
 import DeveloperConsole from '@/components/DeveloperConsole';
 import DailyTaskSection from '@/components/DailyTaskSection';
 
+const VALID_TABS = [
+  'dashboard',
+  'people',
+  'hiring',
+  'apps',
+  'salary',
+  'calendar',
+  'reviews',
+  'settings',
+  'developer',
+];
+
+const getStoredTab = (): string => {
+  if (typeof window === 'undefined') return 'dashboard';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlTab = params.get('tab');
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      return urlTab;
+    }
+    const hash = window.location.hash.replace('#', '');
+    if (hash && VALID_TABS.includes(hash)) {
+      return hash;
+    }
+    const saved = localStorage.getItem('skyland_active_tab');
+    if (saved && VALID_TABS.includes(saved)) {
+      return saved;
+    }
+  } catch {}
+  return 'dashboard';
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Active Tab: default to 'dashboard'
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  // Active Tab state: persisted across refreshes via URL param and localStorage
+  const [activeTab, setActiveTabState] = useState<string>('dashboard');
+
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('skyland_active_tab', tab);
+        const url = new URL(window.location.href);
+        if (tab === 'dashboard') {
+          url.searchParams.delete('tab');
+        } else {
+          url.searchParams.set('tab', tab);
+        }
+        const newUrl = url.pathname + (url.search ? url.search : '') + url.hash;
+        window.history.replaceState(null, '', newUrl);
+      } catch {}
+    }
+  };
+
+  useEffect(() => {
+    // Restore tab on initial load / refresh
+    const initialTab = getStoredTab();
+    if (initialTab && initialTab !== 'dashboard') {
+      setActiveTabState(initialTab);
+    }
+
+    // Keep active tab in sync if user uses browser Back / Forward buttons
+    const handlePopState = () => {
+      const currentTab = getStoredTab();
+      setActiveTabState(currentTab);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Employee Punch & Today data
   const [todayData, setTodayData] = useState<any>(null);
