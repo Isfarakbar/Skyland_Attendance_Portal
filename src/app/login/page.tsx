@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Mail, User, ArrowRight, LogIn, UserPlus } from 'lucide-react';
@@ -8,6 +8,21 @@ import { Lock, Mail, User, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'register'>('signin');
+
+  useEffect(() => {
+    // If the user already has a valid persistent session, forward straight to /dashboard
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.success && data?.user) {
+          try {
+            localStorage.setItem('skyland_user_cache', JSON.stringify(data.user));
+          } catch {}
+          router.replace('/dashboard');
+        }
+      })
+      .catch(() => {});
+  }, [router]);
 
   // Sign In state
   const [email, setEmail] = useState('');
@@ -50,6 +65,11 @@ export default function LoginPage() {
           setError(data.error || 'Invalid email or password');
         }
       } else {
+        if (data.user) {
+          try {
+            localStorage.setItem('skyland_user_cache', JSON.stringify(data.user));
+          } catch {}
+        }
         router.replace('/dashboard');
         router.refresh();
       }

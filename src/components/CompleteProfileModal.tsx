@@ -63,7 +63,6 @@ export default function CompleteProfileModal({
   const [shiftTiming, setShiftTiming] = useState(user.shiftTiming || '09:00 AM - 06:00 PM');
   const [reportingManager, setReportingManager] = useState(user.reportingManager || 'Management');
   const [employmentType, setEmploymentType] = useState(user.employmentType || 'Full-time Permanent');
-  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD'>(user.workMode || 'OFFICE');
   const [baseSalary, setBaseSalary] = useState<number>(user.baseSalary || 70000);
 
   const isElevated = ['developer', 'admin', 'ceo'].includes(user?.role);
@@ -167,7 +166,6 @@ export default function CompleteProfileModal({
             shiftTiming: shiftTiming.trim(),
             reportingManager: reportingManager.trim(),
             employmentType: employmentType.trim(),
-            workMode,
             baseSalary: Number(baseSalary),
           }
         : {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSession, setSessionCookie } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -15,6 +15,17 @@ export async function GET() {
     if (!user || !user.isActive) {
       return NextResponse.json({ success: false, user: null }, { status: 401 });
     }
+
+    // Sliding 365-day session renewal so installed mobile app users never get logged out
+    await setSessionCookie({
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      employeeId: user.employeeId,
+      department: user.department,
+      designation: user.designation,
+    });
 
     return NextResponse.json({
       success: true,
@@ -143,6 +154,17 @@ export async function PUT(req: NextRequest) {
     if (!updatedUser) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
+
+    // Refresh session cookie with updated profile info
+    await setSessionCookie({
+      userId: updatedUser._id.toString(),
+      email: updatedUser.email,
+      name: updatedUser.name,
+      role: updatedUser.role,
+      employeeId: updatedUser.employeeId,
+      department: updatedUser.department,
+      designation: updatedUser.designation,
+    });
 
     return NextResponse.json({
       success: true,

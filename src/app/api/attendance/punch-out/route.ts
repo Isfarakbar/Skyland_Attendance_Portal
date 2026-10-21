@@ -87,12 +87,15 @@ export async function POST(req: NextRequest) {
     attendance.clockOut = now;
     attendance.totalBreakMinutes = totalBreakMinutes;
     attendance.totalWorkMinutes = totalWorkMinutes;
-    attendance.location = {
+    attendance.checkOutLocation = {
       latitude: latNum,
       longitude: lngNum,
-      siteName: attendance.location?.siteName || 'Verified GPS Location',
-      accuracy: accuracy ? Number(accuracy) : attendance.location?.accuracy,
+      siteName: attendance.location?.siteName || 'Verified GPS Check-Out',
+      accuracy: accuracy ? Number(accuracy) : undefined,
     };
+    if (!attendance.location?.latitude) {
+      attendance.location = attendance.checkOutLocation;
+    }
 
     // Check half-day threshold
     const halfDayHours = settings?.halfDayThresholdHours || 4;

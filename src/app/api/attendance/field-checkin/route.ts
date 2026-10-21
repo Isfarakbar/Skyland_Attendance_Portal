@@ -155,7 +155,19 @@ export async function POST(req: NextRequest) {
       attendance.notes = noteText;
     }
 
-    await attendance.save();
+    try {
+      await attendance.save();
+    } catch (saveErr: unknown) {
+      if ((saveErr as { code?: number })?.code === 11000) {
+        const existing = await Attendance.findOne({ user: session.userId, date: todayStr });
+        return NextResponse.json({
+          success: true,
+          message: 'Attendance already recorded for today!',
+          attendance: existing,
+        });
+      }
+      throw saveErr;
+    }
 
     return NextResponse.json({
       success: true,

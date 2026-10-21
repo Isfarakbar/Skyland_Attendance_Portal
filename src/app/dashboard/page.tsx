@@ -42,6 +42,17 @@ export default function DashboardPage() {
   const [isCompleteProfileOpen, setIsCompleteProfileOpen] = useState(false);
 
   useEffect(() => {
+    // Instant local hydration so installed app opens immediately without waiting for network
+    try {
+      const cached = localStorage.getItem('skyland_user_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.email) {
+          setUser(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
     fetchSessionAndData();
   }, []);
 
@@ -68,8 +79,17 @@ export default function DashboardPage() {
         fetch('/api/attendance/today'),
       ]);
 
-      if (!meRes.ok) {
+      if (meRes.status === 401 || meRes.status === 403) {
+        try {
+          localStorage.removeItem('skyland_user_cache');
+        } catch {}
         router.push('/login');
+        return;
+      }
+
+      if (!meRes.ok) {
+        // Temporary server/network blip — keep cached user logged in rather than forcing re-login
+        setLoading(false);
         return;
       }
 
@@ -79,11 +99,17 @@ export default function DashboardPage() {
       ]);
 
       if (!data.user) {
+        try {
+          localStorage.removeItem('skyland_user_cache');
+        } catch {}
         router.push('/login');
         return;
       }
 
       setUser(data.user);
+      try {
+        localStorage.setItem('skyland_user_cache', JSON.stringify(data.user));
+      } catch {}
       if (todayJson?.success) {
         setTodayData(todayJson);
       }
@@ -95,7 +121,10 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error(err);
-      router.push('/login');
+      // Do not log out on temporary network error if user is already hydrated from cache
+      if (!localStorage.getItem('skyland_user_cache')) {
+        router.push('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -507,7 +536,13 @@ export default function DashboardPage() {
           user={user}
           onClose={() => setIsCompleteProfileOpen(false)}
           onProfileUpdated={(updated) => {
-            setUser((prev: any) => ({ ...prev, ...updated }));
+            setUser((prev: any) => {
+              const merged = { ...prev, ...updated };
+              try {
+                localStorage.setItem('skyland_user_cache', JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
           }}
         />
       )}

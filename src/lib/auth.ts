@@ -7,6 +7,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'skyland_super_secret_jwt_key_2026_
 const key = new TextEncoder().encode(JWT_SECRET);
 
 export const COOKIE_NAME = 'skyland_token';
+// 365 days persistent session so employees never have to log in daily after installing the app
+export const SESSION_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 
 export interface TokenPayload {
   userId: string;
@@ -31,7 +33,7 @@ export async function signToken(payload: TokenPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime('365d')
     .sign(key);
 }
 
@@ -60,12 +62,18 @@ export async function getSession(): Promise<TokenPayload | null> {
 export async function setSessionCookie(payload: TokenPayload): Promise<string> {
   const token = await signToken(payload);
   const cookieStore = await cookies();
+  const expiresDate = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
+
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.COOKIE_SECURE === 'true' || process.env.VERCEL === '1',
+    secure:
+      process.env.NODE_ENV === 'production' ||
+      process.env.COOKIE_SECURE === 'true' ||
+      process.env.VERCEL === '1',
     sameSite: 'lax',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    expires: expiresDate,
   });
   return token;
 }

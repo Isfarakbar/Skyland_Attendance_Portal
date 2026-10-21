@@ -61,6 +61,9 @@ export default function Sidebar({
 
   const handleLogout = async () => {
     try {
+      localStorage.removeItem('skyland_user_cache');
+    } catch {}
+    try {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/login');
       router.refresh();

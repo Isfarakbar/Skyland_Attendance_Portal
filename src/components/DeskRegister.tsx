@@ -39,11 +39,21 @@ interface RegisterEmployee {
   isDirty?: boolean;
 }
 
+function getPktDateString(d: Date = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Karachi',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+  } catch {
+    return d.toISOString().split('T')[0];
+  }
+}
+
 export default function DeskRegister() {
-  const [date, setDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  const [date, setDate] = useState(() => getPktDateString());
   const [employees, setEmployees] = useState<RegisterEmployee[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -149,14 +159,12 @@ export default function DeskRegister() {
   };
 
   const handleJumpToToday = () => {
-    const today = new Date();
-    setDate(today.toISOString().split('T')[0]);
+    setDate(getPktDateString(new Date()));
   };
 
   const handleJumpToYesterday = () => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    setDate(d.toISOString().split('T')[0]);
+    const d = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    setDate(getPktDateString(d));
   };
 
   const handleSaveSingleEmployee = async (emp: RegisterEmployee) => {
@@ -225,8 +233,9 @@ export default function DeskRegister() {
   };
 
   const handleSaveRegister = async () => {
-    // Only save employees who have an explicit status selected (never auto-mark unmarked as present)
-    const markedEmployees = employees.filter((e) => e.status !== null);
+    // Prefer saving modified/new rows so untouched GPS check-ins keep their exact original metadata
+    const dirtyMarked = employees.filter((e) => e.status !== null && (e.isDirty || !e.isSaved));
+    const markedEmployees = dirtyMarked.length > 0 ? dirtyMarked : employees.filter((e) => e.status !== null);
 
     if (markedEmployees.length === 0) {
       setMessage({

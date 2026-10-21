@@ -25,14 +25,22 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     );
   }
 
-  if (cached.conn) {
+  // Ensure cached connection is actually connected (readyState === 1)
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
+  }
+
+  if (mongoose.connection.readyState !== 1 && mongoose.connection.readyState !== 2) {
+    cached.conn = null;
+    cached.promise = null;
   }
 
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
       maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
@@ -43,6 +51,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   try {
     cached.conn = await cached.promise;
   } catch (e) {
+    cached.conn = null;
     cached.promise = null;
     throw e;
   }

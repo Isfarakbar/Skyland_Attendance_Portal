@@ -72,26 +72,34 @@ export async function POST(req: NextRequest) {
     const locationLabel = siteName?.trim() || 'Verified GPS Location';
 
     if (!attendance) {
-      attendance = await Attendance.create({
-        user: session.userId,
-        date: todayStr,
-        clockIn: now,
-        clockOut: null,
-        status: evaluatedStatus,
-        source: 'WEB',
-        isFieldCheckIn: true,
-        location: {
-          latitude: latNum,
-          longitude: lngNum,
-          siteName: locationLabel,
-          accuracy: accuracy ? Number(accuracy) : undefined,
-        },
-        breaks: [],
-        totalWorkMinutes: 0,
-        totalBreakMinutes: 0,
-        ipAddress,
-        notes: notes?.trim() || 'Marked via Skyland App (GPS Verified)',
-      });
+      try {
+        attendance = await Attendance.create({
+          user: session.userId,
+          date: todayStr,
+          clockIn: now,
+          clockOut: null,
+          status: evaluatedStatus,
+          source: 'WEB',
+          isFieldCheckIn: true,
+          location: {
+            latitude: latNum,
+            longitude: lngNum,
+            siteName: locationLabel,
+            accuracy: accuracy ? Number(accuracy) : undefined,
+          },
+          breaks: [],
+          totalWorkMinutes: 0,
+          totalBreakMinutes: 0,
+          ipAddress,
+          notes: notes?.trim() || 'Marked via Skyland App (GPS Verified)',
+        });
+      } catch (createErr: unknown) {
+        if ((createErr as { code?: number })?.code === 11000) {
+          attendance = await Attendance.findOne({ user: session.userId, date: todayStr });
+        } else {
+          throw createErr;
+        }
+      }
     } else {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
