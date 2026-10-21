@@ -19,7 +19,6 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
   const isCheckedOut = !!attendance?.clockOut;
 
   const [siteName, setSiteName] = useState('');
-  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -98,7 +97,6 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               longitude,
               accuracy,
               siteName: siteName.trim() || 'GPS Verified Check-In',
-              notes: notes.trim(),
               action: 'check-in',
             }),
           });
@@ -323,32 +321,17 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
           </div>
         ) : (
           <div className="space-y-4 max-w-xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  Location Label (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Head Office / Multan Site"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  Work Note (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Regular shift / Project work"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                Location Label (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Head Office / Multan Site"
+                value={siteName}
+                onChange={(e) => setSiteName(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+              />
             </div>
 
             <button

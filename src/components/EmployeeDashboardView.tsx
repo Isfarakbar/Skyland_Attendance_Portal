@@ -11,7 +11,6 @@ import {
   DollarSign,
   Palmtree,
   CheckSquare,
-  Edit3,
   Building,
   Briefcase,
   Laptop,
@@ -97,14 +96,6 @@ export default function EmployeeDashboardView({
             Keep your device location (GPS) turned ON to mark your daily attendance and submit your work logs.
           </p>
         </div>
-
-        <button
-          onClick={onOpenCompleteProfile}
-          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 shadow-xs flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto"
-        >
-          <Edit3 className="w-3.5 h-3.5 text-[#FF6B00]" />
-          <span>Edit My Profile</span>
-        </button>
       </div>
 
       {/* ========================================================================= */}
