@@ -300,7 +300,7 @@ export default function AdminEditEmployeeModal({
             {[
               { id: 'job', label: 'Job & Role', icon: Briefcase },
               { id: 'personal', label: 'Personal & Contact', icon: User },
-              { id: 'compensation', label: 'Salary, Leaves & Bank', icon: DollarSign },
+              { id: 'compensation', label: 'Salary & Bank', icon: DollarSign },
               {
                 id: 'devices',
                 label: `Company Devices (${devices.length})`,
@@ -610,7 +610,7 @@ export default function AdminEditEmployeeModal({
               <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                 <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-emerald-400" />
-                  <span>Salary, Leave Balances &amp; Banking</span>
+                  <span>Salary &amp; Banking</span>
                 </h3>
                 <span className="text-[11px] text-slate-400">Strictly Admin Controlled</span>
               </div>
@@ -728,48 +728,6 @@ export default function AdminEditEmployeeModal({
                       No tax will be deducted from this employee&apos;s payslip.
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Leave Balances Grid */}
-              <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 space-y-3">
-                <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                  Annual Paid Leave Balances (Days)
-                </span>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Sick Leaves</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="30"
-                      value={sickLeaves}
-                      onChange={(e) => setSickLeaves(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white text-center focus:outline-hidden focus:border-[#FF6B00]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Casual Leaves</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="30"
-                      value={casualLeaves}
-                      onChange={(e) => setCasualLeaves(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white text-center focus:outline-hidden focus:border-[#FF6B00]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Annual Leaves</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="30"
-                      value={annualLeaves}
-                      onChange={(e) => setAnnualLeaves(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white text-center focus:outline-hidden focus:border-[#FF6B00]"
-                    />
-                  </div>
                 </div>
               </div>
 

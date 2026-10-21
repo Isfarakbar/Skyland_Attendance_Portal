@@ -56,10 +56,6 @@ export default function EmployeeDashboardView({
     }
   };
 
-  const leaveBalance = user?.leaveBalance || { sick: 8, casual: 10, annual: 14 };
-  const totalLeavesLeft =
-    (leaveBalance.sick || 0) + (leaveBalance.casual || 0) + (leaveBalance.annual || 0);
-
   const baseSalary = typeof user?.baseSalary === 'number' && user.baseSalary > 0
     ? user.baseSalary
     : (typeof employeeStats?.baseSalary === 'number' && employeeStats.baseSalary > 0 ? employeeStats.baseSalary : 0);
@@ -99,9 +95,9 @@ export default function EmployeeDashboardView({
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. TOP METRIC CARDS (4 CLEAN CARDS) */}
+      {/* 2. TOP METRIC CARDS (3 CLEAN CARDS) */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Card 1: Today's Status */}
         <div
           className={`p-4 sm:p-5 rounded-3xl border shadow-xs transition-all ${
@@ -168,25 +164,7 @@ export default function EmployeeDashboardView({
           </p>
         </div>
 
-        {/* Card 3: Leave Balance */}
-        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Leave Balance
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center">
-              <Palmtree className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-xl sm:text-2xl font-black text-emerald-400 mt-2">
-            {totalLeavesLeft} Days Left
-          </p>
-          <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
-            {leaveBalance.sick || 8}S • {leaveBalance.casual || 10}C • {leaveBalance.annual || 14}A
-          </p>
-        </div>
-
-        {/* Card 4: Estimated Salary */}
+        {/* Card 3: Estimated Salary */}
         <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
