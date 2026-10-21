@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     const employees = await User.find(userQuery)
-      .select('_id name email employeeId department designation baseSalary role taxSettings')
+      .select('_id name email employeeId department designation baseSalary role taxSettings bankName accountNumber iban cnic')
       .sort({ name: 1 })
       .lean();
 
@@ -136,15 +136,90 @@ export async function GET(req: NextRequest) {
 
     const wb = XLSX.utils.book_new();
 
-    // Summary Sheet
-    const wsSummary = XLSX.utils.json_to_sheet(payrollRows);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Salary Sheet');
+    // Default column widths for tabular salary sheet
+    const summaryColWidths = [
+      { wch: 15 }, // Employee ID
+      { wch: 24 }, // Full Name
+      { wch: 24 }, // Department
+      { wch: 22 }, // Designation
+      { wch: 18 }, // Base Salary (PKR)
+      { wch: 14 }, // Present Days
+      { wch: 22 }, // Late Arrivals (Count)
+      { wch: 14 }, // Total Offs
+      { wch: 20 }, // Allowed Offs (Free)
+      { wch: 14 }, // Excess Offs
+      { wch: 18 }, // Total Half Leaves
+      { wch: 24 }, // Allowed Half Leaves (Free)
+      { wch: 18 }, // Excess Half Leaves
+      { wch: 16 }, // Daily Rate (PKR)
+      { wch: 22 }, // Leave Deductions (PKR)
+      { wch: 22 }, // Taxable Income (PKR)
+      { wch: 24 }, // Annualized Taxable (PKR)
+      { wch: 24 }, // Applicable Tax Slab
+      { wch: 24 }, // Annual Income Tax (PKR)
+      { wch: 24 }, // Monthly Tax Withheld (PKR)
+      { wch: 22 }, // Total Deductions (PKR)
+      { wch: 24 }, // Net Take-Home Pay (PKR)
+    ];
 
-    // If exporting for a single employee, add a second sheet with daily attendance log
+    // If exporting for a single employee, generate an executive Corporate Payslip Dossier as Sheet 1
     if (targetUserId && employees.length === 1) {
       const emp = employees[0];
-      const userAtt = recordsByUser.get(String(emp._id)) || [];
+      const p = payrollRows[0];
+      const salaryDays = typeof settings?.salaryCalculationDays === 'number' && settings.salaryCalculationDays > 0 ? settings.salaryCalculationDays : 30;
+      const monthParts = month.split('-');
+      const monthDate = new Date(parseInt(monthParts[0]), parseInt(monthParts[1]) - 1, 1);
+      const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+      // Structured official payslip layout
+      const payslipSheetData: (string | number)[][] = [
+        ['SKYLAND ENERGY (PVT) LIMITED'],
+        ['OFFICIAL MONTHLY SALARY PAYSLIP'],
+        [`Pay Period: ${monthName} | Generated: ${new Date().toLocaleDateString('en-GB')}`],
+        [''],
+        ['EMPLOYEE INFORMATION', '', 'BANKING & DISBURSEMENT', ''],
+        ['Employee ID:', p['Employee ID'], 'Bank Name:', (emp as any).bankName || 'Standard Chartered'],
+        ['Employee Name:', p['Full Name'], 'Account Number:', (emp as any).accountNumber ? `••••${String((emp as any).accountNumber).slice(-4)}` : 'On File'],
+        ['Department:', p['Department'], 'IBAN:', (emp as any).iban || 'On File'],
+        ['Designation:', p['Designation'], 'Payment Mode:', 'Direct Bank Transfer / Auto-Credit'],
+        ['Email:', emp.email, 'Currency:', 'PKR (Pakistani Rupee)'],
+        [''],
+        ['ATTENDANCE & TIME REGISTER', '', 'LEAVE POLICY METRICS', ''],
+        ['Salary Divisor Days:', salaryDays, 'Free Offs Allowed:', p['Allowed Offs (Free)']],
+        ['Present Days:', p['Present Days'], 'Total Offs Taken:', p['Total Offs']],
+        ['Late Arrivals (Count):', `${p['Late Arrivals (Count)']} (No Penalty)`, 'Excess Offs (Deducted):', p['Excess Offs']],
+        ['Free Half Leaves Allowed:', p['Allowed Half Leaves (Free)'], 'Total Half Leaves Taken:', p['Total Half Leaves']],
+        ['Excess Half Leaves (Deducted):', p['Excess Half Leaves'], 'Daily Wage Divisor Rate:', `PKR ${p['Daily Rate (PKR)']}`],
+        [''],
+        ['ITEMIZED EARNINGS & DEDUCTIONS BREAKDOWN', '', '', ''],
+        ['Line Item Component', 'Category', 'Calculation / Policy Basis', 'Amount (PKR)'],
+        ['Basic Monthly Salary', 'Earnings', 'Contracted Monthly Base Wage', p['Base Salary (PKR)']],
+        ['Gross Earnings Subtotal', 'Earnings', 'Base contracted remuneration', p['Base Salary (PKR)']],
+        ['Excess Unpaid Offs Deduction', 'Deductions', `${p['Excess Offs']} excess off(s) × PKR ${p['Daily Rate (PKR)']}`, p['Excess Offs'] * p['Daily Rate (PKR)']],
+        ['Excess Half Leaves Deduction', 'Deductions', `${p['Excess Half Leaves']} excess half leave(s) × PKR ${Math.round(p['Daily Rate (PKR)'] / 2)}`, p['Excess Half Leaves'] * Math.round(p['Daily Rate (PKR)'] / 2)],
+        ['Total Attendance Deductions', 'Deductions', 'Offs & Half Leaves exceeding free quota', p['Leave Deductions (PKR)']],
+        ['FBR Income Tax Withholding', 'Deductions', String(p['Applicable Tax Slab']), p['Monthly Tax Withheld (PKR)']],
+        ['Total Deductions Subtotal', 'Deductions', 'Attendance fines + Income Tax', p['Total Deductions (PKR)']],
+        [''],
+        ['FINAL REMUNERATION', '', '', ''],
+        ['NET TAKE-HOME SALARY PAYABLE', 'NET PAY', 'Gross Earnings - Total Deductions', p['Net Take-Home Pay (PKR)']],
+        [''],
+        ['CONFIDENTIALITY & AUDIT NOTICE:'],
+        ['This salary slip is computer-generated by Skyland Energy Portal and serves as an official receipt of monthly remuneration.'],
+        ['All calculations adhere strictly to company HR policy: 1 free off, 2 free half leaves, and FBR progressive tax guidelines.'],
+      ];
+
+      const wsPayslip = XLSX.utils.aoa_to_sheet(payslipSheetData);
+      wsPayslip['!cols'] = [
+        { wch: 32 },
+        { wch: 28 },
+        { wch: 42 },
+        { wch: 22 },
+      ];
+      XLSX.utils.book_append_sheet(wb, wsPayslip, 'Official Payslip');
+
+      // Sheet 2: Daily Attendance Log
+      const userAtt = recordsByUser.get(String(emp._id)) || [];
       const dailyRows = userAtt.map((att) => {
         let inTime = '';
         let outTime = '';
@@ -174,7 +249,25 @@ export async function GET(req: NextRequest) {
       });
 
       const wsDaily = XLSX.utils.json_to_sheet(dailyRows);
+      wsDaily['!cols'] = [
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 24 },
+        { wch: 30 },
+      ];
       XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Attendance Log');
+
+      // Sheet 3: Structured Ledger Data
+      const wsSummary = XLSX.utils.json_to_sheet(payrollRows);
+      wsSummary['!cols'] = summaryColWidths;
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Ledger Data');
+    } else {
+      // Company-wide export: Summary sheet with auto-sized columns
+      const wsSummary = XLSX.utils.json_to_sheet(payrollRows);
+      wsSummary['!cols'] = summaryColWidths;
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Salary Sheet');
     }
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
