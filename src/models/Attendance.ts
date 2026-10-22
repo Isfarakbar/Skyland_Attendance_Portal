@@ -29,6 +29,8 @@ export interface IAttendance extends Document {
   notes?: string;
   ipAddress?: string;
   isFieldCheckIn?: boolean;
+  workMode?: 'OFFICE' | 'FIELD' | 'WFH';
+  isWorkFromHome?: boolean;
   location?: IFieldLocation;
   checkOutLocation?: IFieldLocation;
   source?: 'WEB' | 'BIOMETRIC' | 'FIELD';
@@ -63,6 +65,12 @@ const AttendanceSchema = new Schema<IAttendance>(
     notes: { type: String, default: '' },
     ipAddress: { type: String, default: '' },
     isFieldCheckIn: { type: Boolean, default: false },
+    workMode: {
+      type: String,
+      enum: ['OFFICE', 'FIELD', 'WFH'],
+      default: 'OFFICE',
+    },
+    isWorkFromHome: { type: Boolean, default: false },
     location: {
       latitude: { type: Number },
       longitude: { type: Number },

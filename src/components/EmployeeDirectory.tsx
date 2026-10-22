@@ -1,9 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2, Fingerprint, Laptop, ShieldCheck } from 'lucide-react';
+import { Users, Plus, Mail, Building, Briefcase, Search, DollarSign, Edit3, Check, X, MapPin, Eye, Trash2, Fingerprint, Laptop, ShieldCheck, Calendar } from 'lucide-react';
 import EmployeeProfileModal from '@/components/EmployeeProfileModal';
 import AdminEditEmployeeModal from '@/components/AdminEditEmployeeModal';
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function formatSchedulePill(days?: number[]): string {
+  if (!days || days.length === 0) return 'Sun Off';
+  return days.map((d) => DAY_LABELS[d] || `D${d}`).join(', ') + ' Off';
+}
+function formatJoinDate(date?: string | Date): string {
+  if (!date) return 'Not set';
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? 'Not set' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 interface Employee {
   _id: string;
@@ -26,7 +37,10 @@ interface Employee {
   reportingManager?: string;
   employmentType?: string;
   baseSalary?: number;
-  workMode?: 'OFFICE' | 'FIELD';
+  workMode?: 'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID';
+  weeklyOffDays?: number[];
+  weeklyHalfDays?: number[];
+  joinDate?: string | Date;
   biometricUserId?: string;
   isActive: boolean;
   leaveBalance?: { sick: number; casual: number; annual: number };
@@ -57,6 +71,9 @@ export default function EmployeeDirectory() {
   const [designation, setDesignation] = useState('Employee');
   const [phone, setPhone] = useState('');
   const [baseSalary, setBaseSalary] = useState(30000);
+  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID'>('OFFICE');
+  const [joinDate, setJoinDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [weeklyOffDays, setWeeklyOffDays] = useState<number[]>([0, 6]); // Default: Sat & Sun
   const [submitting, setSubmitting] = useState(false);
 
   // Quick edit salary state
@@ -105,6 +122,9 @@ export default function EmployeeDirectory() {
           designation,
           phone,
           baseSalary: Number(baseSalary) || 30000,
+          workMode,
+          joinDate,
+          weeklyOffDays,
         }),
       });
       const data = await res.json();
@@ -114,6 +134,9 @@ export default function EmployeeDirectory() {
         setEmail('');
         setPhone('');
         setBaseSalary(30000);
+        setWorkMode('OFFICE');
+        setWeeklyOffDays([0, 6]);
+        setJoinDate(new Date().toISOString().split('T')[0]);
         fetchEmployees();
       } else {
         alert(data.error || 'Failed to create employee');
@@ -371,6 +394,36 @@ export default function EmployeeDirectory() {
                       {emp.devices && emp.devices.length > 0 ? `${emp.devices.length} Assigned` : 'None'}
                     </span>
                   </div>
+
+                  {/* Joining Date & Primary Work Mode */}
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                      <span>Joined:</span>
+                      <span className="font-semibold text-white">{formatJoinDate(emp.joinDate)}</span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                        emp.workMode === 'WFH'
+                          ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                          : emp.workMode === 'FIELD'
+                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                          : emp.workMode === 'HYBRID'
+                          ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                      }`}
+                    >
+                      {emp.workMode === 'WFH' ? '🏡 Remote WFH' : emp.workMode === 'FIELD' ? '🚗 Field' : emp.workMode === 'HYBRID' ? '🔀 Hybrid' : '🏢 Office'}
+                    </span>
+                  </div>
+
+                  {/* Approved Weekly Offs */}
+                  <div className="pt-1.5 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-slate-400">Weekly Offs:</span>
+                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-800/50">
+                      🏖️ {formatSchedulePill(emp.weeklyOffDays)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-3.5 grid grid-cols-2 gap-2">
@@ -427,7 +480,7 @@ export default function EmployeeDirectory() {
       {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-[#0D1527] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-800 animate-in zoom-in-95 duration-150">
+          <div className="bg-[#0D1527] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-800 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
             <h3 className="font-bold text-white text-lg mb-1">Add New Employee</h3>
             <p className="text-xs text-slate-400 mb-4">Onboard a new employee to Skyland Energy</p>
 
@@ -456,17 +509,32 @@ export default function EmployeeDirectory() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Account Role</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-semibold"
-                >
-                  <option value="employee">Employee</option>
-                  <option value="ceo">CEO (Executive Dashboard)</option>
-                  <option value="admin">Operations Admin (Master Access)</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Account Role</label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-semibold"
+                  >
+                    <option value="employee">Employee</option>
+                    <option value="ceo">CEO (Executive)</option>
+                    <option value="admin">Operations Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Work Mode</label>
+                  <select
+                    value={workMode}
+                    onChange={(e) => setWorkMode(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-semibold"
+                  >
+                    <option value="OFFICE">🏢 Office</option>
+                    <option value="WFH">🏡 Work From Home</option>
+                    <option value="FIELD">🚗 Field</option>
+                    <option value="HYBRID">🔀 Hybrid</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -494,6 +562,38 @@ export default function EmployeeDirectory() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Joining Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={joinDate}
+                    onChange={(e) => setJoinDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Weekly Offs</label>
+                  <select
+                    value={weeklyOffDays.sort().join(',')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '0,6') setWeeklyOffDays([0, 6]);
+                      else if (val === '0') setWeeklyOffDays([0]);
+                      else if (val === '0,3') setWeeklyOffDays([0, 3]);
+                      else if (val === '0,5') setWeeklyOffDays([0, 5]);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"
+                  >
+                    <option value="0,6">Sat &amp; Sun (Standard)</option>
+                    <option value="0">Sunday Only (6-day week)</option>
+                    <option value="0,3">Wed &amp; Sun Off</option>
+                    <option value="0,5">Fri &amp; Sun Off</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Base Monthly Salary (PKR)</label>
                 <input
@@ -506,7 +606,7 @@ export default function EmployeeDirectory() {
                   onChange={(e) => setBaseSalary(Number(e.target.value))}
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00] font-mono"
                 />
-                <span className="text-[11px] text-slate-400 mt-0.5 block">Used to calculate daily rate (Base / 30) for excess leaves</span>
+                <span className="text-[11px] text-slate-400 mt-0.5 block">Approved weekly off days incur ZERO salary deduction</span>
               </div>
 
               <div>

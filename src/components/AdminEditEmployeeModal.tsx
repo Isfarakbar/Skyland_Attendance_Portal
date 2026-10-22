@@ -56,6 +56,10 @@ interface EmployeeData {
   reportingManager?: string;
   employmentType?: string;
   baseSalary?: number;
+  workMode?: 'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID';
+  weeklyOffDays?: number[];
+  weeklyHalfDays?: number[];
+  joinDate?: string | Date;
   isActive: boolean;
   leaveBalance?: { sick: number; casual: number; annual: number };
   bankName?: string;
@@ -109,6 +113,28 @@ export default function AdminEditEmployeeModal({
   const [employmentType, setEmploymentType] = useState(employee.employmentType || 'Full-time Permanent');
   const [isActive, setIsActive] = useState(employee.isActive ?? true);
   const [newPassword, setNewPassword] = useState('');
+
+  // Joining Date & Schedule
+  const [joinDate, setJoinDate] = useState<string>(() => {
+    if (!employee.joinDate) return new Date().toISOString().slice(0, 10);
+    try {
+      const d = new Date(employee.joinDate);
+      return !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+    } catch {
+      return new Date().toISOString().slice(0, 10);
+    }
+  });
+  const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID'>(
+    employee.workMode || 'OFFICE'
+  );
+  const [weeklyOffDays, setWeeklyOffDays] = useState<number[]>(
+    Array.isArray(employee.weeklyOffDays) && employee.weeklyOffDays.length > 0
+      ? employee.weeklyOffDays
+      : [0, 6]
+  );
+  const [weeklyHalfDays, setWeeklyHalfDays] = useState<number[]>(
+    Array.isArray(employee.weeklyHalfDays) ? employee.weeklyHalfDays : []
+  );
 
   // Form states - Compensation & Leaves
   const [baseSalary, setBaseSalary] = useState<number>(employee.baseSalary || 30000);
@@ -202,6 +228,10 @@ export default function AdminEditEmployeeModal({
         shiftTiming: shiftTiming.trim(),
         reportingManager: reportingManager.trim(),
         employmentType: employmentType.trim(),
+        workMode,
+        weeklyOffDays,
+        weeklyHalfDays,
+        joinDate,
         isActive,
         ...(newPassword.trim() ? { newPassword: newPassword.trim() } : {}),
         baseSalary: Number(baseSalary) || 30000,
@@ -407,6 +437,35 @@ export default function AdminEditEmployeeModal({
                 </div>
 
                 <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                    <span>Official Joining Date</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={joinDate}
+                    onChange={(e) => setJoinDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-hidden focus:border-[#FF6B00] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
+                    Primary Work Mode
+                  </label>
+                  <select
+                    value={workMode}
+                    onChange={(e: any) => setWorkMode(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-hidden focus:border-[#FF6B00]"
+                  >
+                    <option value="OFFICE">🏢 In-Office (Head Office / Desk)</option>
+                    <option value="FIELD">🚗 Field / On-Site Client Locations</option>
+                    <option value="WFH">🏡 Work From Home (Remote)</option>
+                    <option value="HYBRID">🔄 Hybrid (Office &amp; Remote)</option>
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">Employment Type</label>
                   <select
                     value={employmentType}
@@ -454,6 +513,127 @@ export default function AdminEditEmployeeModal({
                     placeholder="Leave blank to keep existing password, or enter new password (min 6 chars)"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white focus:outline-hidden focus:border-[#FF6B00]"
                   />
+                </div>
+
+                {/* Weekly Off Days & Half Days Configuration */}
+                <div className="sm:col-span-2 lg:col-span-3 p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+                    <div>
+                      <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-emerald-400" />
+                        Weekly Off Days (Approved Schedule — Zero Salary Deduction)
+                      </span>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Select this employee's approved weekly off days (e.g. Saturday for Amna, Wednesday, or Sunday). Taking off on these days will <strong>never</strong> deduct salary.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setWeeklyOffDays([0, 6])}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors cursor-pointer"
+                      >
+                        Sat &amp; Sun (5-Day)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeeklyOffDays([0])}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors cursor-pointer"
+                      >
+                        Sun Only (6-Day)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeeklyOffDays([0, 3])}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors cursor-pointer"
+                      >
+                        Wed &amp; Sun
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 7-Day Pills for Off Days */}
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Rostered Off Days (Green = Approved Weekly Off)
+                    </span>
+                    <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                      {[
+                        { day: 0, label: 'Sun', full: 'Sunday' },
+                        { day: 1, label: 'Mon', full: 'Monday' },
+                        { day: 2, label: 'Tue', full: 'Tuesday' },
+                        { day: 3, label: 'Wed', full: 'Wednesday' },
+                        { day: 4, label: 'Thu', full: 'Thursday' },
+                        { day: 5, label: 'Fri', full: 'Friday' },
+                        { day: 6, label: 'Sat', full: 'Saturday' },
+                      ].map(({ day, label, full }) => {
+                        const isSelected = weeklyOffDays.includes(day);
+                        return (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setWeeklyOffDays(weeklyOffDays.filter((d) => d !== day));
+                              } else {
+                                setWeeklyOffDays([...weeklyOffDays, day].sort());
+                              }
+                            }}
+                            className={`py-2 px-1 rounded-xl text-xs font-black flex flex-col items-center justify-center transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-300 shadow-sm'
+                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                            }`}
+                            title={`Toggle ${full} as Scheduled Weekly Off`}
+                          >
+                            <span>{label}</span>
+                            <span className="text-[9px] font-normal opacity-80">{isSelected ? 'OFF' : 'Work'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Weekly Half Days */}
+                  <div className="pt-2 border-t border-slate-800/80">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                      Weekly Half Working Days (e.g. Wednesday or Saturday Half Day)
+                    </span>
+                    <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                      {[
+                        { day: 0, label: 'Sun' },
+                        { day: 1, label: 'Mon' },
+                        { day: 2, label: 'Tue' },
+                        { day: 3, label: 'Wed' },
+                        { day: 4, label: 'Thu' },
+                        { day: 5, label: 'Fri' },
+                        { day: 6, label: 'Sat' },
+                      ].map(({ day, label }) => {
+                        const isHalf = weeklyHalfDays.includes(day);
+                        return (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => {
+                              if (isHalf) {
+                                setWeeklyHalfDays(weeklyHalfDays.filter((d) => d !== day));
+                              } else {
+                                setWeeklyHalfDays([...weeklyHalfDays, day].sort());
+                              }
+                            }}
+                            className={`py-1.5 px-1 rounded-xl text-[11px] font-bold flex flex-col items-center justify-center transition-all cursor-pointer border ${
+                              isHalf
+                                ? 'bg-amber-950/90 border-amber-500/80 text-amber-300 shadow-sm'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <span>{label}</span>
+                            <span className="text-[8px] font-normal opacity-80">{isHalf ? 'Half' : 'Full'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="sm:col-span-2 lg:col-span-3 pt-3 border-t border-slate-800 flex items-center justify-between">

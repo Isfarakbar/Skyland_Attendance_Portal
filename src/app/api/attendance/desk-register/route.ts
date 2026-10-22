@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       isActive: true,
       role: { $nin: ['admin', 'developer', 'ceo'] },
     })
-      .select('_id name email employeeId department designation baseSalary role workMode')
+      .select('_id name email employeeId department designation baseSalary role workMode weeklyOffDays weeklyHalfDays')
       .sort({ name: 1 })
       .lean();
 
@@ -81,11 +81,14 @@ export async function GET(req: NextRequest) {
         designation: emp.designation,
         baseSalary: emp.baseSalary || 30000,
         workMode: (emp as any).workMode || 'OFFICE',
+        weeklyOffDays: (emp as any).weeklyOffDays ?? [0, 6],
+        weeklyHalfDays: (emp as any).weeklyHalfDays ?? [],
         status: (record?.status as AttendanceStatus) || null,
         clockInTime: clockInTimeStr,
         clockOutTime: clockOutTimeStr,
         notes: record?.notes || '',
         isFieldCheckIn: !!record?.isFieldCheckIn,
+        isWorkFromHome: !!record?.isWorkFromHome || record?.workMode === 'WFH',
         location: record?.location || null,
         isSaved: !!record,
       };

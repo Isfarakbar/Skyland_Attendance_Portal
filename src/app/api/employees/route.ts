@@ -5,7 +5,7 @@ import User from '@/models/User';
 import { generateNextEmployeeId } from '@/lib/attendanceUtils';
 
 const SENSITIVE_FIELDS = '-password -verificationCode -verificationCodeExpires -resetPasswordCode -resetPasswordExpires';
-const PUBLIC_DIRECTORY_FIELDS = '_id name email employeeId department designation role avatarUrl isActive';
+const PUBLIC_DIRECTORY_FIELDS = '_id name email employeeId department designation role avatarUrl isActive workMode joinDate';
 
 export async function GET() {
   try {
@@ -48,7 +48,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
-    const { name, email, password, role, department, designation, phone, employeeId, baseSalary } = await req.json();
+    const {
+      name,
+      email,
+      password,
+      role,
+      department,
+      designation,
+      phone,
+      employeeId,
+      baseSalary,
+      joinDate,
+      workMode,
+      weeklyOffDays,
+      weeklyHalfDays,
+    } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json({ success: false, error: 'Name, email, and temporary password are required' }, { status: 400 });
@@ -92,7 +106,10 @@ export async function POST(req: NextRequest) {
       designation: designation?.trim() || 'Team Member',
       phone: phone?.trim() || '',
       baseSalary: typeof baseSalary === 'number' ? baseSalary : (Number(baseSalary) || 30000),
-      joinDate: new Date(),
+      workMode: workMode || 'OFFICE',
+      weeklyOffDays: Array.isArray(weeklyOffDays) ? weeklyOffDays : [0, 6],
+      weeklyHalfDays: Array.isArray(weeklyHalfDays) ? weeklyHalfDays : [],
+      joinDate: joinDate && !isNaN(new Date(joinDate).getTime()) ? new Date(joinDate) : new Date(),
       isActive: true,
       isEmailVerified: true,
       leaveBalance: { sick: 8, casual: 10, annual: 14 },

@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     const employees = await User.find(userQuery)
-      .select('_id name email employeeId department designation baseSalary role taxSettings bankName accountNumber iban cnic')
+      .select('_id name email employeeId department designation baseSalary role taxSettings bankName accountNumber iban cnic joinDate workMode weeklyOffDays weeklyHalfDays')
       .sort({ name: 1 })
       .lean();
 
@@ -63,21 +63,52 @@ export async function GET(req: NextRequest) {
     const payrollRows = employees.map((emp) => {
       const userAtt = recordsByUser.get(String(emp._id)) || [];
 
+      // Determine employee's approved weekly off days & half days
+      const empOffDays = Array.isArray((emp as any).weeklyOffDays) && (emp as any).weeklyOffDays.length > 0
+        ? (emp as any).weeklyOffDays
+        : [0, 6]; // Default: Sunday (0) and Saturday (6)
+      const empHalfDays = Array.isArray((emp as any).weeklyHalfDays)
+        ? (emp as any).weeklyHalfDays
+        : [];
+
       let presentDays = 0;
       let lateDays = 0;
       let totalOffs = 0;
       let totalHalfLeaves = 0;
+      let rosteredOffs = 0;
+      let wfhDays = 0;
 
       for (const rec of userAtt) {
+        // Parse date to check day of the week (0 = Sun, 1 = Mon, ..., 6 = Sat)
+        const dateParts = rec.date.split('-').map(Number);
+        const dayOfWeek = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2])).getUTCDay();
+        const isScheduledOff = empOffDays.includes(dayOfWeek);
+        const isScheduledHalfDay = empHalfDays.includes(dayOfWeek);
+
+        if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
+          wfhDays++;
+        }
+
         if (rec.status === 'PRESENT') {
           presentDays++;
         } else if (rec.status === 'LATE') {
           lateDays++;
-          presentDays++;
+          presentDays++; // Present, recorded as late (record only, zero penalty)
         } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
-          totalHalfLeaves++;
+          if (isScheduledHalfDay) {
+            // Approved scheduled weekly half day (e.g. Wednesday half day)
+          } else {
+            totalHalfLeaves++;
+          }
         } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
-          totalOffs++;
+          if (isScheduledOff) {
+            // Approved scheduled weekly off day (e.g. Saturday for Amna, Wednesday, or Sunday).
+            // Zero salary deduction!
+            rosteredOffs++;
+          } else {
+            // Unexcused off / leave taken on a working day
+            totalOffs++;
+          }
         }
       }
 
@@ -131,6 +162,8 @@ export async function GET(req: NextRequest) {
         'Monthly Tax Withheld (PKR)': taxDeduction,
         'Total Deductions (PKR)': totalDeduction,
         'Net Take-Home Pay (PKR)': netSalary,
+        'WFH Days': wfhDays,
+        'Rostered Offs': rosteredOffs,
       };
     });
 
@@ -171,6 +204,20 @@ export async function GET(req: NextRequest) {
       const monthDate = new Date(parseInt(monthParts[0]), parseInt(monthParts[1]) - 1, 1);
       const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+      const joinDateStr = (emp as any).joinDate
+        ? new Date((emp as any).joinDate).toLocaleDateString('en-GB')
+        : 'N/A';
+      const empOffDays: number[] = Array.isArray((emp as any).weeklyOffDays) && (emp as any).weeklyOffDays.length > 0
+        ? (emp as any).weeklyOffDays
+        : [0, 6];
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const offDaysStr = empOffDays.map((d: number) => dayNames[d] || d).join(', ') || 'Sun';
+      const workModeStr = (emp as any).workMode === 'WFH'
+        ? 'Work From Home'
+        : ((emp as any).workMode === 'FIELD' ? 'Field / On-Site' : 'In-Office');
+      const wfhDays = p['WFH Days'] ?? 0;
+      const rosteredOffs = p['Rostered Offs'] ?? 0;
+
       // Structured official payslip layout
       const payslipSheetData: (string | number)[][] = [
         ['SKYLAND ENERGY (PVT) LIMITED'],
@@ -182,11 +229,13 @@ export async function GET(req: NextRequest) {
         ['Employee Name:', p['Full Name'], 'Account Number:', (emp as any).accountNumber ? `••••${String((emp as any).accountNumber).slice(-4)}` : 'On File'],
         ['Department:', p['Department'], 'IBAN:', (emp as any).iban || 'On File'],
         ['Designation:', p['Designation'], 'Payment Mode:', 'Direct Bank Transfer / Auto-Credit'],
+        ['Joining Date:', joinDateStr, 'Primary Work Mode:', workModeStr],
         ['Email:', emp.email, 'Currency:', 'PKR (Pakistani Rupee)'],
         [''],
-        ['ATTENDANCE & TIME REGISTER', '', 'LEAVE POLICY METRICS', ''],
+        ['ATTENDANCE & TIME REGISTER', '', 'LEAVE & ROSTER POLICY METRICS', ''],
         ['Salary Divisor Days:', salaryDays, 'Free Offs Allowed:', p['Allowed Offs (Free)']],
-        ['Present Days:', p['Present Days'], 'Total Offs Taken:', p['Total Offs']],
+        ['Present Days:', p['Present Days'], 'Weekly Off Days (Approved):', offDaysStr],
+        ['WFH Days (Remote):', wfhDays, 'Approved Weekly Offs Taken:', `${rosteredOffs} (No Deduction)`],
         ['Late Arrivals (Count):', `${p['Late Arrivals (Count)']} (No Penalty)`, 'Excess Offs (Deducted):', p['Excess Offs']],
         ['Free Half Leaves Allowed:', p['Allowed Half Leaves (Free)'], 'Total Half Leaves Taken:', p['Total Half Leaves']],
         ['Excess Half Leaves (Deducted):', p['Excess Half Leaves'], 'Daily Wage Divisor Rate:', `PKR ${p['Daily Rate (PKR)']}`],
@@ -241,6 +290,7 @@ export async function GET(req: NextRequest) {
         return {
           'Date': att.date,
           'Status': att.status,
+          'Work Mode': (att.workMode === 'WFH' || (att as any).isWorkFromHome) ? 'Work From Home' : 'Office/On-Site',
           'Time In': inTime,
           'Time Out': outTime,
           'Work Duration (Mins)': att.totalWorkMinutes || 0,

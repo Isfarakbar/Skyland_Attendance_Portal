@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MapPin, Navigation, CheckCircle2, AlertCircle, ExternalLink, LogOut } from 'lucide-react';
+import { MapPin, Navigation, CheckCircle2, AlertCircle, ExternalLink, LogOut, Building, Home } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface FieldCheckInWidgetProps {
@@ -19,6 +19,7 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
   const isCheckedOut = !!attendance?.clockOut;
 
   const [siteName, setSiteName] = useState('');
+  const [workLocationType, setWorkLocationType] = useState<'OFFICE' | 'WFH'>('OFFICE');
   const [loading, setLoading] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -96,7 +97,8 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
               latitude,
               longitude,
               accuracy,
-              siteName: siteName.trim() || 'GPS Verified Check-In',
+              siteName: siteName.trim() || (workLocationType === 'WFH' ? 'Work From Home (Remote GPS)' : 'GPS Verified Check-In'),
+              workMode: workLocationType,
               action: 'check-in',
             }),
           });
@@ -246,8 +248,15 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                    {attendance?.status === 'LATE' ? 'Present (Late Arrival)' : 'Present — GPS Verified'}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                      {attendance?.status === 'LATE' ? 'Present (Late Arrival)' : 'Present — GPS Verified'}
+                    </span>
+                    {(attendance?.workMode === 'WFH' || attendance?.isWorkFromHome) && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-950/90 text-indigo-300 border border-indigo-700/80">
+                        🏡 Work From Home
+                      </span>
+                    )}
                   </div>
                   <div className="text-base font-extrabold text-white mt-0.5">
                     {location?.siteName || 'GPS Verified Location'}
@@ -321,13 +330,46 @@ export default function FieldCheckInWidget({ todayData, onRefresh }: FieldCheckI
           </div>
         ) : (
           <div className="space-y-4 max-w-xl">
+            {/* Work Mode Toggle: Office vs WFH */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">
+                Work Mode For Today
+              </label>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900 border border-slate-800 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setWorkLocationType('OFFICE')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    workLocationType === 'OFFICE'
+                      ? 'bg-gradient-to-r from-[#FF6B00] to-amber-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Building className="w-3.5 h-3.5" />
+                  <span>🏢 Office / On-Site</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkLocationType('WFH')}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    workLocationType === 'WFH'
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  <span>🏡 Work From Home</span>
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                Location Label (Optional)
+                {workLocationType === 'WFH' ? 'Home / Remote Notes (Optional)' : 'Location Label (Optional)'}
               </label>
               <input
                 type="text"
-                placeholder="e.g. Head Office / Multan Site"
+                placeholder={workLocationType === 'WFH' ? 'e.g. Home Office / Remote Desk' : 'e.g. Head Office / Multan Site'}
                 value={siteName}
                 onChange={(e) => setSiteName(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-[#FF6B00]"

@@ -166,6 +166,17 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                   <span>•</span>
                   <span className="text-slate-400">{data.employee.email}</span>
                 </div>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-300 mt-2">
+                  <span className="px-2 py-0.5 rounded-md font-bold bg-slate-900 border border-slate-800 text-slate-300">
+                    📅 Joined: {data.employee.joinDate ? format(new Date(data.employee.joinDate), 'dd MMM yyyy') : 'Not set'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                    {data.employee.workMode === 'WFH' ? '🏡 Remote Work From Home' : data.employee.workMode === 'FIELD' ? '🚗 Field Staff' : '🏢 Office Staff'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    🏖️ Offs: {Array.isArray(data.employee.weeklyOffDays) && data.employee.weeklyOffDays.length > 0 ? data.employee.weeklyOffDays.map((d: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d] || d).join(', ') : 'Sat, Sun'} (Paid)
+                  </span>
+                </div>
               </div>
             </div>
           ) : null}

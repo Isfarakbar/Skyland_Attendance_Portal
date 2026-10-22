@@ -4,6 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { Download, FileSpreadsheet, DollarSign, Calendar, Search, AlertCircle, ArrowDownRight, User, Eye, EyeOff, Printer, FileText, X } from 'lucide-react';
 import { PayrollRecord } from '@/app/api/payroll/route';
 
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatOffDays(days?: number[]): string {
+  if (!days || days.length === 0) return 'None';
+  return days.map((d) => DAY_NAMES[d] || `Day ${d}`).join(', ');
+}
+
+function formatJoiningDate(date?: Date | string): string {
+  if (!date) return 'Not set';
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? 'Not set' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 interface SalarySheetProps {
   isEmployeeOnly?: boolean;
   userId?: string;
@@ -280,6 +293,11 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                       <span className="inline-block px-2 py-0.5 rounded-md font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
                         {record.presentDays} days
                       </span>
+                      {Boolean(record.wfhDays) && (
+                        <span className="text-[10px] text-cyan-400 block font-medium mt-0.5">
+                          🏡 {record.wfhDays} WFH
+                        </span>
+                      )}
                     </td>
 
                     {/* Late Count (Record only - no penalty) */}
@@ -477,17 +495,42 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Designation</span>
                   <span className="font-medium text-slate-300 mt-0.5 block truncate">{selectedPayslipRecord.designation}</span>
                 </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Joining Date</span>
+                  <span className="font-medium text-slate-200 mt-0.5 block">{formatJoiningDate(selectedPayslipRecord.joinDate)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Work Mode</span>
+                  <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                    {selectedPayslipRecord.workMode || 'OFFICE'}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Approved Weekly Offs</span>
+                  <span className="font-medium text-emerald-300 mt-0.5 block">
+                    {formatOffDays(selectedPayslipRecord.weeklyOffDays)} (Zero Salary Deduction)
+                  </span>
+                </div>
               </div>
 
               {/* Attendance Breakdown Metrics */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
                 <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800">
                   <span className="text-[10px] font-bold uppercase text-slate-400 block">Present Days</span>
                   <span className="text-sm font-black text-emerald-400 mt-0.5 block">{selectedPayslipRecord.presentDays} Days</span>
+                  {Boolean(selectedPayslipRecord.wfhDays) && (
+                    <span className="text-[10px] text-cyan-400 block font-medium">({selectedPayslipRecord.wfhDays} WFH)</span>
+                  )}
                 </div>
                 <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800">
                   <span className="text-[10px] font-bold uppercase text-slate-400 block">Late Arrivals</span>
-                  <span className="text-sm font-bold text-amber-400 mt-0.5 block">{selectedPayslipRecord.lateDays} (Record Only)</span>
+                  <span className="text-sm font-bold text-amber-400 mt-0.5 block">{selectedPayslipRecord.lateDays}</span>
+                  <span className="text-[10px] text-slate-500 block">Record Only</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block">Rostered Offs</span>
+                  <span className="text-sm font-bold text-sky-400 mt-0.5 block">{selectedPayslipRecord.rosteredOffs ?? 0} Days</span>
+                  <span className="text-[10px] text-emerald-400 block font-semibold">100% Paid</span>
                 </div>
                 <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800">
                   <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Offs</span>

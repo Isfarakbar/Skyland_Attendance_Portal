@@ -14,11 +14,17 @@ export interface PayrollRecord {
   email: string;
   department: string;
   designation: string;
+  workMode?: string;
+  weeklyOffDays?: number[];
+  weeklyHalfDays?: number[];
+  joinDate?: Date | string;
   baseSalary: number;
   dailyRate: number;
   halfDayRate: number;
   presentDays: number;
   lateDays: number;
+  wfhDays?: number;
+  rosteredOffs?: number;
   totalOffs: number;
   allowedOffs: number;
   excessOffs: number;
@@ -71,7 +77,7 @@ export async function GET(req: NextRequest) {
     }
 
     const employees = await User.find(userQuery)
-      .select('_id name email employeeId department designation baseSalary role taxSettings')
+      .select('_id name email employeeId department designation baseSalary role taxSettings workMode weeklyOffDays weeklyHalfDays joinDate')
       .sort({ name: 1 })
       .lean();
 
@@ -95,21 +101,52 @@ export async function GET(req: NextRequest) {
     const payrollList: PayrollRecord[] = employees.map((emp) => {
       const userAtt = recordsByUser.get(String(emp._id)) || [];
 
+      // Determine employee's approved weekly off days & half days
+      const empOffDays = Array.isArray((emp as any).weeklyOffDays) && (emp as any).weeklyOffDays.length > 0
+        ? (emp as any).weeklyOffDays
+        : [0, 6]; // Default: Sunday (0) and Saturday (6)
+      const empHalfDays = Array.isArray((emp as any).weeklyHalfDays)
+        ? (emp as any).weeklyHalfDays
+        : [];
+
       let presentDays = 0;
       let lateDays = 0;
       let totalOffs = 0;
       let totalHalfLeaves = 0;
+      let rosteredOffs = 0;
+      let wfhDays = 0;
 
       for (const rec of userAtt) {
+        // Parse date to check day of the week (0 = Sun, 1 = Mon, ..., 6 = Sat)
+        const dateParts = rec.date.split('-').map(Number);
+        const dayOfWeek = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2])).getUTCDay();
+        const isScheduledOff = empOffDays.includes(dayOfWeek);
+        const isScheduledHalfDay = empHalfDays.includes(dayOfWeek);
+
+        if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
+          wfhDays++;
+        }
+
         if (rec.status === 'PRESENT') {
           presentDays++;
         } else if (rec.status === 'LATE') {
           lateDays++;
-          presentDays++; // Present, but recorded as late (record only, no penalty)
+          presentDays++; // Present, recorded as late (no financial penalty)
         } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
-          totalHalfLeaves++;
+          if (isScheduledHalfDay) {
+            // This is their approved scheduled half working day (e.g. Wednesday half day)
+          } else {
+            totalHalfLeaves++;
+          }
         } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
-          totalOffs++;
+          if (isScheduledOff) {
+            // Approved scheduled weekly off day (e.g. Saturday for Amna, Wednesday, or Sunday).
+            // Zero salary deduction!
+            rosteredOffs++;
+          } else {
+            // Unexcused off / leave taken on a working day
+            totalOffs++;
+          }
         }
       }
 
@@ -148,11 +185,17 @@ export async function GET(req: NextRequest) {
         email: emp.email,
         department: emp.department,
         designation: emp.designation,
+        workMode: (emp as any).workMode || 'OFFICE',
+        weeklyOffDays: empOffDays,
+        weeklyHalfDays: empHalfDays,
+        joinDate: (emp as any).joinDate,
         baseSalary,
         dailyRate,
         halfDayRate,
         presentDays,
         lateDays,
+        wfhDays,
+        rosteredOffs,
         totalOffs,
         allowedOffs,
         excessOffs,

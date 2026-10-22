@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { latitude, longitude, accuracy, siteName, notes, action } = await req.json();
+    const { latitude, longitude, accuracy, siteName, notes, action, workMode } = await req.json();
 
     const latNum = Number(latitude);
     const lngNum = Number(longitude);
@@ -120,7 +120,11 @@ export async function POST(req: NextRequest) {
       timezone
     );
 
-    const locationLabel = siteName?.trim() || 'Verified GPS Location';
+    const selectedWorkMode: 'OFFICE' | 'FIELD' | 'WFH' = workMode === 'WFH' ? 'WFH' : (workMode === 'FIELD' ? 'FIELD' : ((user as any)?.workMode === 'WFH' ? 'WFH' : 'OFFICE'));
+    const isWfh = selectedWorkMode === 'WFH';
+
+    const defaultLabel = isWfh ? 'Work From Home (Remote GPS)' : 'Verified GPS Location';
+    const locationLabel = siteName?.trim() || defaultLabel;
     const noteText = notes?.trim()
       ? (siteName?.trim() ? `${locationLabel}: ${notes.trim()}` : notes.trim())
       : locationLabel;
@@ -132,6 +136,8 @@ export async function POST(req: NextRequest) {
         clockIn: now,
         status: evaluatedStatus,
         isFieldCheckIn: true,
+        workMode: selectedWorkMode,
+        isWorkFromHome: isWfh,
         location: {
           latitude: latNum,
           longitude: lngNum,
@@ -145,6 +151,8 @@ export async function POST(req: NextRequest) {
       attendance.clockIn = now;
       attendance.status = evaluatedStatus;
       attendance.isFieldCheckIn = true;
+      attendance.workMode = selectedWorkMode;
+      attendance.isWorkFromHome = isWfh;
       attendance.source = 'WEB';
       attendance.location = {
         latitude: latNum,

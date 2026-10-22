@@ -47,22 +47,48 @@ export async function GET(
       date: { $regex: `^${currentMonth}` },
     }).sort({ date: -1 }).lean();
 
-    // Calculate monthly stats
+    // Calculate monthly stats adhering to employee's approved weekly schedule
+    const empOffDays = Array.isArray(employee.weeklyOffDays) && employee.weeklyOffDays.length > 0
+      ? employee.weeklyOffDays
+      : [0, 6];
+    const empHalfDays = Array.isArray(employee.weeklyHalfDays) ? employee.weeklyHalfDays : [];
+
     let presentDays = 0;
     let lateDays = 0;
+    let wfhDays = 0;
+    let rosteredOffs = 0;
     let totalOffs = 0;
     let totalHalfLeaves = 0;
 
     for (const rec of monthAttendance) {
+      let isScheduledOffDay = false;
+      let isScheduledHalfDay = false;
+      try {
+        const [y, m, d] = rec.date.split('-').map(Number);
+        const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+        isScheduledOffDay = empOffDays.includes(dayOfWeek);
+        isScheduledHalfDay = empHalfDays.includes(dayOfWeek);
+      } catch {}
+
+      if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
+        wfhDays++;
+      }
+
       if (rec.status === 'PRESENT') {
         presentDays++;
       } else if (rec.status === 'LATE') {
         lateDays++;
         presentDays++;
       } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
-        totalHalfLeaves++;
+        if (!isScheduledHalfDay) {
+          totalHalfLeaves++;
+        }
       } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
-        totalOffs++;
+        if (isScheduledOffDay) {
+          rosteredOffs++;
+        } else {
+          totalOffs++;
+        }
       }
     }
 
@@ -116,6 +142,8 @@ export async function GET(
         dailyRate,
         presentDays,
         lateDays,
+        wfhDays,
+        rosteredOffs,
         totalOffs,
         allowedOffs,
         excessOffs,

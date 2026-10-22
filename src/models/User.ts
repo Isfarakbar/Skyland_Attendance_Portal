@@ -46,6 +46,9 @@ export interface IUser extends Document {
     customRate?: number;
     customFixedAmount?: number;
   };
+  workMode?: 'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID';
+  weeklyOffDays?: number[];
+  weeklyHalfDays?: number[];
   joinDate: Date;
   isActive: boolean;
   isEmailVerified: boolean;
@@ -123,6 +126,19 @@ const UserSchema = new Schema<IUser>(
         customFixedAmount: { type: Number, default: null },
       },
       default: { isExempt: false },
+    },
+    workMode: {
+      type: String,
+      enum: ['OFFICE', 'FIELD', 'WFH', 'HYBRID'],
+      default: 'OFFICE',
+    },
+    weeklyOffDays: {
+      type: [Number],
+      default: [0, 6],
+    },
+    weeklyHalfDays: {
+      type: [Number],
+      default: [],
     },
     joinDate: { type: Date, default: () => new Date() },
     isActive: { type: Boolean, default: true },

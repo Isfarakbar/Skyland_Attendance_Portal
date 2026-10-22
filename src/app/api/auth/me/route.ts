@@ -62,6 +62,9 @@ export async function GET() {
         },
         baseSalary: user.baseSalary || 30000,
         leaveBalance: user.leaveBalance || { sick: 8, casual: 10, annual: 14 },
+        workMode: (user as any).workMode || 'OFFICE',
+        weeklyOffDays: (user as any).weeklyOffDays || [0, 6],
+        weeklyHalfDays: (user as any).weeklyHalfDays || [],
         joinDate: user.joinDate,
       },
     });

@@ -113,12 +113,24 @@ export async function PUT(
       'devices',
       'pensionFund',
       'taxSettings',
+      'workMode',
+      'weeklyOffDays',
+      'weeklyHalfDays',
     ];
     const updateData: Record<string, unknown> = {};
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         updateData[field] = body[field];
+      }
+    }
+
+    if (body.joinDate !== undefined) {
+      if (body.joinDate) {
+        const parsedJoin = new Date(body.joinDate);
+        if (!isNaN(parsedJoin.getTime())) {
+          updateData.joinDate = parsedJoin;
+        }
       }
     }
 

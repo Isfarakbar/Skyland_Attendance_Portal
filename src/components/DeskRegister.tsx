@@ -28,8 +28,11 @@ interface RegisterEmployee {
   department: string;
   designation: string;
   baseSalary: number;
-  workMode?: 'OFFICE' | 'FIELD';
+  workMode?: 'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID';
+  weeklyOffDays?: number[];
+  weeklyHalfDays?: number[];
   isFieldCheckIn?: boolean;
+  isWorkFromHome?: boolean;
   location?: { latitude?: number; longitude?: number; siteName?: string; accuracy?: number } | null;
   status: AttendanceStatus | null;
   clockInTime: string;
@@ -478,6 +481,16 @@ export default function DeskRegister() {
                   const currentStatus = emp.status;
                   const isCurrentSaving = savingUserId === emp.userId;
 
+                  // Determine if today is an approved off/half day for this employee
+                  let isScheduledOff = false;
+                  let isScheduledHalf = false;
+                  try {
+                    const [y, m, d] = date.split('-').map(Number);
+                    const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+                    isScheduledOff = Array.isArray(emp.weeklyOffDays) && emp.weeklyOffDays.includes(dayOfWeek);
+                    isScheduledHalf = Array.isArray(emp.weeklyHalfDays) && emp.weeklyHalfDays.includes(dayOfWeek);
+                  } catch {}
+
                   return (
                     <tr key={emp.userId} className="hover:bg-slate-900/50 transition-colors">
                       {/* Employee Info */}
@@ -494,12 +507,33 @@ export default function DeskRegister() {
                           {emp.isDirty && (
                             <span className="w-2 h-2 rounded-full bg-amber-400" title="Unsaved changes on this row" />
                           )}
+                          {isScheduledOff && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30" title="Approved off day: zero salary penalty">
+                              🏖️ Scheduled Off (Paid)
+                            </span>
+                          )}
+                          {isScheduledHalf && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                              ⏱️ Half Day Schedule
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                           <span className="font-mono text-orange-400">{emp.employeeId}</span>
                           <span>•</span>
                           <span>{emp.designation}</span>
+                          {emp.workMode === 'WFH' && (
+                            <>
+                              <span>•</span>
+                              <span className="text-purple-300 font-semibold">🏡 Remote WFH</span>
+                            </>
+                          )}
                         </div>
+                        {emp.isWorkFromHome && (
+                          <div className="mt-1 text-[10px] text-cyan-400 font-bold flex items-center gap-1">
+                            <span>🏡 Checked-in: Work From Home</span>
+                          </div>
+                        )}
                         {emp.location?.latitude && emp.location?.longitude && (
                           <div className="mt-1 text-[10px] text-orange-400 flex items-center gap-1.5">
                             <span className="font-semibold">📍 {emp.location.siteName || 'GPS Self Check-In'}</span>
