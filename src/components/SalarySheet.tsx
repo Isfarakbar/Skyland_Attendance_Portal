@@ -607,7 +607,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               {/* Legal Notice */}
               <p className="text-[10px] text-slate-500 text-center leading-relaxed pt-1">
                 This is an official computer-generated payslip issued by Skyland Energy Portal.
-                All calculations strictly adhere to the company HR manual: 1 free off, 2 free half leaves, and zero penalty for late arrivals.
+                All calculations strictly adhere to company HR policy: 18 annual leaves (1 full day & 1 half leave per month carry-forward), 10% salary pre-tax relief with FBR tax slabs, and zero financial penalty for late arrivals.
               </p>
             </div>
           </div>

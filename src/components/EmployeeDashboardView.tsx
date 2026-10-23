@@ -3,24 +3,9 @@
 import React, { useState } from 'react';
 import {
   Clock,
-  CheckCircle2,
-  AlertTriangle,
-  Fingerprint,
-  MapPin,
   Calendar,
-  DollarSign,
   Palmtree,
-  CheckSquare,
-  Building,
-  Briefcase,
-  Laptop,
   ArrowUpRight,
-  ShieldCheck,
-  User,
-  Plus,
-  RefreshCw,
-  AlertCircle,
-  Zap,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -73,50 +58,7 @@ export default function EmployeeDashboardView({
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
       {/* ========================================================================= */}
-      {/* 1. APP HEADER: USER GREETING & PROFILE BUTTON */}
-      {/* ========================================================================= */}
-      <div className="flex items-center justify-between gap-3 pb-1">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            onClick={onOpenCompleteProfile}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl overflow-hidden bg-gradient-to-tr from-[#FF6B00] to-orange-400 border border-orange-500/40 flex items-center justify-center text-white font-black text-base shadow-md cursor-pointer shrink-0"
-            title="View or Edit your profile & DOB"
-          >
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              <span>{user?.name?.charAt(0) || 'U'}</span>
-            )}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-xl font-black text-white tracking-tight truncate">
-                {user?.name ? user.name.split(' ')[0] : 'Team Member'}
-              </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-800 shrink-0">
-                👤 Staff
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5 truncate">
-              <span>Reports to: <strong className="text-white">CEO</strong></span>
-              <span>•</span>
-              <span className="font-mono text-orange-400">{user?.employeeId || 'ID'}</span>
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={onOpenCompleteProfile}
-          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-xs"
-          title="Edit your personal details & Date of Birth"
-        >
-          <User className="w-3.5 h-3.5 text-[#FF6B00]" />
-          <span>Edit Profile / DOB</span>
-        </button>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 2. TOP METRIC CARDS (2x2 APP-STYLE GRID ON MOBILE) */}
+      {/* 1. TOP METRIC CARDS (2x2 APP-STYLE GRID ON MOBILE) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Today's Status */}
@@ -236,44 +178,7 @@ export default function EmployeeDashboardView({
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. QUICK ACTION BAR (FINGER-FRIENDLY SHORTCUTS) */}
-      {/* ========================================================================= */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => onOpenTab('apps')}
-          className="px-4 py-2 bg-gradient-to-r from-[#FF6B00] to-orange-500 hover:from-orange-500 hover:to-[#FF6B00] text-white text-xs font-bold rounded-2xl shadow-md shadow-orange-500/20 flex items-center gap-2 transition-all cursor-pointer"
-        >
-          <CheckSquare className="w-3.5 h-3.5" />
-          <span>Submit Work Log</span>
-        </button>
-
-        <button
-          onClick={() => onOpenTab('calendar')}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>My Calendar</span>
-        </button>
-
-        <button
-          onClick={() => onOpenTab('salary')}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          <DollarSign className="w-3.5 h-3.5 text-slate-400" />
-          <span>My Payslip</span>
-        </button>
-
-        <button
-          onClick={() => onOpenTab('reviews')}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold rounded-2xl border border-slate-800 transition-all cursor-pointer flex items-center gap-1.5"
-        >
-          <Palmtree className="w-3.5 h-3.5 text-slate-400" />
-          <span>Apply for Leave</span>
-        </button>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 4. TODAY'S ATTENDANCE SECTION (UNIFIED LIVE GPS SELF-ATTENDANCE) */}
+      {/* 2. TODAY'S ATTENDANCE SECTION (UNIFIED LIVE GPS SELF-ATTENDANCE) */}
       {/* ========================================================================= */}
       <FieldCheckInWidget todayData={todayData} onRefresh={onRefresh} />
 
