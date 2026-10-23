@@ -77,6 +77,10 @@ export async function GET(req: NextRequest) {
 
       // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per month)
       const joinDate = (emp as any).joinDate ? new Date((emp as any).joinDate) : null;
+      const joinDateStr = (joinDate && !isNaN(joinDate.getTime()))
+        ? joinDate.toISOString().substring(0, 10)
+        : null;
+
       let startMonth = 1;
       if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() === currentYear) {
         startMonth = joinDate.getUTCMonth() + 1;
@@ -95,6 +99,11 @@ export async function GET(req: NextRequest) {
       let pastLeavesTaken = 0;
 
       for (const rec of userAtt) {
+        // Attendance logs prior to employee's official joining date are ignored
+        if (joinDateStr && rec.date < joinDateStr) {
+          continue;
+        }
+
         const dateParts = rec.date.split('-').map(Number);
         const dayOfWeek = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2])).getUTCDay();
         const isScheduledOff = empOffDays.includes(dayOfWeek);
@@ -155,8 +164,8 @@ export async function GET(req: NextRequest) {
       const excessOffs = Math.floor(excessLeaves);
       const excessHalfLeaves = (excessLeaves % 1 !== 0) ? 1 : 0;
 
-      // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief)
-      const taxableIncome = Math.max(0, baseSalary - leaveDeduction);
+      // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief on Contracted Base Salary)
+      const taxableIncome = baseSalary;
       const taxResult = resolvePayrollTax({
         monthlyTaxableIncome: taxableIncome,
         companySettings: settings as any,

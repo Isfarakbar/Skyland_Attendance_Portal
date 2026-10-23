@@ -102,7 +102,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               {isEmployeeOnly ? 'My Salary & Leave Fine Details' : 'Monthly Salary Sheet & Leave Fines'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Policy: 1 free Off &amp; 2 free Half Leaves per month. Late arrivals are logged for attendance records with zero salary penalty.
+              Policy: 18 annual leaves (1 full day &amp; 1 half leave per month carry-forward). Late arrivals are logged for attendance records with zero salary penalty.
             </p>
           </div>
 
@@ -187,7 +187,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                 ? `- PKR ${(summary as any).totalLeaveDeductions !== undefined ? (summary as any).totalLeaveDeductions.toLocaleString() : summary.totalDeductions.toLocaleString()}`
                 : <span className="font-mono tracking-widest text-rose-300">- PKR ••••••</span>}
             </div>
-            <div className="text-[11px] text-rose-300/70 mt-0.5">Exceeding 1 off / 2 half leaves</div>
+            <div className="text-[11px] text-rose-300/70 mt-0.5">Exceeding annual accrued leave quota</div>
           </div>
 
           <div className="p-4 bg-amber-950/20 border border-amber-900/40 rounded-2xl">

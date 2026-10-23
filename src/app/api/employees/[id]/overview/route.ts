@@ -59,6 +59,10 @@ export async function GET(
 
     // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per month)
     const joinDate = (employee as any).joinDate ? new Date((employee as any).joinDate) : null;
+    const joinDateStr = (joinDate && !isNaN(joinDate.getTime()))
+      ? joinDate.toISOString().substring(0, 10)
+      : null;
+
     let startMonth = 1;
     if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() === currentYear) {
       startMonth = joinDate.getUTCMonth() + 1;
@@ -77,6 +81,11 @@ export async function GET(
     let pastLeavesTaken = 0;
 
     for (const rec of yearAttendance) {
+      // Attendance logs prior to employee's official joining date are ignored
+      if (joinDateStr && rec.date < joinDateStr) {
+        continue;
+      }
+
       let isScheduledOffDay = false;
       let isScheduledHalfDay = false;
       try {
@@ -144,8 +153,8 @@ export async function GET(
     const offDeduction = excessOffs * dailyRate;
     const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
 
-    // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief)
-    const taxableIncome = Math.max(0, baseSalary - leaveDeduction);
+    // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief on Contracted Base Salary)
+    const taxableIncome = baseSalary;
     const taxResult = resolvePayrollTax({
       monthlyTaxableIncome: taxableIncome,
       companySettings: settings as any,

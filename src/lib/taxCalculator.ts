@@ -279,8 +279,8 @@ export function resolvePayrollTax(params: {
     };
   }
 
-  // 2. Company level setting
-  if (!companySettings?.taxDeductionEnabled) {
+  // 2. Company level setting: Only disable if explicitly set to false
+  if (companySettings?.taxDeductionEnabled === false) {
     return {
       monthlyTax: 0,
       annualTax: 0,
@@ -295,12 +295,12 @@ export function resolvePayrollTax(params: {
   }
 
   // If company configured FLAT_RATE
-  if (companySettings.taxCalculationMode === 'FLAT_RATE') {
+  if (companySettings?.taxCalculationMode === 'FLAT_RATE') {
     const threshold =
-      typeof companySettings.taxExemptionThreshold === 'number'
+      typeof companySettings?.taxExemptionThreshold === 'number'
         ? companySettings.taxExemptionThreshold
         : 50000;
-    const rate = typeof companySettings.taxRate === 'number' ? companySettings.taxRate : 2.5;
+    const rate = typeof companySettings?.taxRate === 'number' ? companySettings.taxRate : 2.5;
     const taxableOver = Math.max(0, netTaxable - threshold);
     const tax = Math.round((taxableOver * rate) / 100);
     return {
