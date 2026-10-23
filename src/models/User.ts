@@ -90,7 +90,7 @@ const UserSchema = new Schema<IUser>(
     gender: { type: String, default: 'Unspecified' },
     cnic: { type: String, default: '' },
     shiftTiming: { type: String, default: '09:00 AM - 06:00 PM' },
-    reportingManager: { type: String, default: 'Department Lead' },
+    reportingManager: { type: String, default: 'CEO' },
     employmentType: { type: String, default: 'Full-time Permanent' },
     bankName: { type: String, default: 'Standard Chartered' },
     accountNumber: { type: String, default: '' },

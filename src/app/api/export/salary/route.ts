@@ -46,8 +46,12 @@ export async function GET(req: NextRequest) {
       .sort({ name: 1 })
       .lean();
 
+    const [yearStr, monthNumStr] = month.split('-');
+    const currentYear = parseInt(yearStr);
+    const currentMonthNum = parseInt(monthNumStr);
+
     const attendanceRecords = await Attendance.find({
-      date: { $regex: `^${month}` },
+      date: { $gte: `${currentYear}-01-01`, $lte: `${month}-31` },
       ...(targetUserId ? { user: targetUserId } : {}),
     }).sort({ date: 1 }).lean();
 
@@ -71,43 +75,63 @@ export async function GET(req: NextRequest) {
         ? (emp as any).weeklyHalfDays
         : [];
 
+      // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per month)
+      const joinDate = (emp as any).joinDate ? new Date((emp as any).joinDate) : null;
+      let startMonth = 1;
+      if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() === currentYear) {
+        startMonth = joinDate.getUTCMonth() + 1;
+      } else if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() > currentYear) {
+        startMonth = currentMonthNum + 1;
+      }
+      const activeMonthsInYear = Math.max(0, currentMonthNum - startMonth + 1);
+      const cumulativeAccruedLeaves = Math.min(18, activeMonthsInYear * 1.5);
+
       let presentDays = 0;
       let lateDays = 0;
       let totalOffs = 0;
       let totalHalfLeaves = 0;
       let rosteredOffs = 0;
       let wfhDays = 0;
+      let pastLeavesTaken = 0;
 
       for (const rec of userAtt) {
-        // Parse date to check day of the week (0 = Sun, 1 = Mon, ..., 6 = Sat)
         const dateParts = rec.date.split('-').map(Number);
         const dayOfWeek = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2])).getUTCDay();
         const isScheduledOff = empOffDays.includes(dayOfWeek);
         const isScheduledHalfDay = empHalfDays.includes(dayOfWeek);
+        const isCurrentMonth = rec.date.startsWith(month);
 
-        if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
-          wfhDays++;
-        }
-
-        if (rec.status === 'PRESENT') {
-          presentDays++;
-        } else if (rec.status === 'LATE') {
-          lateDays++;
-          presentDays++; // Present, recorded as late (record only, zero penalty)
-        } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
-          if (isScheduledHalfDay) {
-            // Approved scheduled weekly half day (e.g. Wednesday half day)
-          } else {
-            totalHalfLeaves++;
+        if (isCurrentMonth) {
+          if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
+            wfhDays++;
           }
-        } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
-          if (isScheduledOff) {
-            // Approved scheduled weekly off day (e.g. Saturday for Amna, Wednesday, or Sunday).
-            // Zero salary deduction!
-            rosteredOffs++;
-          } else {
-            // Unexcused off / leave taken on a working day
-            totalOffs++;
+
+          if (rec.status === 'PRESENT') {
+            presentDays++;
+          } else if (rec.status === 'LATE') {
+            lateDays++;
+            presentDays++; // Present, recorded as late (record only, zero penalty)
+          } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
+            if (!isScheduledHalfDay) {
+              totalHalfLeaves++;
+            }
+          } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
+            if (isScheduledOff) {
+              rosteredOffs++;
+            } else {
+              totalOffs++;
+            }
+          }
+        } else {
+          // Earlier month in this year
+          if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
+            if (!isScheduledHalfDay) {
+              pastLeavesTaken += 0.5;
+            }
+          } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
+            if (!isScheduledOff) {
+              pastLeavesTaken += 1.0;
+            }
           }
         }
       }
@@ -117,17 +141,21 @@ export async function GET(req: NextRequest) {
       const dailyRate = Math.round(baseSalary / salaryDays);
       const halfDayRate = Math.round(dailyRate / 2);
 
-      const allowedOffs = typeof settings?.allowedFreeLeaves === 'number' ? settings.allowedFreeLeaves : 1;
-      const allowedHalfLeaves = typeof settings?.allowedFreeHalfLeaves === 'number' ? settings.allowedFreeHalfLeaves : 2;
+      // Cumulative Leave Quota & Carry-Forward Calculations
+      const currentMonthLeavesTaken = (totalOffs * 1.0) + (totalHalfLeaves * 0.5);
+      const totalYearLeavesTaken = pastLeavesTaken + currentMonthLeavesTaken;
 
-      const excessOffs = Math.max(0, totalOffs - allowedOffs);
-      const excessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);
+      const priorCarryForwardLeaves = Math.max(0, (Math.max(0, activeMonthsInYear - 1) * 1.5) - pastLeavesTaken);
+      const leaveAllowanceThisMonth = Math.max(0, cumulativeAccruedLeaves - pastLeavesTaken);
 
-      const offDeduction = excessOffs * dailyRate;
-      const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
-      const leaveDeduction = offDeduction + halfLeaveDeduction;
+      const excessLeaves = Math.max(0, totalYearLeavesTaken - cumulativeAccruedLeaves);
+      const leaveDeduction = Math.round(excessLeaves * dailyRate);
+      const remainingLeaveBalance = Math.max(0, cumulativeAccruedLeaves - totalYearLeavesTaken);
 
-      // Tax calculation (FBR 2026-27 Slabs / Corporate Rules)
+      const excessOffs = Math.floor(excessLeaves);
+      const excessHalfLeaves = (excessLeaves % 1 !== 0) ? 1 : 0;
+
+      // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief)
       const taxableIncome = Math.max(0, baseSalary - leaveDeduction);
       const taxResult = resolvePayrollTax({
         monthlyTaxableIncome: taxableIncome,
@@ -148,11 +176,13 @@ export async function GET(req: NextRequest) {
         'Present Days': presentDays,
         'Late Arrivals (Count)': lateDays,
         'Total Offs': totalOffs,
-        'Allowed Offs (Free)': allowedOffs,
+        'Allowed Offs (Free)': leaveAllowanceThisMonth,
         'Excess Offs': excessOffs,
         'Total Half Leaves': totalHalfLeaves,
-        'Allowed Half Leaves (Free)': allowedHalfLeaves,
+        'Allowed Half Leaves (Free)': Math.max(0, leaveAllowanceThisMonth * 2),
         'Excess Half Leaves': excessHalfLeaves,
+        'Annual Leave Balance': remainingLeaveBalance,
+        'Cumulative Accrued Leaves': cumulativeAccruedLeaves,
         'Daily Rate (PKR)': dailyRate,
         'Leave Deductions (PKR)': leaveDeduction,
         'Taxable Income (PKR)': taxableIncome,

@@ -125,6 +125,11 @@ export async function PUT(
       }
     }
 
+    if (body.dateOfBirth !== undefined) {
+      const cleanDob = typeof body.dateOfBirth === 'string' ? body.dateOfBirth.trim() : '';
+      updateData.dateOfBirth = cleanDob ? (cleanDob.includes('T') ? cleanDob.split('T')[0] : cleanDob) : '';
+    }
+
     if (body.joinDate !== undefined) {
       if (body.joinDate) {
         const parsedJoin = new Date(body.joinDate);

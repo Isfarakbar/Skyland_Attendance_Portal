@@ -248,6 +248,9 @@ export default function DashboardPage() {
 
       let baseSalary = typeof currentUser?.baseSalary === 'number' ? currentUser.baseSalary : 0;
       let netSalary = baseSalary;
+      let remainingLeaveBalance = 1.5;
+      let cumulativeAccruedLeaves = 1.5;
+      let yearlyQuota = 18;
 
       if (payrollData.success && Array.isArray(payrollData.payroll) && payrollData.payroll.length > 0) {
         const p = payrollData.payroll.find((rec: any) => rec.userId === (currentUser?.id || currentUser?._id)) || payrollData.payroll[0];
@@ -258,6 +261,9 @@ export default function DashboardPage() {
           lateCount = p.lateDays;
           totalOffs = p.totalOffs;
           totalHalfLeaves = p.totalHalfLeaves;
+          remainingLeaveBalance = p.remainingLeaveBalance ?? 1.5;
+          cumulativeAccruedLeaves = p.cumulativeAccruedLeaves ?? 1.5;
+          yearlyQuota = p.yearlyQuota ?? 18;
         }
       }
 
@@ -268,6 +274,9 @@ export default function DashboardPage() {
         totalHalfLeaves,
         baseSalary,
         netSalary,
+        remainingLeaveBalance,
+        cumulativeAccruedLeaves,
+        yearlyQuota,
         leaveBalance: currentUser?.leaveBalance || { sick: 8, casual: 10, annual: 14 },
       });
     } catch (err) {

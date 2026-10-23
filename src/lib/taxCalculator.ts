@@ -88,6 +88,8 @@ export interface SlabBreakdownItem {
 }
 
 export interface TaxCalculationResult {
+  grossMonthlyIncome: number;
+  preTaxReduction: number;
   monthlyTaxableIncome: number;
   annualTaxableIncome: number;
   applicableSlabNumber: number;
@@ -101,10 +103,15 @@ export interface TaxCalculationResult {
 }
 
 /**
- * Calculates FBR progressive salaried tax for a given monthly taxable income.
+ * Calculates FBR progressive salaried tax.
+ * Policy: First minus 10% standard reduction from the monthly salary, then apply tax on the remainder.
+ * Example 1: 55,000 minus 10% (5,500) = 49,500 (< 50,000/month or 600,000/year threshold) -> Zero Tax (0%).
+ * Example 2: 250,000 minus 10% (25,000) = 225,000 -> Tax brackets applied on 225,000/month.
  */
-export function calculateFBRTax(monthlyTaxableIncome: number): TaxCalculationResult {
-  const cleanMonthly = Math.max(0, Number(monthlyTaxableIncome) || 0);
+export function calculateFBRTax(monthlyIncome: number): TaxCalculationResult {
+  const grossMonthly = Math.max(0, Number(monthlyIncome) || 0);
+  const preTaxReduction = Math.round(grossMonthly * 0.10);
+  const cleanMonthly = Math.max(0, grossMonthly - preTaxReduction);
   const annualTaxableIncome = cleanMonthly * 12;
 
   // Find applicable slab
@@ -166,6 +173,8 @@ export function calculateFBRTax(monthlyTaxableIncome: number): TaxCalculationRes
   }
 
   return {
+    grossMonthlyIncome: grossMonthly,
+    preTaxReduction,
     monthlyTaxableIncome: cleanMonthly,
     annualTaxableIncome,
     applicableSlabNumber: applicableSlab.slabNumber,
@@ -205,9 +214,14 @@ export function resolvePayrollTax(params: {
   taxModeUsed: 'FBR_SLABS' | 'FLAT_RATE' | 'EXEMPT' | 'CUSTOM_RATE' | 'FIXED' | 'DISABLED';
   marginalRate: number;
   description: string;
+  grossTaxableIncome: number;
+  preTaxReduction: number;
+  netTaxableIncome: number;
 } {
   const { monthlyTaxableIncome, companySettings, employeeTaxSettings } = params;
   const taxable = Math.max(0, monthlyTaxableIncome || 0);
+  const preTaxReduction = Math.round(taxable * 0.10);
+  const netTaxable = Math.max(0, taxable - preTaxReduction);
 
   // 1. Employee overrides
   if (employeeTaxSettings?.isExempt) {
@@ -218,6 +232,9 @@ export function resolvePayrollTax(params: {
       taxModeUsed: 'EXEMPT',
       marginalRate: 0,
       description: 'Employee Tax Exempt (0%)',
+      grossTaxableIncome: taxable,
+      preTaxReduction,
+      netTaxableIncome: netTaxable,
     };
   }
 
@@ -233,6 +250,9 @@ export function resolvePayrollTax(params: {
       taxModeUsed: 'FIXED',
       marginalRate: taxable > 0 ? fixed / taxable : 0,
       description: `Fixed Monthly Withholding (PKR ${fixed.toLocaleString()})`,
+      grossTaxableIncome: taxable,
+      preTaxReduction,
+      netTaxableIncome: netTaxable,
     };
   }
 
@@ -244,7 +264,7 @@ export function resolvePayrollTax(params: {
       typeof companySettings?.taxExemptionThreshold === 'number'
         ? companySettings.taxExemptionThreshold
         : 50000;
-    const taxableOver = Math.max(0, taxable - threshold);
+    const taxableOver = Math.max(0, netTaxable - threshold);
     const tax = Math.round((taxableOver * employeeTaxSettings.customRate) / 100);
     return {
       monthlyTax: tax,
@@ -252,7 +272,10 @@ export function resolvePayrollTax(params: {
       applicableSlabNumber: null,
       taxModeUsed: 'CUSTOM_RATE',
       marginalRate: employeeTaxSettings.customRate / 100,
-      description: `Custom Rate: ${employeeTaxSettings.customRate}% above PKR ${threshold.toLocaleString()}`,
+      description: `Custom Rate: ${employeeTaxSettings.customRate}% above PKR ${threshold.toLocaleString()} (after 10% pre-tax relief)`,
+      grossTaxableIncome: taxable,
+      preTaxReduction,
+      netTaxableIncome: netTaxable,
     };
   }
 
@@ -265,6 +288,9 @@ export function resolvePayrollTax(params: {
       taxModeUsed: 'DISABLED',
       marginalRate: 0,
       description: 'Company Tax Withholding Disabled',
+      grossTaxableIncome: taxable,
+      preTaxReduction,
+      netTaxableIncome: netTaxable,
     };
   }
 
@@ -275,7 +301,7 @@ export function resolvePayrollTax(params: {
         ? companySettings.taxExemptionThreshold
         : 50000;
     const rate = typeof companySettings.taxRate === 'number' ? companySettings.taxRate : 2.5;
-    const taxableOver = Math.max(0, taxable - threshold);
+    const taxableOver = Math.max(0, netTaxable - threshold);
     const tax = Math.round((taxableOver * rate) / 100);
     return {
       monthlyTax: tax,
@@ -283,11 +309,14 @@ export function resolvePayrollTax(params: {
       applicableSlabNumber: null,
       taxModeUsed: 'FLAT_RATE',
       marginalRate: rate / 100,
-      description: `Flat Rate: ${rate}% above PKR ${threshold.toLocaleString()}`,
+      description: `Flat Rate: ${rate}% above PKR ${threshold.toLocaleString()} (after 10% pre-tax relief)`,
+      grossTaxableIncome: taxable,
+      preTaxReduction,
+      netTaxableIncome: netTaxable,
     };
   }
 
-  // 3. Default: Official FBR Salaried Slabs (Tax Year 2026-27 / Finance Act 2026)
+  // 3. Default: Official FBR Salaried Slabs with 10% Pre-tax Relief
   const fbr = calculateFBRTax(taxable);
   return {
     monthlyTax: fbr.monthlyTax,
@@ -295,6 +324,9 @@ export function resolvePayrollTax(params: {
     applicableSlabNumber: fbr.applicableSlabNumber,
     taxModeUsed: 'FBR_SLABS',
     marginalRate: fbr.marginalRate,
-    description: `FBR Slab #${fbr.applicableSlabNumber}: ${fbr.slabDescription}`,
+    description: `FBR Slab #${fbr.applicableSlabNumber}: ${fbr.slabDescription} (Base after 10% relief: PKR ${netTaxable.toLocaleString()})`,
+    grossTaxableIncome: taxable,
+    preTaxReduction,
+    netTaxableIncome: netTaxable,
   };
 }

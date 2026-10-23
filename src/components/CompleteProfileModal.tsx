@@ -35,6 +35,21 @@ interface CompleteProfileModalProps {
   onProfileUpdated: (updatedUser: any) => void;
 }
 
+function normalizeDateForInput(val?: string | Date): string {
+  if (!val) return '';
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    if (trimmed.includes('T')) return trimmed.split('T')[0];
+    const dmy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+    }
+  }
+  const d = new Date(val);
+  return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+}
+
 export default function CompleteProfileModal({
   user,
   onClose,
@@ -48,9 +63,9 @@ export default function CompleteProfileModal({
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || '');
   const [bio, setBio] = useState(user.bio || '');
   const [emergencyContact, setEmergencyContact] = useState(user.emergencyContact || '');
-  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || '');
+  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || 'Family');
   const [address, setAddress] = useState(user.address || '');
-  const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth || '');
+  const [dateOfBirth, setDateOfBirth] = useState(normalizeDateForInput(user.dateOfBirth));
   const [gender, setGender] = useState(user.gender || 'Unspecified');
   const [cnic, setCnic] = useState(user.cnic || '');
   const [bankName, setBankName] = useState(user.bankName || '');
@@ -61,9 +76,9 @@ export default function CompleteProfileModal({
   const [department, setDepartment] = useState(user.department || 'Skyland Energy');
   const [designation, setDesignation] = useState(user.designation || 'Staff Member');
   const [shiftTiming, setShiftTiming] = useState(user.shiftTiming || '09:00 AM - 06:00 PM');
-  const [reportingManager, setReportingManager] = useState(user.reportingManager || 'Management');
+  const [reportingManager, setReportingManager] = useState(user.reportingManager || 'CEO');
   const [employmentType, setEmploymentType] = useState(user.employmentType || 'Full-time Permanent');
-  const [baseSalary, setBaseSalary] = useState<number>(user.baseSalary || 70000);
+  const [baseSalary, setBaseSalary] = useState<number>(user.baseSalary || 30000);
 
   const isElevated = ['developer', 'admin', 'ceo'].includes(user?.role);
 
@@ -75,6 +90,32 @@ export default function CompleteProfileModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Keep form fields synced if user object reloads
+  React.useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setPhone(user.phone || '');
+      setAvatarUrl(user.avatarUrl || '');
+      setBio(user.bio || '');
+      setEmergencyContact(user.emergencyContact || '');
+      setEmergencyRelation(user.emergencyRelation || 'Family');
+      setAddress(user.address || '');
+      setDateOfBirth(normalizeDateForInput(user.dateOfBirth));
+      setGender(user.gender || 'Unspecified');
+      setCnic(user.cnic || '');
+      setBankName(user.bankName || '');
+      setAccountNumber(user.accountNumber || '');
+      setIban(user.iban || '');
+      setDepartment(user.department || 'Skyland Energy');
+      setDesignation(user.designation || 'Staff Member');
+      setShiftTiming(user.shiftTiming || '09:00 AM - 06:00 PM');
+      setReportingManager(user.reportingManager || 'CEO');
+      setEmploymentType(user.employmentType || 'Full-time Permanent');
+      setBaseSalary(Number(user.baseSalary) || 30000);
+      setDevices(Array.isArray(user.devices) ? user.devices : []);
+    }
+  }, [user]);
 
   const handleAddDevice = () => {
     setDevices([

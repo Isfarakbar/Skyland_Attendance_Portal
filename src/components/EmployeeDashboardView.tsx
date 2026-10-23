@@ -64,48 +64,64 @@ export default function EmployeeDashboardView({
   const netSalary = employeeStats?.netSalary ?? baseSalary;
   const presentDays = employeeStats?.presentDays ?? (isCheckedIn ? 1 : 0);
   const lateDays = employeeStats?.lateDays ?? (attendance?.status === 'LATE' ? 1 : 0);
+  const remainingLeaveBalance = employeeStats?.remainingLeaveBalance ?? 1.5;
+  const cumulativeAccruedLeaves = employeeStats?.cumulativeAccruedLeaves ?? 1.5;
 
   // Privacy mask: pay/wage is hidden by default (like banking apps), revealable via Eye icon
   const [showPay, setShowPay] = useState(false);
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
       {/* ========================================================================= */}
-      {/* 1. WELCOME HEADER & QUICK PROFILE BUTTON */}
+      {/* 1. APP HEADER: USER GREETING & PROFILE BUTTON */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border bg-emerald-950/80 text-emerald-300 border-emerald-800">
-              <User className="w-3.5 h-3.5 text-emerald-400" />
-              Employee
-            </span>
-
-            <span className="text-xs font-mono text-slate-400">
-              Shift: {user?.shiftTiming || '09:00 AM - 06:00 PM'}
-            </span>
+      <div className="flex items-center justify-between gap-3 pb-1">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            onClick={onOpenCompleteProfile}
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl overflow-hidden bg-gradient-to-tr from-[#FF6B00] to-orange-400 border border-orange-500/40 flex items-center justify-center text-white font-black text-base shadow-md cursor-pointer shrink-0"
+            title="View or Edit your profile & DOB"
+          >
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <span>{user?.name?.charAt(0) || 'U'}</span>
+            )}
           </div>
-
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-            Welcome back,{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-orange-400">
-              {user?.name ? user.name.split(' ')[0] : 'Team Member'}
-            </span>{' '}
-            👋
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Keep your device location (GPS) turned ON to mark your daily attendance and submit your work logs.
-          </p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-xl font-black text-white tracking-tight truncate">
+                {user?.name ? user.name.split(' ')[0] : 'Team Member'}
+              </h1>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-800 shrink-0">
+                👤 Staff
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5 truncate">
+              <span>Reports to: <strong className="text-white">CEO</strong></span>
+              <span>•</span>
+              <span className="font-mono text-orange-400">{user?.employeeId || 'ID'}</span>
+            </p>
+          </div>
         </div>
+
+        <button
+          onClick={onOpenCompleteProfile}
+          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-xs"
+          title="Edit your personal details & Date of Birth"
+        >
+          <User className="w-3.5 h-3.5 text-[#FF6B00]" />
+          <span>Edit Profile / DOB</span>
+        </button>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. TOP METRIC CARDS (3 CLEAN CARDS) */}
+      {/* 2. TOP METRIC CARDS (2x2 APP-STYLE GRID ON MOBILE) */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Today's Status */}
         <div
-          className={`p-4 sm:p-5 rounded-3xl border shadow-xs transition-all ${
+          className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border shadow-xs transition-all ${
             isCheckedIn
               ? attendance?.status === 'LATE'
                 ? 'bg-amber-950/30 border-amber-800/80'
@@ -114,11 +130,11 @@ export default function EmployeeDashboardView({
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Today&apos;s Status
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Today
             </span>
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center ${
                 isCheckedIn
                   ? attendance?.status === 'LATE'
                     ? 'bg-amber-900/60 text-amber-300'
@@ -126,11 +142,11 @@ export default function EmployeeDashboardView({
                   : 'bg-slate-800 text-slate-400'
               }`}
             >
-              <Clock className="w-4 h-4" />
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <p
-            className={`text-xl sm:text-2xl font-black mt-2 truncate ${
+            className={`text-base sm:text-xl font-black mt-2 truncate ${
               isCheckedIn
                 ? attendance?.status === 'LATE'
                   ? 'text-amber-300'
@@ -140,77 +156,80 @@ export default function EmployeeDashboardView({
           >
             {isCheckedIn
               ? attendance?.status === 'LATE'
-                ? 'Late Arrival'
+                ? 'Late In'
                 : 'Checked In'
-              : 'Pending Punch'}
+              : 'Pending'}
           </p>
-          <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
-            {isCheckedIn
-              ? `Punched in at ${formatTime(attendance?.clockIn)}`
-              : 'No punch recorded yet today'}
+          <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5 truncate">
+            {isCheckedIn ? formatTime(attendance?.clockIn) : 'Not punched yet'}
           </p>
         </div>
 
         {/* Card 2: Monthly Attendance */}
-        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs">
+        <div className="bg-[#131E36] p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
               This Month
             </span>
-            <div className="w-8 h-8 rounded-xl bg-slate-800 text-orange-400 flex items-center justify-center">
-              <Calendar className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 text-orange-400 flex items-center justify-center">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-white mt-2">
+          <p className="text-base sm:text-xl font-black text-white mt-2">
             {presentDays} Days
           </p>
-          <p className="text-[11px] text-slate-400 font-medium mt-1">
-            {lateDays > 0 ? `${lateDays} late arrival${lateDays > 1 ? 's' : ''} (record only)` : 'Punctual record'}
+          <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5 truncate">
+            {lateDays > 0 ? `${lateDays} Late (No Fine)` : '100% Punctual'}
           </p>
         </div>
 
-        {/* Card 3: Estimated Salary (Hidden by default, revealable with Eye icon like banking apps) */}
-        <div className="bg-[#131E36] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-xs relative">
+        {/* Card 3: Annual Leave Balance (18 Yearly Quota: 1 full + 1 half/mo carry-forward) */}
+        <div className="bg-[#131E36] p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Estimated Wage
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowPay((prev) => !prev)}
-                className="p-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center shadow-xs"
-                title={showPay ? 'Hide salary' : 'View salary'}
-                aria-label={showPay ? 'Hide salary' : 'View salary'}
-              >
-                {showPay ? (
-                  <EyeOff className="w-3.5 h-3.5 text-slate-400 hover:text-white" />
-                ) : (
-                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                )}
-              </button>
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Leave Balance
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 text-sky-400 flex items-center justify-center">
+              <Palmtree className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="w-8 h-8 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
-            </div>
+          </div>
+          <p className="text-base sm:text-xl font-black text-sky-400 mt-2">
+            {remainingLeaveBalance} Days
+          </p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5 truncate">
+            {cumulativeAccruedLeaves} / 18 Accrued
+          </p>
+        </div>
+
+        {/* Card 4: Estimated Wage (Hidden by default, revealable with Eye icon) */}
+        <div className="bg-[#131E36] p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-xs relative">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Est. Salary
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowPay((prev) => !prev)}
+              className="p-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+              title={showPay ? 'Hide salary' : 'View salary'}
+            >
+              {showPay ? (
+                <EyeOff className="w-3.5 h-3.5 text-slate-400" />
+              ) : (
+                <Eye className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+            </button>
           </div>
 
           <div
             onClick={() => setShowPay((prev) => !prev)}
             className="cursor-pointer select-none"
-            title={showPay ? 'Click to hide' : 'Click to view'}
           >
-            <p className="text-xl sm:text-2xl font-black text-white mt-2 tracking-tight">
-              {showPay ? (
-                `PKR ${netSalary.toLocaleString()}`
-              ) : (
-                <span className="tracking-widest font-mono text-slate-300">PKR ••••••</span>
-              )}
+            <p className="text-base sm:text-xl font-black text-white mt-2 tracking-tight truncate">
+              {showPay ? `PKR ${netSalary.toLocaleString()}` : '••••••••'}
             </p>
-            <p className="text-[11px] text-slate-400 font-medium mt-1 truncate">
-              {showPay
-                ? (baseSalary > 0 ? `Base: PKR ${baseSalary.toLocaleString()}` : 'Base: Not configured')
-                : 'Base: PKR ••••••'}
+            <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5 truncate">
+              {showPay ? (baseSalary > 0 ? `Base: ${baseSalary.toLocaleString()}` : 'Configured') : 'Tap to reveal'}
             </p>
           </div>
         </div>
@@ -302,7 +321,7 @@ export default function EmployeeDashboardView({
 
           <div>
             <span className="text-slate-400 uppercase font-bold text-[10px] block">Reporting To</span>
-            <span className="text-white font-bold">{user?.reportingManager || 'Management'}</span>
+            <span className="text-white font-bold">{user?.reportingManager || 'CEO'}</span>
           </div>
 
           <div>

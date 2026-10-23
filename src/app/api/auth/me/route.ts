@@ -48,7 +48,7 @@ export async function GET() {
         gender: user.gender || 'Unspecified',
         cnic: user.cnic || '',
         shiftTiming: user.shiftTiming || '09:00 AM - 06:00 PM',
-        reportingManager: user.reportingManager || 'Department Lead',
+        reportingManager: user.reportingManager || 'CEO',
         employmentType: user.employmentType || 'Full-time Permanent',
         bankName: user.bankName || '',
         accountNumber: user.accountNumber || '',
@@ -128,7 +128,10 @@ export async function PUT(req: NextRequest) {
     if (emergencyContact !== undefined) updateFields.emergencyContact = emergencyContact.trim();
     if (emergencyRelation !== undefined) updateFields.emergencyRelation = emergencyRelation.trim();
     if (address !== undefined) updateFields.address = address.trim();
-    if (dateOfBirth !== undefined) updateFields.dateOfBirth = dateOfBirth.trim();
+    if (dateOfBirth !== undefined) {
+      const cleanDob = typeof dateOfBirth === 'string' ? dateOfBirth.trim() : '';
+      updateFields.dateOfBirth = cleanDob ? (cleanDob.includes('T') ? cleanDob.split('T')[0] : cleanDob) : '';
+    }
     if (gender !== undefined) updateFields.gender = gender.trim();
     if (cnic !== undefined) updateFields.cnic = cnic.trim();
     if (bankName !== undefined) updateFields.bankName = bankName.trim();
@@ -191,7 +194,7 @@ export async function PUT(req: NextRequest) {
         gender: updatedUser.gender || 'Unspecified',
         cnic: updatedUser.cnic || '',
         shiftTiming: updatedUser.shiftTiming || '09:00 AM - 06:00 PM',
-        reportingManager: updatedUser.reportingManager || 'Department Lead',
+        reportingManager: updatedUser.reportingManager || 'CEO',
         employmentType: updatedUser.employmentType || 'Full-time Permanent',
         bankName: updatedUser.bankName || '',
         accountNumber: updatedUser.accountNumber || '',

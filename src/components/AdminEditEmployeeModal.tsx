@@ -84,6 +84,21 @@ interface AdminEditEmployeeModalProps {
   onUpdated: (updatedEmployee: EmployeeData) => void;
 }
 
+function normalizeDateForInput(val?: string | Date): string {
+  if (!val) return '';
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    if (trimmed.includes('T')) return trimmed.split('T')[0];
+    const dmy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmy) {
+      return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+    }
+  }
+  const d = new Date(val);
+  return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+}
+
 export default function AdminEditEmployeeModal({
   employee,
   onClose,
@@ -97,7 +112,7 @@ export default function AdminEditEmployeeModal({
   const [phone, setPhone] = useState(employee.phone || '');
   const [address, setAddress] = useState(employee.address || '');
   const [cnic, setCnic] = useState(employee.cnic || '');
-  const [dateOfBirth, setDateOfBirth] = useState(employee.dateOfBirth || '');
+  const [dateOfBirth, setDateOfBirth] = useState(normalizeDateForInput(employee.dateOfBirth));
   const [gender, setGender] = useState(employee.gender || 'Unspecified');
   const [emergencyContact, setEmergencyContact] = useState(employee.emergencyContact || '');
   const [emergencyRelation, setEmergencyRelation] = useState(employee.emergencyRelation || 'Family');
@@ -109,7 +124,7 @@ export default function AdminEditEmployeeModal({
   const [department, setDepartment] = useState(employee.department || 'Operations');
   const [designation, setDesignation] = useState(employee.designation || 'Staff Member');
   const [shiftTiming, setShiftTiming] = useState(employee.shiftTiming || '09:00 AM - 06:00 PM');
-  const [reportingManager, setReportingManager] = useState(employee.reportingManager || 'Management');
+  const [reportingManager, setReportingManager] = useState(employee.reportingManager || 'CEO');
   const [employmentType, setEmploymentType] = useState(employee.employmentType || 'Full-time Permanent');
   const [isActive, setIsActive] = useState(employee.isActive ?? true);
   const [newPassword, setNewPassword] = useState('');
