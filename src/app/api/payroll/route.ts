@@ -106,10 +106,17 @@ export async function GET(req: NextRequest) {
     const currentYear = parseInt(yearStr);
     const currentMonthNum = parseInt(monthNumStr);
 
-    // Fetch attendance from beginning of the current calendar year up to the end of target month
-    // Enables cumulative yearly leave tracking (18 annual leaves, 1 full day + 1 half leave / month carry-forward)
+    // Online Portal Launch Date: October 1, 2026.
+    // All deductions and records prior to October were settled manually offline.
+    const PORTAL_INCEPTION_DATE = '2026-10-01';
+    const PORTAL_INCEPTION_YEAR = 2026;
+    const PORTAL_INCEPTION_MONTH = 10;
+
+    const effectiveStartDate = currentYear === PORTAL_INCEPTION_YEAR ? PORTAL_INCEPTION_DATE : `${currentYear}-01-01`;
+
+    // Fetch attendance from inception (or year start for future years) up to the end of target month
     const attendanceRecords = await Attendance.find({
-      date: { $gte: `${currentYear}-01-01`, $lte: `${month}-31` },
+      date: { $gte: effectiveStartDate, $lte: `${month}-31` },
       ...(targetUserId ? { user: targetUserId } : {}),
     }).lean();
 
@@ -134,18 +141,26 @@ export async function GET(req: NextRequest) {
         ? (emp as any).weeklyHalfDays
         : [];
 
-      // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per month)
+      // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per active month)
+      // For 2026, baseline begins in October (Month 10) since prior months were settled offline.
       const joinDate = (emp as any).joinDate ? new Date((emp as any).joinDate) : null;
       const joinDateStr = (joinDate && !isNaN(joinDate.getTime()))
         ? joinDate.toISOString().substring(0, 10)
         : null;
 
-      let startMonth = 1;
-      if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() === currentYear) {
-        startMonth = joinDate.getUTCMonth() + 1;
-      } else if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() > currentYear) {
-        startMonth = currentMonthNum + 1;
+      const baselineStartMonth = currentYear === PORTAL_INCEPTION_YEAR ? PORTAL_INCEPTION_MONTH : 1;
+      let startMonth = baselineStartMonth;
+
+      if (joinDate && !isNaN(joinDate.getTime())) {
+        const joinYear = joinDate.getUTCFullYear();
+        const joinMonth = joinDate.getUTCMonth() + 1;
+        if (joinYear === currentYear) {
+          startMonth = Math.max(baselineStartMonth, joinMonth);
+        } else if (joinYear > currentYear) {
+          startMonth = currentMonthNum + 1; // Future hire
+        }
       }
+
       const activeMonthsInYear = Math.max(0, currentMonthNum - startMonth + 1);
       const cumulativeAccruedLeaves = Math.min(18, activeMonthsInYear * 1.5);
 
@@ -158,7 +173,10 @@ export async function GET(req: NextRequest) {
       let pastLeavesTaken = 0;
 
       for (const rec of userAtt) {
-        // Attendance logs prior to employee's official joining date are ignored
+        // Ignore any records prior to portal inception or employee's official joining date
+        if (rec.date < PORTAL_INCEPTION_DATE) {
+          continue;
+        }
         if (joinDateStr && rec.date < joinDateStr) {
           continue;
         }
@@ -225,6 +243,12 @@ export async function GET(req: NextRequest) {
       const offDeduction = excessOffs * dailyRate;
       const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
 
+      // Prior to October 2026, all deductions were settled manually offline.
+      const isPreInceptionMonth = month < PORTAL_INCEPTION_DATE.substring(0, 7);
+      const effectiveLeaveDeduction = isPreInceptionMonth ? 0 : leaveDeduction;
+      const effectiveOffDeduction = isPreInceptionMonth ? 0 : offDeduction;
+      const effectiveHalfLeaveDeduction = isPreInceptionMonth ? 0 : halfLeaveDeduction;
+
       // Tax Calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief on Contracted Base Salary)
       const taxableIncome = baseSalary;
       const taxResult = resolvePayrollTax({
@@ -234,7 +258,7 @@ export async function GET(req: NextRequest) {
       });
 
       const taxDeduction = taxResult.monthlyTax;
-      const totalDeduction = leaveDeduction + taxDeduction;
+      const totalDeduction = effectiveLeaveDeduction + taxDeduction;
       const netSalary = Math.max(0, baseSalary - totalDeduction);
 
       return {
@@ -269,9 +293,9 @@ export async function GET(req: NextRequest) {
         totalYearLeavesTaken,
         excessLeaves,
         remainingLeaveBalance,
-        offDeduction,
-        halfLeaveDeduction,
-        leaveDeduction,
+        offDeduction: effectiveOffDeduction,
+        halfLeaveDeduction: effectiveHalfLeaveDeduction,
+        leaveDeduction: effectiveLeaveDeduction,
         taxableIncome,
         taxDeduction,
         taxSlab: taxResult.applicableSlabNumber,

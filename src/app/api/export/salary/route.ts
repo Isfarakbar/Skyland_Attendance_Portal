@@ -63,8 +63,16 @@ export async function GET(req: NextRequest) {
     const currentYear = parseInt(yearStr);
     const currentMonthNum = parseInt(monthNumStr);
 
+    // Online Portal Launch Date: October 1, 2026.
+    // All deductions and records prior to October were settled manually offline.
+    const PORTAL_INCEPTION_DATE = '2026-10-01';
+    const PORTAL_INCEPTION_YEAR = 2026;
+    const PORTAL_INCEPTION_MONTH = 10;
+
+    const effectiveStartDate = currentYear === PORTAL_INCEPTION_YEAR ? PORTAL_INCEPTION_DATE : `${currentYear}-01-01`;
+
     const attendanceRecords = await Attendance.find({
-      date: { $gte: `${currentYear}-01-01`, $lte: `${month}-31` },
+      date: { $gte: effectiveStartDate, $lte: `${month}-31` },
       ...(targetUserId ? { user: targetUserId } : {}),
     }).sort({ date: 1 }).lean();
 
@@ -88,18 +96,26 @@ export async function GET(req: NextRequest) {
         ? (emp as any).weeklyHalfDays
         : [];
 
-      // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per month)
+      // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per active month)
+      // For 2026, baseline begins in October (Month 10) since prior months were settled offline.
       const joinDate = (emp as any).joinDate ? new Date((emp as any).joinDate) : null;
       const joinDateStr = (joinDate && !isNaN(joinDate.getTime()))
         ? joinDate.toISOString().substring(0, 10)
         : null;
 
-      let startMonth = 1;
-      if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() === currentYear) {
-        startMonth = joinDate.getUTCMonth() + 1;
-      } else if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() > currentYear) {
-        startMonth = currentMonthNum + 1;
+      const baselineStartMonth = currentYear === PORTAL_INCEPTION_YEAR ? PORTAL_INCEPTION_MONTH : 1;
+      let startMonth = baselineStartMonth;
+
+      if (joinDate && !isNaN(joinDate.getTime())) {
+        const joinYear = joinDate.getUTCFullYear();
+        const joinMonth = joinDate.getUTCMonth() + 1;
+        if (joinYear === currentYear) {
+          startMonth = Math.max(baselineStartMonth, joinMonth);
+        } else if (joinYear > currentYear) {
+          startMonth = currentMonthNum + 1;
+        }
       }
+
       const activeMonthsInYear = Math.max(0, currentMonthNum - startMonth + 1);
       const cumulativeAccruedLeaves = Math.min(18, activeMonthsInYear * 1.5);
 
@@ -112,7 +128,10 @@ export async function GET(req: NextRequest) {
       let pastLeavesTaken = 0;
 
       for (const rec of userAtt) {
-        // Attendance logs prior to employee's official joining date are ignored
+        // Attendance logs prior to portal launch date (2026-10-01) or joining date are ignored
+        if (rec.date < PORTAL_INCEPTION_DATE) {
+          continue;
+        }
         if (joinDateStr && rec.date < joinDateStr) {
           continue;
         }
@@ -177,6 +196,11 @@ export async function GET(req: NextRequest) {
       const excessOffs = Math.floor(excessLeaves);
       const excessHalfLeaves = (excessLeaves % 1 !== 0) ? 1 : 0;
 
+      const isPreInceptionMonth = month < PORTAL_INCEPTION_DATE.substring(0, 7);
+      const effectiveLeaveDeduction = isPreInceptionMonth ? 0 : leaveDeduction;
+      const effectiveExcessOffs = isPreInceptionMonth ? 0 : excessOffs;
+      const effectiveExcessHalfLeaves = isPreInceptionMonth ? 0 : excessHalfLeaves;
+
       // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief on Contracted Base Salary)
       const taxableIncome = baseSalary;
       const taxResult = resolvePayrollTax({
@@ -186,7 +210,7 @@ export async function GET(req: NextRequest) {
       });
 
       const taxDeduction = taxResult.monthlyTax;
-      const totalDeduction = leaveDeduction + taxDeduction;
+      const totalDeduction = effectiveLeaveDeduction + taxDeduction;
       const netSalary = Math.max(0, baseSalary - totalDeduction);
 
       return {
@@ -199,14 +223,14 @@ export async function GET(req: NextRequest) {
         'Late Arrivals (Count)': lateDays,
         'Total Offs': totalOffs,
         'Allowed Offs (Free)': leaveAllowanceThisMonth,
-        'Excess Offs': excessOffs,
+        'Excess Offs': effectiveExcessOffs,
         'Total Half Leaves': totalHalfLeaves,
         'Allowed Half Leaves (Free)': Math.max(0, leaveAllowanceThisMonth * 2),
-        'Excess Half Leaves': excessHalfLeaves,
+        'Excess Half Leaves': effectiveExcessHalfLeaves,
         'Annual Leave Balance': remainingLeaveBalance,
         'Cumulative Accrued Leaves': cumulativeAccruedLeaves,
         'Daily Rate (PKR)': dailyRate,
-        'Leave Deductions (PKR)': leaveDeduction,
+        'Leave Deductions (PKR)': effectiveLeaveDeduction,
         'Taxable Income (PKR)': taxableIncome,
         'Annualized Taxable (PKR)': taxResult.annualTax ? Math.round(taxableIncome * 12) : 0,
         'Applicable Tax Slab': taxResult.applicableSlabNumber ? `Slab ${taxResult.applicableSlabNumber} (${(taxResult.marginalRate * 100).toFixed(0)}%)` : (taxResult.taxModeUsed === 'EXEMPT' ? 'Exempt (0%)' : 'Tax-Free / N/A'),
@@ -307,7 +331,7 @@ export async function GET(req: NextRequest) {
         [''],
         ['CONFIDENTIALITY & AUDIT NOTICE:'],
         ['This salary slip is computer-generated by Skyland Energy Portal and serves as an official receipt of monthly remuneration.'],
-        ['All calculations adhere strictly to company HR policy: 18 annual leaves (1 full day & 1 half leave per month carry-forward), 10% salary pre-tax relief with FBR tax slabs, and zero financial penalty for late arrivals.'],
+        ['All calculations adhere strictly to company HR policy: Online platform launched on October 1, 2026; 18 annual leaves (1 full day & 1 half leave per active month carry-forward), 10% salary pre-tax relief with FBR tax slabs, and zero financial penalty for late arrivals.'],
       ];
 
       const wsPayslip = XLSX.utils.aoa_to_sheet(payslipSheetData);

@@ -45,10 +45,18 @@ export async function GET(
     // 1. Today's Attendance
     const todayAttendance = await Attendance.findOne({ user: id, date: todayDate }).lean();
 
+    // Online Portal Launch Date: October 1, 2026.
+    // All deductions and records prior to October were settled manually offline.
+    const PORTAL_INCEPTION_DATE = '2026-10-01';
+    const PORTAL_INCEPTION_YEAR = 2026;
+    const PORTAL_INCEPTION_MONTH = 10;
+
+    const effectiveStartDate = currentYear === PORTAL_INCEPTION_YEAR ? PORTAL_INCEPTION_DATE : `${currentYear}-01-01`;
+
     // 2. Year Attendance Records (for cumulative leave quota tracking and monthly breakdown)
     const yearAttendance = await Attendance.find({
       user: id,
-      date: { $gte: `${currentYear}-01-01`, $lte: `${currentMonth}-31` },
+      date: { $gte: effectiveStartDate, $lte: `${currentMonth}-31` },
     }).sort({ date: -1 }).lean();
 
     // Calculate monthly stats adhering to employee's approved weekly schedule
@@ -57,17 +65,24 @@ export async function GET(
       : [0, 6];
     const empHalfDays = Array.isArray(employee.weeklyHalfDays) ? employee.weeklyHalfDays : [];
 
-    // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per month)
+    // Cumulative Yearly Leave Accrual (18 annual leaves = 1.5 leaves per active month)
+    // For 2026, baseline begins in October (Month 10) since prior months were settled offline.
     const joinDate = (employee as any).joinDate ? new Date((employee as any).joinDate) : null;
     const joinDateStr = (joinDate && !isNaN(joinDate.getTime()))
       ? joinDate.toISOString().substring(0, 10)
       : null;
 
-    let startMonth = 1;
-    if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() === currentYear) {
-      startMonth = joinDate.getUTCMonth() + 1;
-    } else if (joinDate && !isNaN(joinDate.getTime()) && joinDate.getUTCFullYear() > currentYear) {
-      startMonth = currentMonthNum + 1;
+    const baselineStartMonth = currentYear === PORTAL_INCEPTION_YEAR ? PORTAL_INCEPTION_MONTH : 1;
+    let startMonth = baselineStartMonth;
+
+    if (joinDate && !isNaN(joinDate.getTime())) {
+      const joinYear = joinDate.getUTCFullYear();
+      const joinMonth = joinDate.getUTCMonth() + 1;
+      if (joinYear === currentYear) {
+        startMonth = Math.max(baselineStartMonth, joinMonth);
+      } else if (joinYear > currentYear) {
+        startMonth = currentMonthNum + 1;
+      }
     }
     const activeMonthsInYear = Math.max(0, currentMonthNum - startMonth + 1);
     const cumulativeAccruedLeaves = Math.min(18, activeMonthsInYear * 1.5);
@@ -81,7 +96,10 @@ export async function GET(
     let pastLeavesTaken = 0;
 
     for (const rec of yearAttendance) {
-      // Attendance logs prior to employee's official joining date are ignored
+      // Ignore records prior to online portal inception (2026-10-01) or joining date
+      if (rec.date < PORTAL_INCEPTION_DATE) {
+        continue;
+      }
       if (joinDateStr && rec.date < joinDateStr) {
         continue;
       }
@@ -153,6 +171,11 @@ export async function GET(
     const offDeduction = excessOffs * dailyRate;
     const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
 
+    const isPreInceptionMonth = currentMonth < PORTAL_INCEPTION_DATE.substring(0, 7);
+    const effectiveLeaveDeduction = isPreInceptionMonth ? 0 : leaveDeduction;
+    const effectiveOffDeduction = isPreInceptionMonth ? 0 : offDeduction;
+    const effectiveHalfLeaveDeduction = isPreInceptionMonth ? 0 : halfLeaveDeduction;
+
     // Tax calculation (FBR 2026-27 Slabs with 10% Pre-tax Relief on Contracted Base Salary)
     const taxableIncome = baseSalary;
     const taxResult = resolvePayrollTax({
@@ -162,7 +185,7 @@ export async function GET(
     });
 
     const taxDeduction = taxResult.monthlyTax;
-    const totalDeduction = leaveDeduction + taxDeduction;
+    const totalDeduction = effectiveLeaveDeduction + taxDeduction;
     const netSalary = Math.max(0, baseSalary - totalDeduction);
 
     // 3. Daily Tasks Submissions (recent 50)
@@ -207,9 +230,9 @@ export async function GET(
         totalYearLeavesTaken,
         excessLeaves,
         remainingLeaveBalance,
-        offDeduction,
-        halfLeaveDeduction,
-        leaveDeduction,
+        offDeduction: effectiveOffDeduction,
+        halfLeaveDeduction: effectiveHalfLeaveDeduction,
+        leaveDeduction: effectiveLeaveDeduction,
         taxDeduction,
         taxableIncome,
         totalDeduction,

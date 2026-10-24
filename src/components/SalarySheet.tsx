@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, FileSpreadsheet, DollarSign, Calendar, Search, AlertCircle, ArrowDownRight, User, Eye, EyeOff, Printer, FileText, X } from 'lucide-react';
+import { Download, FileSpreadsheet, DollarSign, Calendar, Search, AlertCircle, ArrowDownRight, User, Eye, EyeOff, Printer, FileText, X, Info } from 'lucide-react';
 import { PayrollRecord } from '@/app/api/payroll/route';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -112,6 +112,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
               <Calendar className="w-4 h-4 text-slate-400" />
               <input
                 type="month"
+                min="2026-10"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
                 className="bg-transparent text-xs font-bold text-slate-200 focus:outline-hidden cursor-pointer"
@@ -164,6 +165,15 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
             )}
           </div>
         </div>
+
+        {month < '2026-10' && (
+          <div className="mt-4 p-3.5 rounded-2xl bg-amber-950/40 border border-amber-800/80 text-xs text-amber-300 flex items-center gap-2.5">
+            <Info className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong>Online Platform Notice:</strong> The Skyland Online Attendance Portal commenced operations on October 1, 2026. All previous months&apos; payroll and deductions were settled offline.
+            </span>
+          </div>
+        )}
 
         {/* Summary Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">

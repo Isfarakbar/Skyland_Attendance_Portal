@@ -15,6 +15,7 @@ import {
   X,
   Edit3,
   MapPin,
+  Info,
 } from 'lucide-react';
 
 interface AttendanceRecord {
@@ -295,6 +296,15 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
             </div>
           </div>
         </div>
+
+        {((year === 2026 && month < 9) || year < 2026) && (
+          <div className="mt-4 p-3.5 rounded-2xl bg-amber-950/40 border border-amber-800/80 text-xs text-amber-300 flex items-center gap-2.5">
+            <Info className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong>Online Portal Launch Notice:</strong> The Skyland Online Attendance Portal went live on October 1, 2026. Prior months were recorded and settled offline.
+            </span>
+          </div>
+        )}
 
         {/* Monthly Summary KPI Banner */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-5">
