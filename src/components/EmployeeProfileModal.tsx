@@ -122,6 +122,8 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
     switch (status) {
       case 'PRESENT':
         return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800">Present</span>;
+      case 'WFH':
+        return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800">🏡 WFH</span>;
       case 'LATE':
         return <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-amber-950 text-amber-300 border border-amber-800">Late</span>;
       case 'HALF_LEAVE':

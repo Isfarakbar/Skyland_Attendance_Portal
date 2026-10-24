@@ -98,11 +98,11 @@ export async function GET(
       const isCurrentMonth = rec.date.startsWith(currentMonth);
 
       if (isCurrentMonth) {
-        if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
+        if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome || rec.status === 'WFH') {
           wfhDays++;
         }
 
-        if (rec.status === 'PRESENT') {
+        if (rec.status === 'PRESENT' || rec.status === 'WFH') {
           presentDays++;
         } else if (rec.status === 'LATE') {
           lateDays++;

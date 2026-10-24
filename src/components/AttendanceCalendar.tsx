@@ -20,7 +20,9 @@ import {
 interface AttendanceRecord {
   _id: string;
   date: string; // "YYYY-MM-DD"
-  status: 'PRESENT' | 'LATE' | 'HALF_DAY' | 'HALF_LEAVE' | 'ABSENT' | 'OFF' | 'ON_LEAVE';
+  status: 'PRESENT' | 'LATE' | 'HALF_DAY' | 'HALF_LEAVE' | 'ABSENT' | 'OFF' | 'ON_LEAVE' | 'WFH';
+  workMode?: 'OFFICE' | 'FIELD' | 'WFH';
+  isWorkFromHome?: boolean;
   clockIn: string | null;
   clockOut: string | null;
   location?: { latitude?: number; longitude?: number; siteName?: string } | null;
@@ -110,7 +112,8 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
     setSelectedDayDetail({ date: dateKey, record });
     setAdjustError(null);
     if (record) {
-      setEditStatus(record.status || 'PRESENT');
+      const isWfh = record.status === 'WFH' || record.workMode === 'WFH' || !!record.isWorkFromHome;
+      setEditStatus(isWfh ? 'WFH' : (record.status || 'PRESENT'));
       setEditClockIn(
         record.clockIn
           ? new Date(record.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -199,12 +202,17 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
 
   // Monthly stats
   let presentDays = 0;
+  let wfhDays = 0;
   let lateDays = 0;
   let totalOffs = 0;
   let totalHalfLeaves = 0;
 
   for (const r of records) {
-    if (r.status === 'PRESENT') {
+    const isWfh = r.status === 'WFH' || (r.status === 'PRESENT' && (r.workMode === 'WFH' || !!r.isWorkFromHome));
+    if (isWfh) {
+      wfhDays++;
+      presentDays++;
+    } else if (r.status === 'PRESENT') {
       presentDays++;
     } else if (r.status === 'LATE') {
       lateDays++;
@@ -289,11 +297,17 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
         </div>
 
         {/* Monthly Summary KPI Banner */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-5">
           <div className="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-2xl">
             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Days Present</span>
             <div className="text-xl font-black text-emerald-300 mt-0.5">{presentDays}</div>
-            <span className="text-[10px] text-emerald-500/80">Monthly attendances</span>
+            <span className="text-[10px] text-emerald-500/80">Total worked</span>
+          </div>
+
+          <div className="p-3 bg-indigo-950/40 border border-indigo-800/80 rounded-2xl">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">🏡 Remote WFH</span>
+            <div className="text-xl font-black text-indigo-300 mt-0.5">{wfhDays}</div>
+            <span className="text-[10px] text-indigo-400/80">Home attendances</span>
           </div>
 
           <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-2xl">
@@ -356,7 +370,24 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                 }
 
                 if (record) {
-                  if (record.status === 'PRESENT') {
+                  const isWfh = record.status === 'WFH' || (record.status === 'PRESENT' && (record.workMode === 'WFH' || !!record.isWorkFromHome));
+
+                  if (isWfh) {
+                    cellBg = 'bg-indigo-950/25 border-indigo-700/50 hover:border-indigo-500';
+                    badge = (
+                      <div className="mt-1">
+                        <span className="inline-block px-1.5 py-0.5 rounded-md font-bold text-[10px] bg-indigo-950/90 text-indigo-300 border border-indigo-700/80">
+                          🏡 WFH
+                        </span>
+                        {record.clockIn && (
+                          <div className="text-[10px] font-mono text-indigo-400 mt-1 flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            {new Date(record.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } else if (record.status === 'PRESENT') {
                     cellBg = 'bg-emerald-950/20 border-emerald-800/40 hover:border-emerald-600';
                     badge = (
                       <div className="mt-1">
@@ -449,6 +480,10 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
             <span>Present</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+            <span>Work From Home (WFH)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             <span>Late</span>
           </div>
@@ -506,7 +541,7 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                   <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1.5">
                     Attendance Status
                   </label>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-5 gap-1.5">
                     <button
                       type="button"
                       onClick={() => setEditStatus('PRESENT')}
@@ -517,6 +552,17 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                       }`}
                     >
                       Present
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditStatus('WFH')}
+                      className={`py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                        editStatus === 'WFH'
+                          ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                          : 'bg-slate-900 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      🏡 WFH
                     </button>
                     <button
                       type="button"
@@ -679,7 +725,11 @@ export default function AttendanceCalendar({ currentUserId, userRole }: Attendan
                 <div className="space-y-3 text-xs">
                   <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
                     <span className="text-slate-400">Status</span>
-                    <span className="font-bold text-white">{selectedDayDetail.record.status}</span>
+                    <span className="font-bold text-white">
+                      {selectedDayDetail.record.status === 'WFH' || (selectedDayDetail.record.status === 'PRESENT' && (selectedDayDetail.record.workMode === 'WFH' || selectedDayDetail.record.isWorkFromHome))
+                        ? '🏡 Work From Home (WFH)'
+                        : selectedDayDetail.record.status}
+                    </span>
                   </div>
                   {selectedDayDetail.record.clockIn && (
                     <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-slate-800 rounded-xl">

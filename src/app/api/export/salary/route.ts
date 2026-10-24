@@ -124,11 +124,11 @@ export async function GET(req: NextRequest) {
         const isCurrentMonth = rec.date.startsWith(month);
 
         if (isCurrentMonth) {
-          if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome) {
+          if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome || rec.status === 'WFH') {
             wfhDays++;
           }
 
-          if (rec.status === 'PRESENT') {
+          if (rec.status === 'PRESENT' || rec.status === 'WFH') {
             presentDays++;
           } else if (rec.status === 'LATE') {
             lateDays++;

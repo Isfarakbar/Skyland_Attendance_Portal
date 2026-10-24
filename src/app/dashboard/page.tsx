@@ -233,7 +233,7 @@ export default function DashboardPage() {
 
       if (historyData.success && historyData.records) {
         for (const r of historyData.records) {
-          if (r.status === 'PRESENT') {
+          if (r.status === 'PRESENT' || r.status === 'WFH') {
             presentCount++;
           } else if (r.status === 'LATE') {
             lateCount++;

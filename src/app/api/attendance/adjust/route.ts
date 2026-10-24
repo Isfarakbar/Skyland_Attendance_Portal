@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
     let attendance = await Attendance.findOne({ user: userId, date });
 
     const isOff = status === 'OFF' || status === 'ABSENT';
+    const isWfh = status === 'WFH';
     const clockInDate = isOff ? null : parseTimeToDate(date, clockIn);
     const clockOutDate = isOff ? null : parseTimeToDate(date, clockOut);
 
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
         clockIn: clockInDate,
         clockOut: clockOutDate,
         status: status || 'PRESENT',
+        workMode: isWfh ? 'WFH' : 'OFFICE',
+        isWorkFromHome: isWfh,
         totalWorkMinutes: workMins,
         totalBreakMinutes: 0,
         notes: notes || '',
@@ -43,7 +46,16 @@ export async function POST(req: NextRequest) {
     } else {
       if (clockIn !== undefined || isOff) attendance.clockIn = clockInDate;
       if (clockOut !== undefined || isOff) attendance.clockOut = clockOutDate;
-      if (status) attendance.status = status;
+      if (status) {
+        attendance.status = status;
+        if (isWfh) {
+          attendance.workMode = 'WFH';
+          attendance.isWorkFromHome = true;
+        } else if (attendance.workMode === 'WFH' && (status === 'PRESENT' || status === 'OFF' || status === 'LATE')) {
+          attendance.workMode = 'OFFICE';
+          attendance.isWorkFromHome = false;
+        }
+      }
       if (notes !== undefined) attendance.notes = notes;
       attendance.isRegularized = true;
       attendance.regularizedReason = regularizedReason || 'Manual adjustment by Management';

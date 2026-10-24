@@ -28,6 +28,15 @@ export default function ClockWidget({ todayData }: ClockWidgetProps) {
       };
     }
 
+    if (status === 'WFH' || (status === 'PRESENT' && attendance.workMode === 'WFH')) {
+      return {
+        badgeBg: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+        dotBg: 'bg-indigo-400',
+        title: 'Marked Work From Home',
+        description: 'Approved remote work day with full attendance recorded.',
+      };
+    }
+
     switch (status) {
       case 'PRESENT':
         return {

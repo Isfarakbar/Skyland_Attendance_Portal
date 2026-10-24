@@ -124,9 +124,13 @@ export default function DeskRegister() {
           updatedIn = newStatus === 'LATE' ? '09:45' : '09:00';
         }
 
+        const isWfh = newStatus === 'WFH';
+
         return {
           ...emp,
           status: newStatus,
+          workMode: isWfh ? 'WFH' : emp.workMode,
+          isWorkFromHome: isWfh ? true : (newStatus === 'PRESENT' ? false : emp.isWorkFromHome),
           clockInTime: updatedIn,
           clockOutTime: updatedOut,
           isDirty: true,
@@ -407,6 +411,7 @@ export default function DeskRegister() {
   );
 
   const presentCount = employees.filter((e) => e.status === 'PRESENT').length;
+  const wfhCount = employees.filter((e) => e.status === 'WFH' || (e.status === 'PRESENT' && (e.workMode === 'WFH' || e.isWorkFromHome))).length;
   const lateCount = employees.filter((e) => e.status === 'LATE').length;
   const halfLeaveCount = employees.filter((e) => e.status === 'HALF_LEAVE' || e.status === 'HALF_DAY').length;
   const offCount = employees.filter((e) => e.status === 'OFF' || e.status === 'ABSENT').length;
@@ -517,25 +522,29 @@ export default function DeskRegister() {
         </div>
 
         {/* Stats Summary Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4">
-          <div className="p-3 bg-emerald-950/40 border border-emerald-800/80 rounded-2xl">
-            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Present</div>
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5 pt-4">
+          <div className="p-2.5 bg-emerald-950/40 border border-emerald-800/80 rounded-2xl">
+            <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Present</div>
             <div className="text-xl font-black text-emerald-300 mt-0.5">{presentCount}</div>
           </div>
-          <div className="p-3 bg-amber-950/40 border border-amber-800/80 rounded-2xl">
-            <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Late</div>
+          <div className="p-2.5 bg-indigo-950/40 border border-indigo-800/80 rounded-2xl">
+            <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">🏡 WFH</div>
+            <div className="text-xl font-black text-indigo-300 mt-0.5">{wfhCount}</div>
+          </div>
+          <div className="p-2.5 bg-amber-950/40 border border-amber-800/80 rounded-2xl">
+            <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Late</div>
             <div className="text-xl font-black text-amber-300 mt-0.5">{lateCount}</div>
           </div>
-          <div className="p-3 bg-orange-950/40 border border-orange-800/80 rounded-2xl">
-            <div className="text-[11px] font-bold text-orange-400 uppercase tracking-wider">Half Leave</div>
+          <div className="p-2.5 bg-orange-950/40 border border-orange-800/80 rounded-2xl">
+            <div className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Half Leave</div>
             <div className="text-xl font-black text-orange-300 mt-0.5">{halfLeaveCount}</div>
           </div>
-          <div className="p-3 bg-rose-950/40 border border-rose-800/80 rounded-2xl">
-            <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider">Off / Absent</div>
+          <div className="p-2.5 bg-rose-950/40 border border-rose-800/80 rounded-2xl">
+            <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">Off / Absent</div>
             <div className="text-xl font-black text-rose-300 mt-0.5">{offCount}</div>
           </div>
-          <div className="p-3 bg-slate-900 border border-slate-800 rounded-2xl">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unmarked</div>
+          <div className="p-2.5 bg-slate-900 border border-slate-800 rounded-2xl">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unmarked</div>
             <div className="text-xl font-black text-slate-300 mt-0.5">{unmarkedCount}</div>
           </div>
         </div>
@@ -764,6 +773,18 @@ export default function DeskRegister() {
                             title="Present (Click again to unselect)"
                           >
                             Present
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(emp.userId, 'WFH')}
+                            className={`px-2.5 py-1 rounded-xl font-bold text-[11px] transition-all cursor-pointer ${
+                              currentStatus === 'WFH'
+                                ? 'bg-indigo-600 text-white shadow-xs'
+                                : 'text-slate-400 hover:text-indigo-400'
+                            }`}
+                            title="Work From Home (Click again to unselect)"
+                          >
+                            WFH
                           </button>
                           <button
                             type="button"

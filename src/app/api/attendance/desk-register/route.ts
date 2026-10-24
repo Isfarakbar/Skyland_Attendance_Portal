@@ -104,7 +104,9 @@ export async function GET(req: NextRequest) {
         workMode: (emp as any).workMode || 'OFFICE',
         weeklyOffDays: (emp as any).weeklyOffDays ?? [0, 6],
         weeklyHalfDays: (emp as any).weeklyHalfDays ?? [],
-        status: (record?.status as AttendanceStatus) || null,
+        status: (record?.status === 'WFH' || (record?.status === 'PRESENT' && (record?.workMode === 'WFH' || record?.isWorkFromHome)))
+          ? 'WFH'
+          : ((record?.status as AttendanceStatus) || null),
         clockInTime: clockInTimeStr,
         clockOutTime: clockOutTimeStr,
         notes: record?.notes || '',
@@ -154,6 +156,7 @@ export async function POST(req: NextRequest) {
 
     const bulkOps = validEntries.map((entry) => {
       const isOff = entry.status === 'OFF' || entry.status === 'ABSENT';
+      const isWfh = entry.status === 'WFH';
       const clockInDate = isOff ? null : parseTimeToDate(date, entry.clockInTime);
       const clockOutDate = isOff ? null : parseTimeToDate(date, entry.clockOutTime);
       let totalWorkMinutes = 0;
@@ -168,6 +171,7 @@ export async function POST(req: NextRequest) {
           update: {
             $set: {
               status: entry.status,
+              ...(isWfh ? { workMode: 'WFH', isWorkFromHome: true } : { isWorkFromHome: false }),
               clockIn: clockInDate,
               clockOut: clockOutDate,
               totalWorkMinutes,
