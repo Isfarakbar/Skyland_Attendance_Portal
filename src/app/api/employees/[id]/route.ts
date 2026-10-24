@@ -130,6 +130,40 @@ export async function PUT(
       updateData.dateOfBirth = cleanDob ? (cleanDob.includes('T') ? cleanDob.split('T')[0] : cleanDob) : '';
     }
 
+    const DAY_MAP: Record<string, number> = {
+      SUN: 0, SUNDAY: 0,
+      MON: 1, MONDAY: 1,
+      TUE: 2, TUESDAY: 2,
+      WED: 3, WEDNESDAY: 3,
+      THU: 4, THURSDAY: 4,
+      FRI: 5, FRIDAY: 5,
+      SAT: 6, SATURDAY: 6,
+    };
+
+    const sanitizeDays = (arr: unknown): number[] => {
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .map((d) => {
+          if (typeof d === 'number' && !isNaN(d) && d >= 0 && d <= 6) return d;
+          if (typeof d === 'string') {
+            const upper = d.trim().toUpperCase();
+            if (DAY_MAP[upper] !== undefined) return DAY_MAP[upper];
+            const parsed = parseInt(upper, 10);
+            if (!isNaN(parsed) && parsed >= 0 && parsed <= 6) return parsed;
+          }
+          return null;
+        })
+        .filter((d): d is number => d !== null);
+    };
+
+    if (body.weeklyOffDays !== undefined) {
+      updateData.weeklyOffDays = sanitizeDays(body.weeklyOffDays);
+    }
+
+    if (body.weeklyHalfDays !== undefined) {
+      updateData.weeklyHalfDays = sanitizeDays(body.weeklyHalfDays);
+    }
+
     if (body.joinDate !== undefined) {
       if (body.joinDate) {
         const parsedJoin = new Date(body.joinDate);

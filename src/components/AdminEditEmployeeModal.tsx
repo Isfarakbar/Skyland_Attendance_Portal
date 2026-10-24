@@ -99,6 +99,33 @@ function normalizeDateForInput(val?: string | Date): string {
   return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
 }
 
+const DAY_NAME_TO_INT: Record<string, number> = {
+  SUN: 0, SUNDAY: 0,
+  MON: 1, MONDAY: 1,
+  TUE: 2, TUESDAY: 2,
+  WED: 3, WEDNESDAY: 3,
+  THU: 4, THURSDAY: 4,
+  FRI: 5, FRIDAY: 5,
+  SAT: 6, SATURDAY: 6,
+};
+
+function normalizeDayNumbers(val: any, defaultVal: number[] = [0, 6]): number[] {
+  if (!Array.isArray(val) || val.length === 0) return defaultVal;
+  const cleaned = val
+    .map((d) => {
+      if (typeof d === 'number' && !isNaN(d) && d >= 0 && d <= 6) return d;
+      if (typeof d === 'string') {
+        const upper = d.trim().toUpperCase();
+        if (DAY_NAME_TO_INT[upper] !== undefined) return DAY_NAME_TO_INT[upper];
+        const num = parseInt(upper, 10);
+        if (!isNaN(num) && num >= 0 && num <= 6) return num;
+      }
+      return null;
+    })
+    .filter((d): d is number => d !== null);
+  return Array.from(new Set(cleaned)).sort((a, b) => a - b);
+}
+
 export default function AdminEditEmployeeModal({
   employee,
   onClose,
@@ -142,13 +169,11 @@ export default function AdminEditEmployeeModal({
   const [workMode, setWorkMode] = useState<'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID'>(
     employee.workMode || 'OFFICE'
   );
-  const [weeklyOffDays, setWeeklyOffDays] = useState<number[]>(
-    Array.isArray(employee.weeklyOffDays) && employee.weeklyOffDays.length > 0
-      ? employee.weeklyOffDays
-      : [0, 6]
+  const [weeklyOffDays, setWeeklyOffDays] = useState<number[]>(() =>
+    normalizeDayNumbers(employee.weeklyOffDays, [0, 6])
   );
-  const [weeklyHalfDays, setWeeklyHalfDays] = useState<number[]>(
-    Array.isArray(employee.weeklyHalfDays) ? employee.weeklyHalfDays : []
+  const [weeklyHalfDays, setWeeklyHalfDays] = useState<number[]>(() =>
+    normalizeDayNumbers(employee.weeklyHalfDays, [])
   );
 
   // Form states - Compensation & Leaves
@@ -244,8 +269,8 @@ export default function AdminEditEmployeeModal({
         reportingManager: reportingManager.trim(),
         employmentType: employmentType.trim(),
         workMode,
-        weeklyOffDays,
-        weeklyHalfDays,
+        weeklyOffDays: normalizeDayNumbers(weeklyOffDays, [0, 6]),
+        weeklyHalfDays: normalizeDayNumbers(weeklyHalfDays, []),
         joinDate,
         isActive,
         ...(newPassword.trim() ? { newPassword: newPassword.trim() } : {}),
