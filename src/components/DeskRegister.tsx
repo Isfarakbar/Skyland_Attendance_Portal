@@ -16,6 +16,9 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
   RotateCcw,
 } from 'lucide-react';
 import { AttendanceStatus } from '@/models/Attendance';
@@ -64,6 +67,9 @@ export default function DeskRegister() {
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [inspectingEmpId, setInspectingEmpId] = useState<string | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const [orderSavedToast, setOrderSavedToast] = useState(false);
 
   useEffect(() => {
     fetchRegister(date);
@@ -282,6 +288,117 @@ export default function DeskRegister() {
     }
   };
 
+  const persistOrder = async (newOrder: RegisterEmployee[]) => {
+    setReordering(true);
+    try {
+      const orderedUserIds = newOrder.map((e) => e.userId);
+      const res = await fetch('/api/attendance/desk-register', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedUserIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrderSavedToast(true);
+        setTimeout(() => setOrderSavedToast(false), 2000);
+      }
+    } catch {
+      // non-blocking
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const handleMoveUp = (indexInFiltered: number) => {
+    if (indexInFiltered <= 0) return;
+    const currentEmp = filtered[indexInFiltered];
+    const prevEmp = filtered[indexInFiltered - 1];
+
+    setEmployees((prev) => {
+      const newArr = [...prev];
+      const idxA = newArr.findIndex((e) => e.userId === currentEmp.userId);
+      const idxB = newArr.findIndex((e) => e.userId === prevEmp.userId);
+      if (idxA === -1 || idxB === -1) return prev;
+
+      [newArr[idxA], newArr[idxB]] = [newArr[idxB], newArr[idxA]];
+      persistOrder(newArr);
+      return newArr;
+    });
+  };
+
+  const handleMoveDown = (indexInFiltered: number) => {
+    if (indexInFiltered >= filtered.length - 1) return;
+    const currentEmp = filtered[indexInFiltered];
+    const nextEmp = filtered[indexInFiltered + 1];
+
+    setEmployees((prev) => {
+      const newArr = [...prev];
+      const idxA = newArr.findIndex((e) => e.userId === currentEmp.userId);
+      const idxB = newArr.findIndex((e) => e.userId === nextEmp.userId);
+      if (idxA === -1 || idxB === -1) return prev;
+
+      [newArr[idxA], newArr[idxB]] = [newArr[idxB], newArr[idxA]];
+      persistOrder(newArr);
+      return newArr;
+    });
+  };
+
+  const handleResetOrder = async () => {
+    if (!confirm('Are you sure you want to reset the register order back to default alphabetical (A-Z)?')) return;
+    setReordering(true);
+    try {
+      await fetch('/api/attendance/desk-register', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reset: true }),
+      });
+      setEmployees((prev) => [...prev].sort((a, b) => a.name.localeCompare(b.name)));
+      setMessage({ text: 'Register order reset to default alphabetical order', type: 'success' });
+    } catch {
+      setMessage({ text: 'Failed to reset order', type: 'error' });
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, indexInFiltered: number) => {
+    setDraggedIndex(indexInFiltered);
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      e.dataTransfer.setData('text/plain', String(indexInFiltered));
+    } catch {}
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndexInFiltered: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndexInFiltered) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    const draggedEmp = filtered[draggedIndex];
+    const targetEmp = filtered[targetIndexInFiltered];
+
+    setEmployees((prev) => {
+      const newArr = [...prev];
+      const fromIdx = newArr.findIndex((emp) => emp.userId === draggedEmp.userId);
+      const toIdx = newArr.findIndex((emp) => emp.userId === targetEmp.userId);
+      if (fromIdx === -1 || toIdx === -1) return prev;
+
+      const [removed] = newArr.splice(fromIdx, 1);
+      newArr.splice(toIdx, 0, removed);
+      persistOrder(newArr);
+      return newArr;
+    });
+
+    setDraggedIndex(null);
+  };
+
   const filtered = employees.filter(
     (emp) =>
       emp.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -443,19 +560,43 @@ export default function DeskRegister() {
 
       {/* Register List */}
       <div className="bg-[#131E36] border border-slate-800 rounded-3xl p-6 shadow-xs">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search employee by name, ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-            />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search employee by name, ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleResetOrder}
+              disabled={reordering}
+              title="Reset order back to alphabetical A-Z"
+              className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              <RotateCcw className="w-3 h-3 text-orange-400" />
+              <span className="hidden sm:inline">Reset A-Z</span>
+            </button>
           </div>
-          <div className="text-xs text-slate-400">
-            Showing <span className="font-bold text-white">{filtered.length}</span> staff members
+
+          <div className="flex items-center gap-3 text-xs">
+            {orderSavedToast && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 text-[11px] font-bold animate-in fade-in duration-150">
+                <Check className="w-3 h-3 text-emerald-400" />
+                Register Order Saved
+              </span>
+            )}
+            <span className="text-slate-400 text-[11px] hidden lg:inline">
+              Tip: Use <strong className="text-white">↑</strong> / <strong className="text-white">↓</strong> to arrange register sequence
+            </span>
+            <div className="text-xs text-slate-400 shrink-0">
+              Showing <span className="font-bold text-white">{filtered.length}</span> staff members
+            </div>
           </div>
         </div>
 
@@ -468,6 +609,9 @@ export default function DeskRegister() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                  <th className="pb-3 pl-3 w-14 text-center" title="Reorder: Use ↑ / ↓ or drag tiles to match paper register">
+                    Order
+                  </th>
                   <th className="pb-3 pl-2">Employee</th>
                   <th className="pb-3 text-center">Status</th>
                   <th className="pb-3 text-center">Time In</th>
@@ -477,9 +621,12 @@ export default function DeskRegister() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
-                {filtered.map((emp) => {
+                {filtered.map((emp, index) => {
                   const currentStatus = emp.status;
                   const isCurrentSaving = savingUserId === emp.userId;
+                  const isFirst = index === 0;
+                  const isLast = index === filtered.length - 1;
+                  const isDragging = draggedIndex === index;
 
                   // Determine if today is an approved off/half day for this employee
                   let isScheduledOff = false;
@@ -492,7 +639,61 @@ export default function DeskRegister() {
                   } catch {}
 
                   return (
-                    <tr key={emp.userId} className="hover:bg-slate-900/50 transition-colors">
+                    <tr
+                      key={emp.userId}
+                      draggable={!search}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                      className={`hover:bg-slate-900/50 transition-colors ${
+                        isDragging ? 'opacity-40 bg-orange-950/20 border-2 border-dashed border-orange-500' : ''
+                      }`}
+                    >
+                      {/* Move Up / Down Buttons & Order Number */}
+                      <td className="py-3 pl-3 pr-2 text-center select-none">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span
+                            className="w-5 h-5 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-mono font-bold text-slate-400 flex items-center justify-center shrink-0"
+                            title={`Position #${index + 1}`}
+                          >
+                            {index + 1}
+                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveUp(index)}
+                              disabled={isFirst || reordering}
+                              title={isFirst ? 'Already at top' : `Move ${emp.name} up`}
+                              className={`p-1 rounded-md transition-colors ${
+                                isFirst || reordering
+                                  ? 'text-slate-700 cursor-not-allowed opacity-30'
+                                  : 'text-slate-400 hover:text-orange-400 hover:bg-slate-800 cursor-pointer active:scale-90'
+                              }`}
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveDown(index)}
+                              disabled={isLast || reordering}
+                              title={isLast ? 'Already at bottom' : `Move ${emp.name} down`}
+                              className={`p-1 rounded-md transition-colors ${
+                                isLast || reordering
+                                  ? 'text-slate-700 cursor-not-allowed opacity-30'
+                                  : 'text-slate-400 hover:text-orange-400 hover:bg-slate-800 cursor-pointer active:scale-90'
+                              }`}
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {!search && (
+                            <span title="Drag to reorder" className="hidden sm:inline-flex items-center">
+                              <GripVertical className="w-3.5 h-3.5 text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing shrink-0" />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
                       {/* Employee Info */}
                       <td className="py-3 pl-2 pr-4">
                         <div className="flex items-center gap-2">

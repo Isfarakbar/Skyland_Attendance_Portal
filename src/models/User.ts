@@ -49,6 +49,7 @@ export interface IUser extends Document {
   workMode?: 'OFFICE' | 'FIELD' | 'WFH' | 'HYBRID';
   weeklyOffDays?: number[];
   weeklyHalfDays?: number[];
+  sortOrder?: number;
   joinDate: Date;
   isActive: boolean;
   isEmailVerified: boolean;
@@ -139,6 +140,10 @@ const UserSchema = new Schema<IUser>(
     weeklyHalfDays: {
       type: [Number],
       default: [],
+    },
+    sortOrder: {
+      type: Number,
+      default: 0,
     },
     joinDate: { type: Date, default: () => new Date() },
     isActive: { type: Boolean, default: true },

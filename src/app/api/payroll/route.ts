@@ -86,8 +86,21 @@ export async function GET(req: NextRequest) {
 
     const employees = await User.find(userQuery)
       .select('_id name email employeeId department designation baseSalary role taxSettings workMode weeklyOffDays weeklyHalfDays joinDate')
-      .sort({ name: 1 })
       .lean();
+
+    const registerOrder: string[] = (settings as any)?.deskRegisterOrder || [];
+    const orderMap = new Map(registerOrder.map((id: string, idx: number) => [String(id), idx]));
+
+    employees.sort((a, b) => {
+      const idA = String(a._id);
+      const idB = String(b._id);
+      const hasA = orderMap.has(idA);
+      const hasB = orderMap.has(idB);
+      if (hasA && hasB) return orderMap.get(idA)! - orderMap.get(idB)!;
+      if (hasA) return -1;
+      if (hasB) return 1;
+      return a.name.localeCompare(b.name);
+    });
 
     const [yearStr, monthNumStr] = month.split('-');
     const currentYear = parseInt(yearStr);
