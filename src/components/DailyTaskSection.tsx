@@ -553,10 +553,10 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
         {/* Filter Controls Ribbon */}
         <div className="mt-6 pt-5 border-t border-slate-800/80 space-y-4">
           {/* Row 1: Employee selector & Date Quick Chips */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-end gap-4">
             {/* Employee Selector (Admin Only) */}
             {isAdminMode && (
-              <div className="lg:col-span-4">
+              <div className="w-full lg:w-72 shrink-0">
                 <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-indigo-400" />
                   Filter by Employee
@@ -580,7 +580,7 @@ export default function DailyTaskSection({ userId }: DailyTaskSectionProps) {
             )}
 
             {/* Date Filters Ribbon */}
-            <div className={isAdminMode ? 'lg:col-span-8' : 'w-full'}>
+            <div className="flex-1 min-w-0">
               <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <CalendarDays className="w-3.5 h-3.5 text-orange-400" />
                 Date Range / Previous Days Work
