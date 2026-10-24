@@ -18,7 +18,9 @@ import {
   Navigation,
   ExternalLink,
   ShieldCheck,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -32,6 +34,16 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'tasks' | 'attendance'>('tasks');
   const [actionLoading, setActionLoading] = useState(false);
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandTask = (id: string) => {
+    setExpandedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     fetchOverview();
@@ -362,9 +374,41 @@ export default function EmployeeProfileModal({ employeeId, onClose }: EmployeePr
                           </div>
                         </div>
 
-                        <div className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
-                          {task.description}
-                        </div>
+                        {(() => {
+                          const isExpanded = expandedTaskIds.has(task._id);
+                          const isLong = (task.description || '').length > 180 || (task.description || '').split('\n').length > 3;
+                          return (
+                            <div>
+                              <div
+                                className={`text-xs text-slate-300 leading-relaxed whitespace-pre-wrap transition-all ${
+                                  !isExpanded && isLong ? 'line-clamp-3' : ''
+                                }`}
+                              >
+                                {task.description}
+                              </div>
+
+                              {isLong && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpandTask(task._id)}
+                                  className="mt-2 text-[11px] font-bold text-[#FF6B00] hover:text-orange-400 inline-flex items-center gap-1 transition-colors cursor-pointer bg-orange-950/20 hover:bg-orange-950/40 px-2 py-0.5 rounded-lg border border-orange-800/40"
+                                >
+                                  {isExpanded ? (
+                                    <>
+                                      <span>Show Less</span>
+                                      <ChevronUp className="w-3 h-3" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>Show Full Details</span>
+                                      <ChevronDown className="w-3 h-3" />
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {task.blockers && (
                           <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-800/80 text-[11px] text-amber-300 flex items-start gap-1.5">
