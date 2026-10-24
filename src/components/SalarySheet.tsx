@@ -329,6 +329,11 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                       <div className="text-white font-semibold">
                         {record.totalOffs} <span className="text-slate-400 font-normal">/ {record.allowedOffs} free</span>
                       </div>
+                      {Boolean((record as any).concessionDays) && (
+                        <div className="text-[10px] text-purple-300 font-bold">
+                          🎁 {(record as any).concessionDays}d Waived
+                        </div>
+                      )}
                       {record.excessOffs > 0 && (
                         <div className="text-[10px] text-rose-400 font-bold">
                           {record.excessOffs} excess: -PKR {record.offDeduction.toLocaleString()}
@@ -569,6 +574,16 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                   <span>Daily Wage Rate (Divisor: 30 days)</span>
                   <span className="font-mono">PKR {selectedPayslipRecord.dailyRate.toLocaleString()} / day</span>
                 </div>
+
+                {Boolean((selectedPayslipRecord as any).concessionDays) && (
+                  <div className="flex items-center justify-between text-purple-300 bg-purple-950/30 px-2.5 py-1.5 rounded-xl border border-purple-800/40">
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <span>🎁</span>
+                      <span>Executive Concession ({(selectedPayslipRecord as any).concessionDays} day(s) waived by CEO)</span>
+                    </span>
+                    <span className="font-mono font-bold text-purple-200">Zero Cut (PKR 0)</span>
+                  </div>
+                )}
 
                 {selectedPayslipRecord.excessOffs > 0 && (
                   <div className="flex items-center justify-between text-rose-400">

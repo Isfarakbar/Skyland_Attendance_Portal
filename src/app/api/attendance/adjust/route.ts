@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Management only' }, { status: 403 });
     }
 
-    const { userId, date, clockIn, clockOut, status, notes, regularizedReason } = await req.json();
+    const { userId, date, clockIn, clockOut, status, notes, regularizedReason, employeeNote, hasConcession, concessionReason } = await req.json();
 
     if (!userId || !date) {
       return NextResponse.json({ success: false, error: 'User ID and date are required' }, { status: 400 });
@@ -39,9 +39,14 @@ export async function POST(req: NextRequest) {
         totalWorkMinutes: workMins,
         totalBreakMinutes: 0,
         notes: notes || '',
+        employeeNote: typeof employeeNote === 'string' ? employeeNote.trim().slice(0, 25) : '',
+        hasConcession: Boolean(hasConcession),
+        concessionReason: Boolean(hasConcession) ? (concessionReason ? String(concessionReason).trim() : 'Approved by Executive Management') : '',
+        concessionGrantedBy: Boolean(hasConcession) ? (session.userId as any) : undefined,
+        concessionGrantedAt: Boolean(hasConcession) ? new Date() : undefined,
         isRegularized: true,
         regularizedReason: regularizedReason || 'Manual adjustment by Management',
-        regularizedBy: session.userId,
+        regularizedBy: session.userId as any,
       });
     } else {
       if (clockIn !== undefined || isOff) attendance.clockIn = clockInDate;
@@ -57,6 +62,19 @@ export async function POST(req: NextRequest) {
         }
       }
       if (notes !== undefined) attendance.notes = notes;
+      if (employeeNote !== undefined) attendance.employeeNote = typeof employeeNote === 'string' ? employeeNote.trim().slice(0, 25) : '';
+      if (hasConcession !== undefined) {
+        attendance.hasConcession = Boolean(hasConcession);
+        if (attendance.hasConcession) {
+          attendance.concessionReason = concessionReason ? String(concessionReason).trim() : 'Approved by Executive Management';
+          attendance.concessionGrantedBy = session.userId as unknown as import('mongoose').Types.ObjectId;
+          attendance.concessionGrantedAt = new Date();
+        } else {
+          attendance.concessionReason = '';
+          attendance.concessionGrantedBy = null as any;
+          attendance.concessionGrantedAt = null as any;
+        }
+      }
       attendance.isRegularized = true;
       attendance.regularizedReason = regularizedReason || 'Manual adjustment by Management';
       attendance.regularizedBy = session.userId as unknown as import('mongoose').Types.ObjectId;

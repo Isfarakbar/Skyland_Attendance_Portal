@@ -27,6 +27,11 @@ export interface IAttendance extends Document {
   totalWorkMinutes: number;
   totalBreakMinutes: number;
   notes?: string;
+  employeeNote?: string;
+  hasConcession?: boolean;
+  concessionReason?: string;
+  concessionGrantedBy?: mongoose.Types.ObjectId;
+  concessionGrantedAt?: Date;
   ipAddress?: string;
   isFieldCheckIn?: boolean;
   workMode?: 'OFFICE' | 'FIELD' | 'WFH';
@@ -91,6 +96,11 @@ const AttendanceSchema = new Schema<IAttendance>(
     isRegularized: { type: Boolean, default: false },
     regularizedReason: { type: String, default: '' },
     regularizedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    employeeNote: { type: String, default: '', maxlength: 50 },
+    hasConcession: { type: Boolean, default: false, index: true },
+    concessionReason: { type: String, default: '' },
+    concessionGrantedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    concessionGrantedAt: { type: Date, default: null },
   },
   {
     timestamps: true,

@@ -97,6 +97,7 @@ export async function GET(
     let lateDays = 0;
     let wfhDays = 0;
     let rosteredOffs = 0;
+    let concessionDays = 0;
     let totalOffs = 0;
     let totalHalfLeaves = 0;
     let pastOffsTaken = 0;
@@ -122,6 +123,7 @@ export async function GET(
       } catch {}
 
       const isCurrentMonth = rec.date.startsWith(currentMonth);
+      const hasConcession = Boolean((rec as any).hasConcession);
 
       if (isCurrentMonth) {
         if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome || rec.status === 'WFH') {
@@ -135,11 +137,17 @@ export async function GET(
           presentDays++;
         } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
           if (!isScheduledHalfDay) {
-            totalHalfLeaves++;
+            if (hasConcession) {
+              concessionDays += 0.5; // Waived by Executive/CEO
+            } else {
+              totalHalfLeaves++;
+            }
           }
         } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
           if (isScheduledOffDay) {
             rosteredOffs++;
+          } else if (hasConcession) {
+            concessionDays += 1.0; // Waived by Executive/CEO
           } else {
             totalOffs++;
           }
@@ -147,12 +155,12 @@ export async function GET(
       } else {
         // Earlier month in this year
         if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
-          if (!isScheduledHalfDay) {
+          if (!isScheduledHalfDay && !hasConcession) {
             pastHalfLeavesTaken += 1;
             pastLeavesTaken += 0.5;
           }
         } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
-          if (!isScheduledOffDay) {
+          if (!isScheduledOffDay && !hasConcession) {
             pastOffsTaken += 1;
             pastLeavesTaken += 1.0;
           }
@@ -257,6 +265,7 @@ export async function GET(
         lateDays,
         wfhDays,
         rosteredOffs,
+        concessionDays,
         totalOffs,
         allowedOffs,
         excessOffs,

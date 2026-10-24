@@ -130,6 +130,7 @@ export async function GET(req: NextRequest) {
       let totalOffs = 0;
       let totalHalfLeaves = 0;
       let rosteredOffs = 0;
+      let concessionDays = 0;
       let wfhDays = 0;
       let pastOffsTaken = 0;
       let pastHalfLeavesTaken = 0;
@@ -149,6 +150,7 @@ export async function GET(req: NextRequest) {
         const isScheduledOff = empOffDays.includes(dayOfWeek);
         const isScheduledHalfDay = empHalfDays.includes(dayOfWeek);
         const isCurrentMonth = rec.date.startsWith(month);
+        const hasConcession = Boolean((rec as any).hasConcession);
 
         if (isCurrentMonth) {
           if (rec.workMode === 'WFH' || (rec as any).isWorkFromHome || rec.status === 'WFH') {
@@ -162,11 +164,17 @@ export async function GET(req: NextRequest) {
             presentDays++; // Present, recorded as late (record only, zero penalty)
           } else if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
             if (!isScheduledHalfDay) {
-              totalHalfLeaves++;
+              if (hasConcession) {
+                concessionDays += 0.5; // Waived by Executive/CEO
+              } else {
+                totalHalfLeaves++;
+              }
             }
           } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
             if (isScheduledOff) {
               rosteredOffs++;
+            } else if (hasConcession) {
+              concessionDays += 1.0; // Waived by Executive/CEO
             } else {
               totalOffs++;
             }
@@ -174,12 +182,12 @@ export async function GET(req: NextRequest) {
         } else {
           // Earlier month in this year
           if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
-            if (!isScheduledHalfDay) {
+            if (!isScheduledHalfDay && !hasConcession) {
               pastHalfLeavesTaken += 1;
               pastLeavesTaken += 0.5;
             }
           } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
-            if (!isScheduledOff) {
+            if (!isScheduledOff && !hasConcession) {
               pastOffsTaken += 1;
               pastLeavesTaken += 1.0;
             }
@@ -283,6 +291,7 @@ export async function GET(req: NextRequest) {
         'Net Take-Home Pay (PKR)': netSalary,
         'WFH Days': wfhDays,
         'Rostered Offs': rosteredOffs,
+        'Concession Days (Waived)': concessionDays,
       };
     });
 
