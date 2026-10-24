@@ -264,7 +264,11 @@ export default function LeaveSection({ userId }: LeaveSectionProps) {
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
             {monthStats.excessOffs > 0 || monthStats.excessHalfLeaves > 0 ? (
-              <span className="text-rose-400 font-semibold">Exceeded: {monthStats.excessOffs} full off, {monthStats.excessHalfLeaves} half</span>
+              <span className="text-rose-400 font-semibold">
+                Exceeded: {monthStats.excessOffs > 0 ? `${monthStats.excessOffs} day${monthStats.excessOffs === 1 ? '' : 's'}` : ''}
+                {monthStats.excessOffs > 0 && monthStats.excessHalfLeaves > 0 ? ', ' : ''}
+                {monthStats.excessHalfLeaves > 0 ? `${monthStats.excessHalfLeaves} half` : ''}
+              </span>
             ) : (
               <span className="text-emerald-400 font-medium">Within free allowance</span>
             )}

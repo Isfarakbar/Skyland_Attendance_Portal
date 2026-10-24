@@ -245,10 +245,35 @@ export async function GET(req: NextRequest) {
       const allowedOffs = Math.max(0, totalCumulativeOffs - pastOffsTaken);
       const allowedHalfLeaves = Math.max(0, totalCumulativeHalfLeaves - pastHalfLeavesTaken);
 
-      const excessOffs = Math.max(0, totalOffs - allowedOffs);
-      const excessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);
+      // Raw excess and unused counts before cross-category adjustment
+      const rawExcessOffs = Math.max(0, totalOffs - allowedOffs);
+      const rawUnusedOffs = Math.max(0, allowedOffs - totalOffs);
 
-      const offDeduction = excessOffs * dailyRate;
+      const rawExcessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);
+      const rawUnusedHalfLeaves = Math.max(0, allowedHalfLeaves - totalHalfLeaves);
+
+      let excessOffs = rawExcessOffs;
+      let excessHalfLeaves = rawExcessHalfLeaves;
+
+      // Cross-category adjustment:
+      // If employee took no/fewer half leaves than allowed, unused half leaves adjust against excess offs (1 half leave = 0.5 day credit)
+      if (rawUnusedHalfLeaves > 0 && excessOffs > 0) {
+        const halfLeaveCreditInDays = rawUnusedHalfLeaves * 0.5;
+        const offsCovered = Math.min(excessOffs, halfLeaveCreditInDays);
+        excessOffs -= offsCovered;
+      }
+
+      // If employee took fewer offs than allowed, unused offs adjust against excess half leaves (1 off = 2 half leaves credit)
+      if (rawUnusedOffs > 0 && excessHalfLeaves > 0) {
+        const offCreditInHalfLeaves = rawUnusedOffs * 2;
+        const halfLeavesCovered = Math.min(excessHalfLeaves, offCreditInHalfLeaves);
+        excessHalfLeaves -= halfLeavesCovered;
+      }
+
+      // Calculate deductions ensuring accurate rate handling for fractional excess days (e.g. 3.5 days = 3 full + 1 half)
+      const fullOffsToDeduct = Math.floor(excessOffs);
+      const halfOffsToDeduct = (excessOffs % 1 !== 0) ? 1 : 0;
+      const offDeduction = (fullOffsToDeduct * dailyRate) + (halfOffsToDeduct * halfDayRate);
       const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
       const leaveDeduction = offDeduction + halfLeaveDeduction;
 
