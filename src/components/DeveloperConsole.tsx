@@ -41,7 +41,7 @@ export default function DeveloperConsole() {
     officeEndTime: '18:00',
     gracePeriodMinutes: 15,
     allowedFreeLeaves: 1,
-    allowedFreeHalfLeaves: 2,
+    allowedFreeHalfLeaves: 1,
   });
 
   // Master Record Management State
@@ -93,7 +93,7 @@ export default function DeveloperConsole() {
           officeEndTime: json.settings.officeEndTime || '18:00',
           gracePeriodMinutes: json.settings.gracePeriodMinutes ?? 15,
           allowedFreeLeaves: json.settings.allowedFreeLeaves ?? 1,
-          allowedFreeHalfLeaves: json.settings.allowedFreeHalfLeaves ?? 2,
+          allowedFreeHalfLeaves: json.settings.allowedFreeHalfLeaves ?? 1,
         });
       }
     } catch (err) {

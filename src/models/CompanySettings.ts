@@ -12,7 +12,7 @@ export interface ICompanySettings extends Document {
   workingDays: number[]; // [1, 2, 3, 4, 5] (Monday to Friday)
   timezone: string; // e.g., "Asia/Karachi"
   allowedFreeLeaves?: number; // default: 1
-  allowedFreeHalfLeaves?: number; // default: 2
+  allowedFreeHalfLeaves?: number; // default: 1
   salaryCalculationDays?: number; // default: 30
   taxDeductionEnabled?: boolean; // default: true
   taxCalculationMode?: 'FBR_SLABS' | 'FLAT_RATE'; // default: 'FBR_SLABS'
@@ -35,7 +35,7 @@ const CompanySettingsSchema = new Schema<ICompanySettings>(
     workingDays: { type: [Number], default: [1, 2, 3, 4, 5] },
     timezone: { type: String, default: 'Asia/Karachi' },
     allowedFreeLeaves: { type: Number, default: 1 },
-    allowedFreeHalfLeaves: { type: Number, default: 2 },
+    allowedFreeHalfLeaves: { type: Number, default: 1 },
     salaryCalculationDays: { type: Number, default: 30 },
     taxDeductionEnabled: { type: Boolean, default: true },
     taxCalculationMode: { type: String, enum: ['FBR_SLABS', 'FLAT_RATE'], default: 'FBR_SLABS' },

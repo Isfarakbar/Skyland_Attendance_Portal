@@ -84,8 +84,14 @@ export async function GET(
         startMonth = currentMonthNum + 1;
       }
     }
+    // Dynamic Admin Policy: Allowed free full day offs and half day leaves per month
+    const freeOffsPerMonth = typeof settings?.allowedFreeLeaves === 'number' ? settings.allowedFreeLeaves : 1;
+    const freeHalfLeavesPerMonth = typeof settings?.allowedFreeHalfLeaves === 'number' ? settings.allowedFreeHalfLeaves : 1;
+    const monthlyLeaveQuota = freeOffsPerMonth + (freeHalfLeavesPerMonth * 0.5);
+    const yearlyQuota = monthlyLeaveQuota * 12;
+
     const activeMonthsInYear = Math.max(0, currentMonthNum - startMonth + 1);
-    const cumulativeAccruedLeaves = Math.min(18, activeMonthsInYear * 1.5);
+    const cumulativeAccruedLeaves = Math.min(yearlyQuota, activeMonthsInYear * monthlyLeaveQuota);
 
     let presentDays = 0;
     let lateDays = 0;
@@ -93,6 +99,8 @@ export async function GET(
     let rosteredOffs = 0;
     let totalOffs = 0;
     let totalHalfLeaves = 0;
+    let pastOffsTaken = 0;
+    let pastHalfLeavesTaken = 0;
     let pastLeavesTaken = 0;
 
     for (const rec of yearAttendance) {
@@ -140,10 +148,12 @@ export async function GET(
         // Earlier month in this year
         if (rec.status === 'HALF_LEAVE' || rec.status === 'HALF_DAY') {
           if (!isScheduledHalfDay) {
+            pastHalfLeavesTaken += 1;
             pastLeavesTaken += 0.5;
           }
         } else if (rec.status === 'OFF' || rec.status === 'ABSENT' || rec.status === 'ON_LEAVE') {
           if (!isScheduledOffDay) {
+            pastOffsTaken += 1;
             pastLeavesTaken += 1.0;
           }
         }
@@ -156,20 +166,26 @@ export async function GET(
     const halfDayRate = Math.round(dailyRate / 2);
 
     // Cumulative Leave Quota & Carry-Forward Calculations
-    const currentMonthLeavesTaken = (totalOffs * 1.0) + (totalHalfLeaves * 0.5);
-    const totalYearLeavesTaken = pastLeavesTaken + currentMonthLeavesTaken;
+    // Directly respects dynamic admin settings for Allowed Free Offs & Allowed Free Half Leaves
+    const totalCumulativeOffs = freeOffsPerMonth * activeMonthsInYear;
+    const totalCumulativeHalfLeaves = freeHalfLeavesPerMonth * activeMonthsInYear;
 
-    const priorCarryForwardLeaves = Math.max(0, (Math.max(0, activeMonthsInYear - 1) * 1.5) - pastLeavesTaken);
-    const leaveAllowanceThisMonth = Math.max(0, cumulativeAccruedLeaves - pastLeavesTaken);
+    const allowedOffs = Math.max(0, totalCumulativeOffs - pastOffsTaken);
+    const allowedHalfLeaves = Math.max(0, totalCumulativeHalfLeaves - pastHalfLeavesTaken);
 
-    const excessLeaves = Math.max(0, totalYearLeavesTaken - cumulativeAccruedLeaves);
-    const leaveDeduction = Math.round(excessLeaves * dailyRate);
-    const remainingLeaveBalance = Math.max(0, cumulativeAccruedLeaves - totalYearLeavesTaken);
+    const excessOffs = Math.max(0, totalOffs - allowedOffs);
+    const excessHalfLeaves = Math.max(0, totalHalfLeaves - allowedHalfLeaves);
 
-    const excessOffs = Math.floor(excessLeaves);
-    const excessHalfLeaves = (excessLeaves % 1 !== 0) ? 1 : 0;
     const offDeduction = excessOffs * dailyRate;
     const halfLeaveDeduction = excessHalfLeaves * halfDayRate;
+    const leaveDeduction = offDeduction + halfLeaveDeduction;
+
+    const currentMonthLeavesTaken = (totalOffs * 1.0) + (totalHalfLeaves * 0.5);
+    const totalYearLeavesTaken = pastLeavesTaken + currentMonthLeavesTaken;
+    const remainingLeaveBalance = Math.max(0, cumulativeAccruedLeaves - totalYearLeavesTaken);
+    const excessLeaves = Math.max(0, totalYearLeavesTaken - cumulativeAccruedLeaves);
+    const priorCarryForwardLeaves = Math.max(0, (Math.max(0, activeMonthsInYear - 1) * monthlyLeaveQuota) - pastLeavesTaken);
+    const leaveAllowanceThisMonth = allowedOffs + (allowedHalfLeaves * 0.5);
 
     const isPreInceptionMonth = currentMonth < PORTAL_INCEPTION_DATE.substring(0, 7);
     const effectiveLeaveDeduction = isPreInceptionMonth ? 0 : leaveDeduction;
@@ -217,12 +233,12 @@ export async function GET(
         wfhDays,
         rosteredOffs,
         totalOffs,
-        allowedOffs: leaveAllowanceThisMonth,
+        allowedOffs,
         excessOffs,
         totalHalfLeaves,
-        allowedHalfLeaves: Math.max(0, leaveAllowanceThisMonth * 2),
+        allowedHalfLeaves,
         excessHalfLeaves,
-        yearlyQuota: 18,
+        yearlyQuota,
         cumulativeAccruedLeaves,
         priorCarryForwardLeaves,
         leaveAllowanceThisMonth,

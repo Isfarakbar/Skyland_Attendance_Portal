@@ -139,7 +139,7 @@ export default function EmployeeDashboardView({
             {remainingLeaveBalance} Days
           </p>
           <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium mt-0.5 truncate">
-            {cumulativeAccruedLeaves} / 18 Accrued
+            {cumulativeAccruedLeaves} / {employeeStats?.yearlyQuota ?? 18} Accrued
           </p>
         </div>
 

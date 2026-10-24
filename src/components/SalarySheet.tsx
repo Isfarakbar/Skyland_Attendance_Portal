@@ -549,7 +549,7 @@ export default function SalarySheet({ isEmployeeOnly = false, userId }: SalarySh
                 <div className="p-2.5 rounded-xl bg-slate-950/40 border border-slate-800">
                   <span className="text-[10px] font-bold uppercase text-sky-400 block">Annual Leave Balance</span>
                   <span className="text-sm font-black text-sky-300 mt-0.5 block">{selectedPayslipRecord.remainingLeaveBalance ?? 1.5} Days</span>
-                  <span className="text-[9px] text-slate-400 block">({selectedPayslipRecord.cumulativeAccruedLeaves ?? 1.5} / 18 Accrued)</span>
+                  <span className="text-[9px] text-slate-400 block">({selectedPayslipRecord.cumulativeAccruedLeaves ?? 1.5} / {selectedPayslipRecord.yearlyQuota ?? 18} Accrued)</span>
                 </div>
               </div>
 

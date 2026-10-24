@@ -17,7 +17,7 @@ export async function GET() {
         fullDayThresholdHours: 8,
         timezone: 'Asia/Karachi',
         allowedFreeLeaves: 1,
-        allowedFreeHalfLeaves: 2,
+        allowedFreeHalfLeaves: 1,
         salaryCalculationDays: 30,
         taxDeductionEnabled: true,
         taxCalculationMode: 'FBR_SLABS',

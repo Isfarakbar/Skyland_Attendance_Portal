@@ -17,7 +17,7 @@ export default function CompanySettingsTab() {
   const [fullDayThresholdHours, setFullDayThresholdHours] = useState(8);
   const [timezone, setTimezone] = useState('Asia/Karachi');
   const [allowedFreeLeaves, setAllowedFreeLeaves] = useState(1);
-  const [allowedFreeHalfLeaves, setAllowedFreeHalfLeaves] = useState(2);
+  const [allowedFreeHalfLeaves, setAllowedFreeHalfLeaves] = useState(1);
   const [salaryCalculationDays, setSalaryCalculationDays] = useState(30);
   const [taxDeductionEnabled, setTaxDeductionEnabled] = useState(true);
   const [taxCalculationMode, setTaxCalculationMode] = useState<'FBR_SLABS' | 'FLAT_RATE'>('FBR_SLABS');
@@ -46,7 +46,7 @@ export default function CompanySettingsTab() {
         setFullDayThresholdHours(data.settings.fullDayThresholdHours ?? 8);
         setTimezone(data.settings.timezone || 'Asia/Karachi');
         setAllowedFreeLeaves(data.settings.allowedFreeLeaves ?? 1);
-        setAllowedFreeHalfLeaves(data.settings.allowedFreeHalfLeaves ?? 2);
+        setAllowedFreeHalfLeaves(data.settings.allowedFreeHalfLeaves ?? 1);
         setSalaryCalculationDays(data.settings.salaryCalculationDays ?? 30);
         setTaxDeductionEnabled(data.settings.taxDeductionEnabled ?? true);
         setTaxCalculationMode(data.settings.taxCalculationMode || 'FBR_SLABS');
